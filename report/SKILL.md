@@ -43,7 +43,8 @@ actions. Check both before writing or exploring.
 
 Scaffold a new report project:
 
-1. Init git, create directory structure:
+1. Verify pandoc is installed (`pandoc --version`). If missing, stop and tell the user to install it.
+2. Init git, create directory structure:
    ```
    <project>/
    ├── <report>.md         ← main source (YAML front-matter: title, bibliography, csl)
@@ -54,14 +55,14 @@ Scaffold a new report project:
    └── docs/
        ├── reference.odt, README.md, STYLING.md, CITATIONS.md
    ```
-2. Extract pandoc reference.odt (`pandoc --print-default-data-file reference.odt`)
-3. Download CSL style (Nature by default)
-4. Create build.sh (accept `--zotero` flag, respect `PANDOC` env var)
-5. If existing report provided: convert to markdown, extract vocabulary
-6. Create status.md with sections, decisions, writing queue, placeholders
-7. Explore codebase → create code_map.md (section-to-file mapping with parameters)
-8. Create references.bib with tool citations inferred from codebase
-9. Tell user: fill style_sample.md, edit reference.odt for margins/fonts, run `/report outline`
+3. Extract pandoc reference.odt (`pandoc --print-default-data-file reference.odt`)
+4. Download CSL style (Nature by default)
+5. Create build.sh (accept `--zotero` flag, respect `PANDOC` env var)
+6. If existing report provided: convert to markdown, extract vocabulary
+7. Create status.md with sections, decisions, writing queue, placeholders
+8. Explore codebase → create code_map.md (section-to-file mapping with parameters)
+9. Create references.bib with tool citations inferred from codebase
+10. Tell user: fill style_sample.md, edit reference.odt for margins/fonts, run `/report outline`
 
 ---
 
@@ -89,7 +90,7 @@ Scaffold a new report project:
 
 **Anti-AI style rules (apply to every sentence):**
 
-> **RULE #0 — EM DASH BAN**: Never write — or --. Use comma, parentheses, or colon.
+> **RULE #0**: Never write em dashes (U+2014) or double hyphens. Use comma, parentheses, or colon instead.
 
 *Banned words:* pivotal, crucial, vital, delve, showcase, highlight, underscore, enhance,
 foster, tapestry, landscape (abstract), testament, vibrant, enduring, intricate, garner,

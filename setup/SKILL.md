@@ -60,7 +60,7 @@ git -C ~/.claude/skills/job-search/users/dimit log --oneline -1 || echo "ERROR: 
 | `~/.claude/settings.json` | Symlink → Drive path, valid JSON |
 | `~/.claude/skills/` | Symlink/Junction → Drive skills dir, contains skill subdirs |
 | `~/.claude/local.md` | Plain file, machine-specific paths |
-| `~/.claude/skills/job-search/users/dimit/` | Directory with Summary.md, Journal.md, CV.md, Human-Expertise.md, Topics/, etc. |
+| `~/.claude/skills/job-search/users/dimit/` | Directory with Direction.md, Journal.md, CV.md, Human-Expertise.md, Topics/, etc. |
 | `~/.claude/skills/job-search/users/dimit/.git` | Git repo initialized with at least one commit |
 
 ## First-Time Setup on a New Machine

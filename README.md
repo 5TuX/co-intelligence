@@ -12,6 +12,7 @@ A personal collection of [Claude Code](https://docs.anthropic.com/en/docs/claude
 | **note** | `/note` | Quick capture of learnings, gotchas, tips to career files |
 | **myplay** | `/myplay` | Log moments of demonstrated human expertise |
 | **agent** | `/agent` | Multi-agent chat channel coordination |
+| **setup** | `/setup` | Verify, repair, or initialize Claude Code setup on a machine |
 | **sync-skills** | `/sync-skills` | Commit and push skill changes to the repo |
 
 ## Installation
@@ -35,7 +36,7 @@ Skills are automatically available as slash commands in Claude Code.
 ├── agent/                  # Multi-agent chat coordination
 │   └── SKILL.md
 ├── job-search/             # AI job search engine
-│   ├── SKILL.md            #   Orchestration (~550 lines)
+│   ├── SKILL.md            #   Orchestration (~230 lines)
 │   ├── README.md           #   Detailed documentation
 │   ├── ROADMAP.md          #   Development roadmap
 │   ├── pyproject.toml      #   Python dependencies
@@ -49,6 +50,12 @@ Skills are automatically available as slash commands in Claude Code.
 │   │   └── templates/      #     Jinja2 HTML templates
 │   ├── sources-general.yaml
 │   ├── deep-search-tactics.md
+│   ├── clean-mode.md       #   Clean mode protocol (extracted from SKILL.md)
+│   ├── learning-loop.md    #   Learning loop protocol (extracted from SKILL.md)
+│   ├── search-agents.md    #   Search agent specifications (extracted from SKILL.md)
+│   ├── update-phase.md     #   Distribution & update phase (extracted from SKILL.md)
+│   ├── new-user-flow.md    #   New user creation flow
+│   ├── update-user-flow.md #   User profile update flow
 │   └── users/              #   Per-user data (gitignored)
 │       └── _example/       #     Template for new users
 ├── refine-skill/           # Meta-skill for iterative improvement
@@ -63,7 +70,8 @@ Skills are automatically available as slash commands in Claude Code.
 ├── myplay/                 # Human expertise logging
 │   └── SKILL.md
 ├── setup/                  # Environment setup
-│   └── SKILL.md
+│   ├── SKILL.md
+│   └── architecture.md     #   Drive paths and symlink layout by OS
 └── sync-skills/            # Repo commit + push
     └── SKILL.md
 ```

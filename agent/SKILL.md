@@ -9,11 +9,7 @@ argument-hint: <agent-name> [message to send]
 This skill connects Claude instances to a shared file-based message bus.
 No server or daemon required — just a file that all agents read and write on demand.
 
-**Chat file location** (pick based on OS):
-- Linux/macOS: `/tmp/agent-chat.md`
-- Windows: `C:\Users\<username>\AppData\Local\Temp\agent-chat.md`
-
-Detect the OS and use the appropriate path. On Windows you can resolve it via the `TEMP` or `TMP` environment variable.
+**Chat file**: `$TEMP/agent-chat.md` (resolves cross-platform via the TEMP environment variable; falls back to `/tmp/agent-chat.md` on Linux/macOS).
 
 ## Usage
 
@@ -37,18 +33,19 @@ Parse $ARGUMENTS:
 3. Internalize the chat history silently — you now know what other agents have said.
 
 ### If a message was provided:
-4. Append the message to the chat file:
+- Append the message to the chat file:
    ```
    **[{name}] YYYY-MM-DD HH:MM** — {message}
    ```
-5. Summarize in one line what you wrote and what you read from others (if anything).
+- Summarize in one line what you wrote and what you read from others (if anything).
+- Verify the file ends with your message (read last line). If not, warn the user.
 
 ### If mode is "read":
-4. Print the full chat history to the user in a readable format.
+- Print the full chat history to the user in a readable format.
 
 ### If mode is "ask":
-4. Append the question tagged with your name.
-5. Tell the user: "Message sent. Ask the other terminal to respond, then run `/agent {name} read` to see the reply."
+- Append the question tagged with your name.
+- Tell the user: "Message sent. Ask the other terminal to respond, then run `/agent {name} read` to see the reply."
 
 ### General rules:
 - Always use the exact format: `**[Name] YYYY-MM-DD HH:MM** —` for new messages

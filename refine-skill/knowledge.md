@@ -65,13 +65,14 @@ Curated resources on skill design and prompt optimization. Refined over successi
 Observations about specific skills. Updated after refinements.
 
 ### job-search
-- ~550 lines, ~32K chars — CRITICAL: over 15K limit, content likely truncated
+- 231 lines, ~12.5K chars — OK (was 31K CRITICAL, fixed 2026-03-16)
+- Extracted to: clean-mode.md, learning-loop.md, search-agents.md, update-phase.md
 - Has Python package for deterministic ops (good pattern)
 - Uses `context: fork` — writes in fork may not persist (pitfall #5)
-- Complex multi-user system with learning loops
+- Complex multi-user system with learning loops (young, few runs)
 
 ### report
-- 164 lines, ~6.4K chars — healthy size
+- 166 lines, ~6.5K chars — healthy size
 - Good patterns: modes, anti-AI rules, verification steps
 - Extracted reference material to context/ directory
 
@@ -80,11 +81,12 @@ Observations about specific skills. Updated after refinements.
 - Single purpose, clear steps
 
 ### note
-- 31 lines, ~1.3K chars — minimal, focused
+- 29 lines, ~1.2K chars — minimal, focused
 - Single purpose, clear steps
+- Had stale file references (Summary.md, Learning path.md) — fixed 2026-03-16
 
 ### agent
-- 66 lines, ~2.3K chars — healthy size
+- 62 lines, ~2.2K chars — healthy size
 - Multi-mode with clear format specifications
 
 ### setup
@@ -92,8 +94,23 @@ Observations about specific skills. Updated after refinements.
 - Good: extracted architecture to separate file
 - Has verification with PASS/FAIL output
 
+### sync-skills
+- 101 lines, ~3.2K chars — healthy size
+- Well-structured 8-step workflow with safety checks
+
+### refine-skill
+- 128 lines, ~4.9K chars — healthy size
+- Uses knowledge.md + analysis.md reference files
+
 ## Refinement Log
 
 Chronological record of all refinement sessions.
 
-(No entries yet — grows with use.)
+### 2026-03-16 — Full audit (all 8 skills)
+- **job-search**: CRITICAL fix — extracted 4 sections to reference files (31K → 12.5K chars)
+- **note**: fixed broken file references (Summary.md → removed, Learning path.md → Direction.md)
+- **setup**: fixed stale file reference (Summary.md → Direction.md)
+- **report**: removed self-contradicting em dash in ban rule, added pandoc install check
+- **agent**: simplified cross-platform path, added write verification, renumbered steps
+- **myplay**, **sync-skills**, **refine-skill**: no changes needed
+- Pattern observed: `Summary.md` was referenced in 3 skills but never existed — likely a renamed/removed file
