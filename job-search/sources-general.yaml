@@ -17,19 +17,19 @@ sources:
     url: https://welcometothejungle.com
     keywords: [France, tech, startup]
     priority: 2
-    last_checked: 2026-03-15
+    last_checked: 2026-03-16
 
   - name: WTTJ AI Engineer France
     url: https://www.welcometothejungle.com/en/jobs?query=AI%20engineer&page=1&refinementList%5Boffices.country_code%5D%5B%5D=FR
     keywords: [AI, engineer, France, startup]
     priority: 2
-    last_checked: 2026-03-15
+    last_checked: 2026-03-16
 
   - name: Glassdoor AI France
     url: https://www.glassdoor.com/Job/france-artificial-intelligence-jobs-SRCH_IL.0,6_IN86_KO7,30.htm
     keywords: [AI, France, ML]
     priority: 2
-    last_checked: 2026-03-15
+    last_checked: 2026-03-16
     discovered: 2026-03-14
     recommended_by: Glassdoor search
 
@@ -37,13 +37,13 @@ sources:
     url: https://www.glassdoor.com/Job/remote-engineer-llm-jobs-SRCH_IL.0,6_IS11047_KO7,19.htm
     keywords: [LLM, engineer, remote]
     priority: 3
-    last_checked: 2026-03-15
+    last_checked: 2026-03-16
 
   - name: Built In AI France
     url: https://builtin.com/jobs/eu/france/dev-engineering/search/artificial-intelligence
     keywords: [AI, France, startup]
     priority: 2
-    last_checked: 2026-03-15
+    last_checked: 2026-03-16
     discovered: 2026-03-14
     recommended_by: Built In platform
 
@@ -51,7 +51,7 @@ sources:
     url: https://www.apec.fr/candidat/recherche-emploi.html/emploi?motsCles=intelligence%20artificielle&typeContrat=101888
     keywords: [AI, ML, France, cadre, CDI]
     priority: 2
-    last_checked: 2026-03-15
+    last_checked: 2026-03-16
     discovered: 2026-03-15
     recommended_by: job search strategy suggestion — major French cadre board for AI/ML roles
 
@@ -59,7 +59,7 @@ sources:
     url: https://www.abg.asso.fr/fr/candidatOffres
     keywords: [PhD, research, R&D, AI, ML, data science, France]
     priority: 2
-    last_checked: 2026-03-15
+    last_checked: 2026-03-16
     discovered: 2026-03-15
     recommended_by: SKILL.md instruction — PhD/researcher job board
 
@@ -73,7 +73,7 @@ sources:
     url: https://dynamitejobs.com/country/remote-jobs-in-france
     keywords: [remote, France, tech, AI]
     priority: 2
-    last_checked: 2026-03-15
+    last_checked: 2026-03-16
     discovered: 2026-03-15
     recommended_by: remote France job search
 
@@ -81,7 +81,7 @@ sources:
     url: https://www.seedtable.com/best-ai-startups-in-france
     keywords: [AI, startup, France, funding, careers]
     priority: 2
-    last_checked: 2026-03-15
+    last_checked: 2026-03-16
     discovered: 2026-03-14
     recommended_by: AI startup funding search — 69 best French AI startups
 
@@ -89,7 +89,7 @@ sources:
     url: https://wellfound.com/role/l/artificial-intelligence-engineer/france
     keywords: [AI, France, startup]
     priority: 2
-    last_checked: 2026-03-15
+    last_checked: 2026-03-16
     discovered: 2026-03-14
     recommended_by: Wellfound direct search
 
@@ -98,45 +98,45 @@ sources:
     url: https://wellfound.com/role/l/ai-engineer/europe
     keywords: [AI, engineer, startup, Europe]
     priority: 3
-    last_checked: 2026-03-15
+    last_checked: 2026-03-16
 
   - name: Wellfound Remote AI Engineer
     url: https://wellfound.com/role/r/ai-engineer
     keywords: [AI, engineer, remote]
     priority: 3
-    last_checked: 2026-03-15
+    last_checked: 2026-03-16
 
   - name: Wellfound CV Europe
     url: https://wellfound.com/role/l/computer-vision/europe
     keywords: [computer vision, Europe, startup]
     priority: 3
-    last_checked: 2026-03-15
+    last_checked: 2026-03-16
 
   # Arc.dev
   - name: Arc.dev Remote CV
     url: https://arc.dev/remote-jobs/computer-vision
     keywords: [computer vision, remote]
     priority: 3
-    last_checked: 2026-03-15
+    last_checked: 2026-03-16
 
   - name: Arc.dev Remote LLM
     url: https://arc.dev/remote-jobs/llm
     keywords: [LLM, RAG, remote, freelance]
     priority: 3
-    last_checked: 2026-03-15
+    last_checked: 2026-03-16
 
   - name: Arc.dev Remote AI
     url: https://arc.dev/remote-jobs/ai
     keywords: [AI, agents, remote]
     priority: 3
-    last_checked: 2026-03-15
+    last_checked: 2026-03-16
 
   # Europe boards
   - name: EU Data Jobs
     url: https://eudatajobs.com
     keywords: [AI, data science, Europe]
     priority: 3
-    last_checked: 2026-03-15
+    last_checked: 2026-03-16
     discovered: 2026-03-14
     recommended_by: "best job boards AI Europe" search
 
@@ -144,7 +144,7 @@ sources:
     url: https://www.eurotechjobs.com/jobs/python_developer
     keywords: [Python, Europe, tech]
     priority: 3
-    last_checked: 2026-03-15
+    last_checked: 2026-03-16
     discovered: 2026-03-14
     recommended_by: European tech job board list
 
@@ -152,7 +152,7 @@ sources:
     url: https://ellis.eu/research/jobs
     keywords: [AI, research, Europe, academic]
     priority: 3
-    last_checked: 2026-03-15
+    last_checked: 2026-03-16
     discovered: 2026-03-14
     recommended_by: European AI research network
 
@@ -160,7 +160,7 @@ sources:
     url: https://www.remoterocketship.com/country/europe/jobs/machine-learning-engineer/
     keywords: [ML, remote, Europe]
     priority: 3
-    last_checked: 2026-03-15
+    last_checked: 2026-03-16
     discovered: 2026-03-14
     recommended_by: web search for remote AI boards
 
@@ -168,7 +168,7 @@ sources:
     url: https://www.remoterocketship.com/country/europe/jobs/ai-engineer/
     keywords: [AI, remote, Europe]
     priority: 3
-    last_checked: 2026-03-15
+    last_checked: 2026-03-16
     discovered: 2026-03-14
     recommended_by: web search for remote AI boards
 
@@ -176,14 +176,14 @@ sources:
     url: https://www.linkedin.com/jobs/computer-vision-engineer-jobs-european-union
     keywords: [computer vision, engineer, EU]
     priority: 3
-    last_checked: 2026-03-15
+    last_checked: 2026-03-16
 
   # AI/ML aggregators
   - name: AIJobs.net
     url: https://aijobs.net/
     keywords: [AI, ML, data science, global]
     priority: 3
-    last_checked: 2026-03-15
+    last_checked: 2026-03-16
     discovered: 2026-03-14
     recommended_by: top AI job boards 2026 list
     # 9300+ AI/ML jobs listed
@@ -192,7 +192,7 @@ sources:
     url: https://aijobs.ai/
     keywords: [AI, ML, data science]
     priority: 3
-    last_checked: 2026-03-15
+    last_checked: 2026-03-16
     discovered: 2026-03-14
     recommended_by: top AI job boards 2026 list (Uxcel)
 
@@ -200,7 +200,7 @@ sources:
     url: https://remoteml.com/
     keywords: [ML, remote, data science, deep learning]
     priority: 3
-    last_checked: 2026-03-15
+    last_checked: 2026-03-16
     discovered: 2026-03-14
     recommended_by: "remote ML jobs" search — 28,900+ ML engineers subscribed
 
@@ -208,7 +208,7 @@ sources:
     url: https://www.datasciencejobs.com
     keywords: [data science, ML, AI]
     priority: 3
-    last_checked: 2026-03-15
+    last_checked: 2026-03-16
     discovered: 2026-03-14
     recommended_by: niche AI job boards 2026 list
 
@@ -216,7 +216,7 @@ sources:
     url: https://www.workingnomads.com/remote-machine-learning-jobs
     keywords: [ML, remote, global]
     priority: 3
-    last_checked: 2026-03-15
+    last_checked: 2026-03-16
     discovered: 2026-03-14
     recommended_by: remote ML jobs search
 
@@ -225,7 +225,7 @@ sources:
     url: https://www.google.com/search?q=site%3Aboards.greenhouse.io+%22machine+learning%22+OR+%22AI+engineer%22+France+OR+remote
     keywords: [ATS, greenhouse, AI, ML, France]
     priority: 2
-    last_checked: 2026-03-15
+    last_checked: 2026-03-16
     discovered: 2026-03-14
     recommended_by: ATS X-ray search strategy
 
@@ -233,7 +233,7 @@ sources:
     url: https://www.google.com/search?q=site%3Ajobs.lever.co+AI+OR+ML+OR+%22deep+learning%22+France+OR+Europe+OR+remote
     keywords: [ATS, lever, AI, ML, Europe]
     priority: 2
-    last_checked: 2026-03-15
+    last_checked: 2026-03-16
     discovered: 2026-03-14
     recommended_by: ATS X-ray search strategy
 
@@ -241,7 +241,7 @@ sources:
     url: https://www.google.com/search?q=site%3Ajobs.ashbyhq.com+%22machine+learning%22+OR+%22AI+engineer%22+Europe+OR+remote
     keywords: [ATS, ashby, AI, ML, Europe]
     priority: 3
-    last_checked: 2026-03-15
+    last_checked: 2026-03-16
     discovered: 2026-03-14
     recommended_by: ATS X-ray search strategy
 
@@ -250,7 +250,7 @@ sources:
     url: https://jobs.climatedraft.org
     keywords: [climate, sustainability, environment, tech]
     priority: 3
-    last_checked: 2026-03-15
+    last_checked: 2026-03-16
     discovered: 2026-03-15
     recommended_by: Sweep job search — curated climate tech jobs
 
@@ -258,7 +258,7 @@ sources:
     url: https://startup.jobs
     keywords: [startup, tech, AI, ML, Europe]
     priority: 3
-    last_checked: 2026-03-15
+    last_checked: 2026-03-16
     discovered: 2026-03-15
     recommended_by: job search aggregation — found HF and Doctolib listings
 
@@ -266,7 +266,7 @@ sources:
     url: https://jobs.accel.com
     keywords: [VC, startup, AI, ML, Europe]
     priority: 3
-    last_checked: 2026-03-15
+    last_checked: 2026-03-16
     discovered: 2026-03-15
     recommended_by: VC portfolio job board — found Doctolib roles not on WTTJ
 
