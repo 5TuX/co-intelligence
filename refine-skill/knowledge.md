@@ -18,6 +18,8 @@ Things that break skills or degrade quality. Check every skill against these.
 
 7. **"Soft dead" links pass verification** — A URL that returns 200 but shows unrelated content (homepage, wiki, generic page) instead of the expected resource. Automated link checkers miss these. Require LLM verification that the page contains the expected content.
 
+8. **`argument-hint` out of sync with actual modes** — The `argument-hint` YAML field controls the hint text shown in the Claude Code UI next to the slash command. When new modes are added to a skill, update `argument-hint` too or users won't discover them.
+
 ### Structural (degrades quality)
 
 7. **Overloaded single SKILL.md** — Everything in one file = everything loaded every time. Extract reference material to separate files.

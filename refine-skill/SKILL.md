@@ -3,7 +3,7 @@ name: refine-skill
 description: >
   Use when the user says /refine-skill to analyze and improve Claude Code skills.
   With no argument, refines all skills. Use "self" to refine the refiner itself.
-argument-hint: "<skill-name> | self | (empty = refine all)"
+argument-hint: "<skill-name> | self | <name> apply <changes> | (empty = all)"
 ---
 
 # Refine Skill

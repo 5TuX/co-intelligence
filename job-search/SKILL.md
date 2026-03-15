@@ -5,7 +5,7 @@ description: >
   job search, CV analysis, or skill gap review.
 disable-model-invocation: true
 context: fork
-argument-hint: "[user1,user2] | all | new-user | update-user <handle>"
+argument-hint: "[user1,user2] | all | clean [handle] | new-user | update-user <handle>"
 ---
 
 # Job Search & Career Refresh (Multi-User)

@@ -1,7 +1,7 @@
 ---
 name: agent
 description: Connect this Claude instance to the shared multi-agent chat channel — register a name and send/read messages
-argument-hint: <agent-name> [message to send]
+argument-hint: "<name> [message] | <name> read | <name> ask <question>"
 ---
 
 # Multi-Agent Communication

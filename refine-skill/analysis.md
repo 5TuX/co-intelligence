@@ -24,6 +24,7 @@ Token estimate: `chars / 4` (rough for English prose + code).
 6. **Reference file usage**: count "see " or "read " pointing to other files.
 7. **Step count**: count `##` action headers.
 8. **Mode organization**: if multi-mode, are modes self-contained?
+9. **argument-hint completeness**: if skill has `argument-hint` in frontmatter, verify all documented modes/args appear in the hint. This controls the UI hint text shown next to the slash command.
 
 ### Quality Dimensions
 
