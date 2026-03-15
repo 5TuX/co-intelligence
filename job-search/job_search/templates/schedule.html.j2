@@ -1,0 +1,49 @@
+{% extends "base.html.j2" %}
+
+{% block title %}Weekly Learning Schedule – {{ ctx.user_name }}{% endblock %}
+
+{% block body %}
+<h1>Weekly Learning Schedule</h1>
+<p class="date-updated">11h/week — priorities derived from active job offers</p>
+
+{% if ctx.method %}
+<div class="tips">
+<h3>Session Structure (evidence-based)</h3>
+<p><strong>{{ ctx.method.daily_pattern }}</strong></p>
+<ul>
+{% for p in ctx.method.principles %}
+  <li>{{ p }}</li>
+{% endfor %}
+</ul>
+</div>
+{% endif %}
+
+<table>
+<tr><th class="sortable">Day</th><th class="sortable">Skill</th><th class="sortable">Hours</th><th>Difficulty</th><th>Why</th></tr>
+{% for day in ctx.schedule %}
+<tr>
+  <td><strong>{{ day.day }}</strong></td>
+  <td>{{ day.skill }}</td>
+  <td>{{ day.hours }}h</td>
+  <td>{{ day.difficulty }}</td>
+  <td>{{ day.why }}</td>
+</tr>
+{% endfor %}
+</table>
+
+{% for day in ctx.schedule %}
+<h2>{{ day.day }} — {{ day.skill }} ({{ day.hours }}h)</h2>
+
+{% if day.topics %}
+<p><strong>Topics:</strong> {{ day.topics | join(", ") }}</p>
+{% endif %}
+
+{% if day.resources %}
+<ul>
+{% for r in day.resources %}
+  <li>{{ r.label }}{% if r.url %} — <a href="{{ r.url }}" target="_blank">{{ r.url }}</a>{% endif %}</li>
+{% endfor %}
+</ul>
+{% endif %}
+{% endfor %}
+{% endblock %}

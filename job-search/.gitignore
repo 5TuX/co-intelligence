@@ -1,0 +1,21 @@
+# User data — contains personal career files, CVs, preferences, and job offers
+# Each user creates their own directory via /job-search new-user
+users/*/
+
+# Keep the example user template
+!users/_example/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+dist/
+build/
+
+# uv
+uv.lock
+
+# OS
+.DS_Store
+Thumbs.db

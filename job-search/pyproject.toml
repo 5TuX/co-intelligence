@@ -1,0 +1,22 @@
+[project]
+name = "job-search"
+version = "0.1.0"
+description = "Automation scripts for the job-search skill"
+requires-python = ">=3.11"
+dependencies = [
+    "jinja2>=3.1",
+    "httpx>=0.27",
+    "pyyaml>=6.0",
+    "pydantic>=2.0",
+]
+
+[project.scripts]
+js-render = "job_search.render:main"
+js-validate-links = "job_search.links:main"
+js-validate-sources = "job_search.sources:main"
+js-clean = "job_search.clean:main"
+js-schedule = "job_search.schedule:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
