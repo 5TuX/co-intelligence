@@ -130,6 +130,8 @@ Read `search-agents.md` for agent specifications, output format, and field guide
 
 Read `update-phase.md` for the full protocol. Covers: ethical filtering, location/skills scoring, offers.json generation, link validation, HTML rendering, LLM verification, stale offer handling, people tracking, weekly schedule updates, Direction.md updates, and CV suggestions.
 
+**Gate rule: No offer enters offers.json without a verified link pointing to the actual job listing.** If a URL cannot be confirmed to show the specific position, drop the offer entirely. A working URL that doesn't show the offer is the same as a dead link.
+
 ### Step 5: Summary phase
 
 For EVERY target user, ALWAYS generate `users/<handle>/summary.html`.
@@ -168,6 +170,8 @@ fi
 ### Steps 6.5-7: Post-search learning loop
 
 Read `learning-loop.md` § "Post-Search" and § "Post-Report" for the full protocol. Covers: search-log.yaml updates, metrics.yaml updates, conversational feedback questions, preference recording, and learning-loop commits.
+
+**MANDATORY: After presenting the final report, you MUST ask the user 3-5 targeted questions to refine their profile for next time.** Do not skip this step. See learning-loop.md § "Post-Report" for question selection strategy. Wait for answers before committing learning-loop files.
 
 ### Step 8: Final report
 

@@ -10,3 +10,9 @@
 - Before: 31,755 chars, 551 lines (CRITICAL — over 15K limit)
 - After: 12,459 chars, 231 lines (OK — under 15K)
 - User feedback: learning loop is active but young (few runs), clean mode works, no observed truncation issues yet but skill was likely being silently truncated
+
+## 2026-03-16 (apply mode)
+- Changes: [USER] made post-search questions MANDATORY with bold callout in SKILL.md, [USER] added stricter link verification rules in update-phase.md (reject soft-dead links, volunteer/community calls), [REFINE] added gate rule in SKILL.md — no offer without verified link
+- Before: 12,459 chars, 231 lines
+- After: 13,003 chars, 235 lines
+- User feedback: The Document Foundation offer had a dead link that wasn't caught; post-search questions were being skipped

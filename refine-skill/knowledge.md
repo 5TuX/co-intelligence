@@ -16,6 +16,8 @@ Things that break skills or degrade quality. Check every skill against these.
 5. **context: fork may not persist writes** — Files written in a forked context may vanish after the skill returns.
 6. **"Never use X" without alternative** — Agent gets stuck. Always pair a prohibition with a concrete alternative.
 
+7. **"Soft dead" links pass verification** — A URL that returns 200 but shows unrelated content (homepage, wiki, generic page) instead of the expected resource. Automated link checkers miss these. Require LLM verification that the page contains the expected content.
+
 ### Structural (degrades quality)
 
 7. **Overloaded single SKILL.md** — Everything in one file = everything loaded every time. Extract reference material to separate files.

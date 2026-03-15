@@ -45,6 +45,8 @@ For new offers not yet validated, verify with WebFetch. Do NOT add links that:
 - Redirect to a different job listing
 - **Have no dates from the current year or the previous 3 months** — if a page only shows dates from a year ago or older, it is stale and must be excluded. Academic/research pages are especially prone to this.
 - **Are from a news/announcement source older than 6 months** — if the source URL is a press release, news article, or one-time announcement (not an active job board) and its publication date is >6 months old, treat any offers from it as unverified. Prefer finding the same role on the employer's actual careers page instead.
+- **Land on a page that doesn't contain the specific job listing** — if the URL loads but shows a company homepage, a generic careers page, a blog post, a wiki, or any page without a concrete job description with responsibilities/requirements, it is a dead link. The page must show the actual offer.
+- **Show a community/volunteer call** instead of a job listing — verify the page describes a paid position with a job description, not a volunteer contribution request or a general "get involved" page
 
 ### 4d. Date verification
 
