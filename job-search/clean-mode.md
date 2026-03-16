@@ -37,6 +37,7 @@ For each unverified offer, use WebFetch (or Playwright for JS-rendered pages) an
 - The page is for **this specific role** (not a generic careers/tenders/jobs listing page)
 - The page describes a **paid position** (not a volunteer call, community contribution, or "get involved" page)
 - The listing is **currently active** — check for banners, notices, or elements saying "this position is no longer available", "position filled", "expired", "closed", "no longer accepting applications". WTTJ and similar platforms keep the full job page visible but add a dismissal banner — always check for this.
+- The listing is **from the current year** — if the page only mentions deadlines, dates, or timeframes from a previous year (e.g., "deadline: 2024", "apply by December 2024", "published in 2024") and no current-year dates, it is stale. News/announcement pages are especially prone to this. Check the page's publication date, deadline mentions, and any year references.
 
 **Remove** if:
 - The URL shows a blog post, wiki, homepage, or generic listing page
