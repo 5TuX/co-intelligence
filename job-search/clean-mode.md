@@ -28,6 +28,26 @@ After review, if any additional offers were removed, update `offers.json` and re
 uv run js-render users/<handle>/offers.json --template offers --user-dir users/<handle>/
 ```
 
+## C2.5. Soft dead link scan (LLM content verification)
+
+After resolving flagged offers, scan ALL remaining offers for soft-dead links. These are URLs that return 200 OK but don't show the actual job listing. Skip offers whose URL was already verified in C2 (Playwright already confirmed the listing).
+
+For each unverified offer, use WebFetch (or Playwright for JS-rendered pages) and verify:
+- The page contains a **specific job description** with responsibilities, requirements, or qualifications
+- The page is for **this specific role** (not a generic careers/tenders/jobs listing page)
+- The page describes a **paid position** (not a volunteer call, community contribution, or "get involved" page)
+
+**Remove** if:
+- The URL shows a blog post, wiki, homepage, or generic listing page
+- The URL shows a tenders/procurement page without a specific role description
+- The page has no job-specific content (no responsibilities, no requirements, no application instructions)
+
+**Keep** if the page clearly shows the specific job posting with role details.
+
+Mark removed offers with reason: "soft dead link — <what the page actually shows>"
+
+After removing soft-dead offers, update `offers.json` and re-render (same as C2).
+
 ## C3. Archive removed offers
 
 For all removed offers (both auto-removed by `js-clean` and LLM-confirmed), append to the "Removed Offers" section of `users/<handle>/Job-Search-Reference.md`:

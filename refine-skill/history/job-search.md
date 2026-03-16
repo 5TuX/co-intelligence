@@ -16,3 +16,9 @@
 - Before: 12,459 chars, 231 lines
 - After: 13,003 chars, 235 lines
 - User feedback: The Document Foundation offer had a dead link that wasn't caught; post-search questions were being skipped
+
+## 2026-03-16 (apply mode — soft dead links)
+- Changes: [USER] added C2.5 step to clean-mode.md — LLM content verification for soft-dead links (URLs that load but don't show actual job listing), skips already-verified URLs from C2
+- Before: clean-mode.md 47 lines
+- After: clean-mode.md 67 lines
+- User feedback: Document Foundation /tenders/ page passed both httpx and Playwright checks but showed no actual job listing
