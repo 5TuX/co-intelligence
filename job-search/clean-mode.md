@@ -36,11 +36,13 @@ For each unverified offer, use WebFetch (or Playwright for JS-rendered pages) an
 - The page contains a **specific job description** with responsibilities, requirements, or qualifications
 - The page is for **this specific role** (not a generic careers/tenders/jobs listing page)
 - The page describes a **paid position** (not a volunteer call, community contribution, or "get involved" page)
+- The listing is **currently active** — check for banners, notices, or elements saying "this position is no longer available", "position filled", "expired", "closed", "no longer accepting applications". WTTJ and similar platforms keep the full job page visible but add a dismissal banner — always check for this.
 
 **Remove** if:
 - The URL shows a blog post, wiki, homepage, or generic listing page
 - The URL shows a tenders/procurement page without a specific role description
 - The page has no job-specific content (no responsibilities, no requirements, no application instructions)
+- The page shows the listing but includes an "unavailable" / "expired" / "position filled" banner or notice
 
 **Keep** if the page clearly shows the specific job posting with role details.
 
