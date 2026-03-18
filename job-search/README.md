@@ -100,7 +100,7 @@ Each run takes the full learning from all previous runs into account. The more y
 ├── job_search/                 # Python automation package
 │   ├── models.py               #   Pydantic schemas (Offer, Source, CleanReport, etc.)
 │   ├── clean.py                #   CLI: js-clean (validate links + remove dead offers)
-│   ├── schedule.py             #   CLI: js-schedule (profile.yaml → schedule.html)
+│   ├── schedule.py             #   CLI: js-schedule (profile.yaml → learning path)
 │   ├── render.py               #   CLI: js-render (JSON → HTML)
 │   ├── links.py                #   CLI: js-validate-links (async link checker)
 │   ├── sources.py              #   CLI: js-validate-sources (YAML validator)
@@ -153,7 +153,7 @@ All personal data lives in `users/your-handle/` which is **gitignored by default
 ## CLI Tools
 
 ```bash
-# Generate weekly learning schedule HTML (reads from profile.yaml, no duplication)
+# Generate learning path HTML (reads from profile.yaml, no duplication)
 uv run js-schedule users/your-handle/
 
 # Clean dead/stale offers (auto-removes dead, flags CAPTCHA/redirect for review)
@@ -184,9 +184,9 @@ In `profile.yaml`, configure:
 - `ethical_filter.prioritize` — domains that get a scoring boost
 - `ethical_filter.also_look_for` — non-obvious roles where your skills apply
 
-### Weekly Learning Schedule
+### Learning Path
 
-Define a recurring weekly learning plan in `profile.yaml` under `weekly_schedule`. Each day maps to a skill, hours, difficulty estimate, rationale, topics, and curated resources with clickable URLs. The skill reviews the schedule each run and suggests adjustments based on what current offers demand — swapping skills, updating dead resource links, and tracking progress as skills move from `learning` to `strong`.
+Define skills to develop in `profile.yaml` under `learning_path`. Each item has a priority (1 = highest), difficulty estimate, rationale, topics, and curated resources with clickable URLs. The skill reviews the learning path each run and suggests adjustments based on what current offers demand — re-prioritizing skills, updating dead resource links, and tracking progress as skills move from `learning` to `strong`.
 
 ### Search Notes
 

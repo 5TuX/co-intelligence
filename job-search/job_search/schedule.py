@@ -1,9 +1,8 @@
-"""Render weekly learning schedule from profile.yaml to HTML.
+"""Build learning-path context from profile.yaml for dashboard rendering.
 
 CLI: uv run js-schedule <user-dir>
 
 Reads profile.yaml (single source of truth), renders schedule.html.
-No intermediate JSON — avoids data duplication with the YAML.
 """
 
 from __future__ import annotations
@@ -17,7 +16,6 @@ import yaml
 from jinja2 import Environment, FileSystemLoader
 
 TEMPLATES_DIR = Path(__file__).parent / "templates"
-DAY_ORDER = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"]
 
 
 def _parse_resource(raw: str) -> dict:
@@ -31,25 +29,27 @@ def _parse_resource(raw: str) -> dict:
 
 
 def build_schedule_context(profile_path: Path) -> dict:
-    """Build template context from profile.yaml weekly_schedule."""
+    """Build template context from profile.yaml learning_path."""
     profile = yaml.safe_load(profile_path.read_text(encoding="utf-8"))
-    raw = profile.get("weekly_schedule", {})
     user_name = profile.get("name", "")
 
-    schedule = []
-    for day_key in DAY_ORDER:
-        if day_key not in raw:
-            continue
-        entry = raw[day_key]
-        schedule.append({
-            "day": day_key.capitalize(),
+    raw = profile.get("learning_path", [])
+    if not raw:
+        return {"user_name": user_name, "schedule": []}
+
+    items = []
+    for entry in raw:
+        items.append({
             "skill": entry.get("skill", ""),
-            "hours": entry.get("hours", 0),
+            "priority": entry.get("priority", 3),
             "difficulty": entry.get("difficulty", ""),
             "why": entry.get("why", ""),
             "topics": entry.get("topics", []),
             "resources": [_parse_resource(r) for r in entry.get("resources", [])],
         })
+
+    # Sort by priority (1 = highest)
+    items.sort(key=lambda x: x["priority"])
 
     method_raw = profile.get("learning_method", {})
     method = None
@@ -60,13 +60,13 @@ def build_schedule_context(profile_path: Path) -> dict:
             "principles": method_raw.get("principles", []),
         }
 
-    return {"user_name": user_name, "schedule": schedule, "method": method}
+    return {"user_name": user_name, "schedule": items, "method": method}
 
 
 def main() -> None:
     parser = argparse.ArgumentParser(
         prog="js-schedule",
-        description="Render weekly learning schedule from profile.yaml to HTML",
+        description="Render learning path from profile.yaml to HTML",
     )
     parser.add_argument("user_dir", help="User directory (e.g. users/dimit/)")
     args = parser.parse_args()
@@ -79,7 +79,7 @@ def main() -> None:
 
     ctx = build_schedule_context(profile_path)
     if not ctx["schedule"]:
-        print("No weekly_schedule found in profile.yaml, nothing to render.")
+        print("No learning_path found in profile.yaml, nothing to render.")
         return
 
     env = Environment(loader=FileSystemLoader(str(TEMPLATES_DIR)), autoescape=False)

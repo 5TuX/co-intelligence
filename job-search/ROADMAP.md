@@ -64,8 +64,8 @@ The best job search is a conversation, not a form. This skill turns Claude Code 
 - [x] Salaries normalized to gross €/month (all currencies converted)
 
 ### Learning & Career Development
-- [x] Weekly learning schedule in profile.yaml — per-day skill, hours (adjusted by difficulty), curated resources with clickable URLs
-- [x] Schedule auto-review each run — checks skill relevance vs. current offers, suggests adjustments, tracks progress
+- [x] Learning path in profile.yaml — prioritized skills with difficulty, curated resources with clickable URLs
+- [x] Learning path auto-review each run — checks skill relevance vs. current offers, suggests re-prioritization, tracks progress
 
 ---
 

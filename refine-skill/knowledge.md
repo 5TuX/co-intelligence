@@ -69,8 +69,8 @@ Curated resources on skill design and prompt optimization. Refined over successi
 Observations about specific skills. Updated after refinements.
 
 ### job-search
-- 231 lines, ~12.5K chars — OK (was 31K CRITICAL, fixed 2026-03-16)
-- Extracted to: clean-mode.md, learning-loop.md, search-agents.md, update-phase.md
+- 178 lines, ~9.6K chars — OK (was 31K CRITICAL → 12.5K → 9.6K)
+- Extracted to: clean-mode.md, learning-loop.md, search-agents.md, update-phase.md, final-report.md
 - Has Python package for deterministic ops (good pattern)
 - Uses `context: fork` — writes in fork may not persist (pitfall #5)
 - Complex multi-user system with learning loops (young, few runs)
@@ -118,3 +118,10 @@ Chronological record of all refinement sessions.
 - **agent**: simplified cross-platform path, added write verification, renumbered steps
 - **myplay**, **sync-skills**, **refine-skill**: no changes needed
 - Pattern observed: `Summary.md` was referenced in 3 skills but never existed — likely a renamed/removed file
+
+### 2026-03-18 — Full audit (8 skills, context7-mcp deleted)
+- **context7-mcp**: deleted — redundant with MCP server tool descriptions
+- **job-search**: trimmed SKILL.md (236→178 lines, 13.5K→9.6K chars). Removed shared resources tree, extracted final report to `final-report.md`, consolidated bottom pointer sections into reference table. Replaced deprecated "Top 10" report format with "Run delta" (new/removed/totals).
+- **agent**: removed Unix-only fallback path from chat file description
+- **myplay**, **note**, **report**, **setup**, **sync-skills**, **refine-skill**: no changes needed
+- Pattern observed: fixed-count report formats ("Top 10") become awkward when catalogs are small (<15 offers). Use delta-based reporting instead.

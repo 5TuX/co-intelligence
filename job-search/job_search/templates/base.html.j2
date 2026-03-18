@@ -98,6 +98,28 @@ a:hover { text-decoration: underline; }
 }
 .admin-notes h3 { color: #854d0e; margin-top: 0; }
 .admin-notes ul { margin: 0; padding-left: 1.5em; }
+.tabs {
+  display: flex;
+  gap: 4px;
+  margin: 1.5em 0 0;
+  border-bottom: 2px solid #e2e8f0;
+}
+.tab {
+  padding: 10px 20px;
+  border: none;
+  background: none;
+  font-size: 0.95em;
+  font-weight: 600;
+  color: #64748b;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -2px;
+  transition: color 0.15s, border-color 0.15s;
+}
+.tab:hover { color: #1e40af; }
+.tab.active { color: #1e40af; border-bottom-color: #1e40af; }
+.tab-panel { display: none; }
+.tab-panel.active { display: block; }
 </style>
 </head>
 <body>
@@ -150,6 +172,17 @@ document.querySelectorAll('th.sortable').forEach(th => {
     th.classList.add(asc ? 'asc' : 'desc');
 
     rows.forEach(r => tbody.appendChild(r));
+  });
+});
+
+/* Tab switching */
+document.querySelectorAll('.tab').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+    btn.classList.add('active');
+    const panel = document.getElementById(btn.dataset.target);
+    if (panel) panel.classList.add('active');
   });
 });
 </script>

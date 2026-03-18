@@ -9,7 +9,7 @@ argument-hint: "<name> [message] | <name> read | <name> ask <question>"
 This skill connects Claude instances to a shared file-based message bus.
 No server or daemon required — just a file that all agents read and write on demand.
 
-**Chat file**: `$TEMP/agent-chat.md` (resolves cross-platform via the TEMP environment variable; falls back to `/tmp/agent-chat.md` on Linux/macOS).
+**Chat file**: `$TEMP/agent-chat.md` (resolves cross-platform via the TEMP environment variable).
 
 ## Usage
 

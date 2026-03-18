@@ -36,7 +36,7 @@ Skills are automatically available as slash commands in Claude Code.
 ├── agent/                  # Multi-agent chat coordination
 │   └── SKILL.md
 ├── job-search/             # AI job search engine
-│   ├── SKILL.md            #   Orchestration (~230 lines)
+│   ├── SKILL.md            #   Orchestration (~178 lines)
 │   ├── README.md           #   Detailed documentation
 │   ├── ROADMAP.md          #   Development roadmap
 │   ├── pyproject.toml      #   Python dependencies
@@ -54,6 +54,7 @@ Skills are automatically available as slash commands in Claude Code.
 │   ├── learning-loop.md    #   Learning loop protocol (extracted from SKILL.md)
 │   ├── search-agents.md    #   Search agent specifications (extracted from SKILL.md)
 │   ├── update-phase.md     #   Distribution & update phase (extracted from SKILL.md)
+│   ├── final-report.md     #   Final report format (extracted from SKILL.md)
 │   ├── new-user-flow.md    #   New user creation flow
 │   ├── update-user-flow.md #   User profile update flow
 │   └── users/              #   Per-user data (gitignored)

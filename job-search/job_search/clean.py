@@ -16,7 +16,7 @@ from urllib.parse import urlparse
 
 from .links import validate_links
 from .models import CleanReport, CleanedOffer, RenderContext
-from .render import render
+from .render import render, render_user_dashboard
 
 AUTO_REMOVE = {"dead", "expired", "stale_announcement"}
 FLAG_STATUSES = {"redirect", "captcha", "error"}
@@ -124,10 +124,8 @@ async def clean_offers(
             encoding="utf-8",
         )
 
-        # Re-render Offers.html
-        html = render(ctx, "offers")
-        (user_dir / "Offers.html").write_text(html, encoding="utf-8")
-        print(f"Wrote {user_dir / 'Offers.html'}")
+        # Re-render dashboard
+        render_user_dashboard(user_dir)
 
     # Summary
     mode = "[DRY RUN] " if dry_run else ""

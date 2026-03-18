@@ -1,14 +1,14 @@
 {% extends "base.html.j2" %}
 
-{% block title %}Weekly Learning Schedule – {{ ctx.user_name }}{% endblock %}
+{% block title %}Learning Path – {{ ctx.user_name }}{% endblock %}
 
 {% block body %}
-<h1>Weekly Learning Schedule</h1>
-<p class="date-updated">11h/week — priorities derived from active job offers</p>
+<h1>Learning Path</h1>
+<p class="section-note">Skills to develop — pick what fits your energy and schedule. Sorted by priority.</p>
 
 {% if ctx.method %}
 <div class="tips">
-<h3>Session Structure (evidence-based)</h3>
+<h3>Session Structure</h3>
 <p><strong>{{ ctx.method.daily_pattern }}</strong></p>
 <ul>
 {% for p in ctx.method.principles %}
@@ -19,28 +19,27 @@
 {% endif %}
 
 <table>
-<tr><th class="sortable">Day</th><th class="sortable">Skill</th><th class="sortable">Hours</th><th>Difficulty</th><th>Why</th></tr>
-{% for day in ctx.schedule %}
+<tr><th class="sortable">Priority</th><th class="sortable">Skill</th><th>Difficulty</th><th>Why</th></tr>
+{% for item in ctx.schedule %}
 <tr>
-  <td><strong>{{ day.day }}</strong></td>
-  <td>{{ day.skill }}</td>
-  <td>{{ day.hours }}h</td>
-  <td>{{ day.difficulty }}</td>
-  <td>{{ day.why }}</td>
+  <td><span class="match-score">{{ item.priority }}</span></td>
+  <td>{{ item.skill }}</td>
+  <td>{{ item.difficulty }}</td>
+  <td>{{ item.why }}</td>
 </tr>
 {% endfor %}
 </table>
 
-{% for day in ctx.schedule %}
-<h2>{{ day.day }} — {{ day.skill }} ({{ day.hours }}h)</h2>
+{% for item in ctx.schedule %}
+<h2>{{ item.skill }}</h2>
 
-{% if day.topics %}
-<p><strong>Topics:</strong> {{ day.topics | join(", ") }}</p>
+{% if item.topics %}
+<p><strong>Topics:</strong> {{ item.topics | join(", ") }}</p>
 {% endif %}
 
-{% if day.resources %}
+{% if item.resources %}
 <ul>
-{% for r in day.resources %}
+{% for r in item.resources %}
   <li>{{ r.label }}{% if r.url %} — <a href="{{ r.url }}" target="_blank">{{ r.url }}</a>{% endif %}</li>
 {% endfor %}
 </ul>

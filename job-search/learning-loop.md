@@ -64,7 +64,7 @@ Append this run's metrics to `users/<handle>/metrics.yaml`:
 
 ## Post-Report: Conversational Feedback (Step 7)
 
-**This is the key step for incremental improvement.** After presenting results in the final report, ask the user 3-5 targeted questions to learn their preferences.
+**This is the key step for incremental improvement.** After presenting results in the final report, ask the user 3-5 targeted questions to learn their preferences. **Only do this for single-user runs** — when running for multiple users, skip the conversational feedback step.
 
 ### Question selection strategy
 
