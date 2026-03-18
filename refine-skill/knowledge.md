@@ -69,11 +69,12 @@ Curated resources on skill design and prompt optimization. Refined over successi
 Observations about specific skills. Updated after refinements.
 
 ### job-search
-- 178 lines, ~9.6K chars — OK (was 31K CRITICAL → 12.5K → 9.6K)
+- ~180 lines, ~10K chars — OK (was 31K CRITICAL → 12.5K → 9.6K)
 - Extracted to: clean-mode.md, learning-loop.md, search-agents.md, update-phase.md, final-report.md
 - Has Python package for deterministic ops (good pattern)
 - Uses `context: fork` — writes in fork may not persist (pitfall #5)
 - Complex multi-user system with learning loops (young, few runs)
+- **SCOPE: search and discovery only.** User explicitly does not want application help (resume tailoring, ATS optimization, cover letters). Do NOT propose application-related features when refining this skill.
 
 ### report
 - 166 lines, ~6.5K chars — healthy size

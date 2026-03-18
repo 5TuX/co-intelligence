@@ -1,13 +1,17 @@
 ---
 name: report
-description: Write quality technical reports from codebases — pandoc ODT/PDF output, BibTeX citations, strict style matching
+description: Write quality technical reports from codebases — Quarto ODT/PDF output, BibTeX citations, strict style matching
 argument-hint: "[kickstart|outline|write <section>|extract-metrics|status|test]"
 ---
 
 # Technical Report Assistant
 
-End-to-end workflow for technical/scientific reports from codebases: pandoc-based ODT output,
-Zotero-compatible citations, and strict writing style matching.
+End-to-end workflow for technical/scientific reports from codebases: Quarto-based ODT/PDF output,
+Zotero-compatible citations, native cross-references, and strict writing style matching.
+
+**Quarto** is built on top of Pandoc (same ecosystem, by Posit). It adds native cross-references,
+hoverable citations, callout blocks, and multi-format output from one source. Your `.bib` files
+and `reference.odt` work unchanged — Quarto passes them through to Pandoc under the hood.
 
 ## Usage
 
@@ -43,26 +47,38 @@ actions. Check both before writing or exploring.
 
 Scaffold a new report project:
 
-1. Verify pandoc is installed (`pandoc --version`). If missing, stop and tell the user to install it.
+1. Verify Quarto is installed (`quarto --version`). If missing, stop and tell the user: install from https://quarto.org/docs/download/
 2. Init git, create directory structure:
    ```
    <project>/
-   ├── <report>.md         ← main source (YAML front-matter: title, bibliography, csl)
-   ├── build.sh            ← pandoc build (--citeproc, --reference-doc, --toc, --standalone)
-   ├── status.md           ← section tracking (can live at report root for visibility)
+   ├── <report>.qmd         ← main source (YAML front-matter)
+   ├── _quarto.yml          ← project config (format, bibliography, csl, reference-doc)
+   ├── status.md            ← section tracking
    ├── context/
    │   ├── style_sample.md, vocabulary.md, code_map.md, references.bib, nature.csl
    └── docs/
        ├── reference.odt, README.md, STYLING.md, CITATIONS.md
    ```
-3. Extract pandoc reference.odt (`pandoc --print-default-data-file reference.odt`)
+3. Extract default reference.odt (`pandoc --print-default-data-file reference.odt`) — Quarto uses Pandoc's reference doc for ODT/DOCX styling.
 4. Download CSL style (Nature by default)
-5. Create build.sh (accept `--zotero` flag, respect `PANDOC` env var)
-6. If existing report provided: convert to markdown, extract vocabulary
+5. Create `_quarto.yml`:
+   ```yaml
+   project:
+     type: default
+   format:
+     odt:
+       reference-doc: docs/reference.odt
+       toc: true
+   bibliography: context/references.bib
+   csl: context/nature.csl
+   ```
+6. If existing report provided: convert to `.qmd`, extract vocabulary
 7. Create status.md with sections, decisions, writing queue, placeholders
 8. Explore codebase → create code_map.md (section-to-file mapping with parameters)
 9. Create references.bib with tool citations inferred from codebase
 10. Tell user: fill style_sample.md, edit reference.odt for margins/fonts, run `/report outline`
+
+**Build command:** `quarto render <report>.qmd` (or `quarto render` for the whole project).
 
 ---
 
@@ -88,6 +104,13 @@ Scaffold a new report project:
 - `[@citekey]` after cited item, before punctuation
 - Prose over lists unless genuine parallel enumeration
 
+**Cross-references (Quarto native):**
+- Figures: `![Caption](path){#fig-label}` → reference with `@fig-label`
+- Tables: add `{#tbl-label}` after caption → reference with `@tbl-label`
+- Equations: `$$...$$ {#eq-label}` → reference with `@eq-label`
+- Sections: `## Heading {#sec-label}` → reference with `@sec-label`
+- All cross-references are automatically numbered and hyperlinked.
+
 **Anti-AI style rules (apply to every sentence):**
 
 > **RULE #0**: Never write em dashes (U+2014) or double hyphens. Use comma, parentheses, or colon instead.
@@ -106,7 +129,7 @@ Vary sentence length and openers.
 *Self-check:* Search for — and --. Scan banned words. Check consecutive sentence openers.
 Verify all numbers from code_map.md or marked [[placeholder]].
 
-**After writing:** Update status.md, rebuild ODT, ask user before committing.
+**After writing:** Update status.md, rebuild with `quarto render`, ask user before committing.
 
 ---
 
@@ -129,11 +152,12 @@ Suggest the single most valuable next action.
 
 Quality checks with PASS/FAIL output:
 
-- **Infrastructure**: context files present, style sample filled, build succeeds, git clean
+- **Infrastructure**: context files present, style sample filled, `quarto render` succeeds, git clean
 - **Hard rules**: em dashes, double-hyphens, smart quotes
 - **Banned vocabulary**: words, sentence openers, content patterns
 - **Style**: person consistency, sentence-case headings, bold overuse
-- **Citations**: syntax, unresolved citekeys, bare URLs
+- **Citations**: `[@citekey]` syntax, unresolved citekeys, bare URLs
+- **Cross-references**: unresolved `@fig-`, `@tbl-`, `@eq-`, `@sec-` references
 - **Vocabulary**: species names, version names, model names, feature names, hardware, metrics
 - **Placeholders**: count and list all `[[...]]`
 - **Progress**: section completion from status.md
@@ -151,12 +175,14 @@ Print summary: `Result: N PASS / M FAIL`. Do NOT auto-fix.
 
 ---
 
-## Pandoc tips
+## Quarto tips
 
-- Pin pandoc version in build.sh comments
-- YAML front-matter for title, author, bibliography, csl
-- .md is source of truth; .odt is artifact
-- For cross-references: consider Quarto migration (native @fig-label, @tbl-label)
+- Install: https://quarto.org/docs/download/ (standalone, includes Pandoc)
+- `.qmd` is source of truth; `.odt`/`.pdf` are artifacts
+- `_quarto.yml` centralizes config (formats, bibliography, CSL, reference-doc)
+- Multi-format: add `pdf:` or `html:` sections to `_quarto.yml` for simultaneous output
+- Callout blocks: `:::{.callout-note}` / `:::{.callout-warning}` for structured asides
+- Quarto uses Pandoc under the hood — all Pandoc filters and features still work
 
 ## Zotero tip
 

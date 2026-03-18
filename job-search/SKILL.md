@@ -10,9 +10,11 @@ argument-hint: "[user1,user2] | all | clean [handle] | new-user | update-user <h
 
 # Job Search & Career Refresh (Multi-User)
 
-Full career refresh — job search, CV refinement, skill gap analysis.
+Full career refresh — job **discovery**, CV refinement, skill gap analysis.
 Runs in a forked context to avoid polluting the main conversation.
 Supports multiple users with independent profiles, preferences, and career files.
+
+**Scope: search and discovery only.** This skill finds, validates, and organizes job offers. It does NOT help with applications, resume tailoring, cover letters, or ATS keyword optimization. The output is a curated, verified catalog of opportunities — what the user does with them is up to them.
 
 **Admin identity:** The admin/operator is always the user running the Claude Code session. Other users are "friends." Admin sees process notes in their summary; friends only get personalized tips.
 
