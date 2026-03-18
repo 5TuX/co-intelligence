@@ -11,6 +11,17 @@ uv run js-clean users/<handle>/ --timeout 15
 
 Read the generated `users/<handle>/clean-report.json`.
 
+## C1.5. Generic URL pattern check
+
+Before handling flagged offers, scan all offer URLs for generic careers page patterns. **Remove** any offer whose URL matches:
+- `jobs.lever.co/<company>` or `jobs.eu.lever.co/<company>` (no UUID after company)
+- `apply.workable.com/<company>` (no `/j/<id>` suffix)
+- `jobs.ashbyhq.com/<company>` (no UUID after company)
+- `boards.greenhouse.io/<company>` (no `/jobs/<id>` suffix)
+- URLs ending in `/careers`, `/jobs`, `/open-roles`, `/hiring`, `/open-positions` with no further path
+
+These are hub pages, not specific listings. Log with reason "generic careers page URL". Academic/lab pages are exempt if the page clearly describes specific positions.
+
 ## C2. Handle flagged offers (LLM review)
 
 For each offer in `flagged_offers` from the clean report:
@@ -25,7 +36,7 @@ For each offer in `flagged_offers` from the clean report:
 
 After review, if any additional offers were removed, update `offers.json` and re-render:
 ```bash
-uv run js-render users/<handle>/offers.json --template offers --user-dir users/<handle>/
+uv run js-render users/<handle>/
 ```
 
 ## C2.5. Soft dead link scan (LLM content verification)
@@ -64,6 +75,6 @@ Print a summary to the user: N offers checked, N removed, N flagged (N resolved 
 
 Commit the changes:
 ```bash
-git -C ~/.claude/skills/job-search/users/<handle> add offers.json Offers.html Job-Search-Reference.md clean-report.json
+git -C ~/.claude/skills/job-search/users/<handle> add offers.json Dashboard.html Job-Search-Reference.md clean-report.json
 git -C ~/.claude/skills/job-search/users/<handle> commit -m "career: clean — removed N dead/stale offers"
 ```

@@ -27,14 +27,28 @@ uv run js-validate-links users/<handle>/offers.json --output users/<handle>/link
 ```
 Read `link-results.json`. Remove offers with status `dead` or `expired`. Mark `captcha` offers as UNCERTAIN in notes. Log removed offers.
 
-### 4b. Render Offers.html (automated)
+### 4b. Render Dashboard.html (automated)
 
-After cleaning dead links from `offers.json`, render to HTML:
+After cleaning dead links from `offers.json`, render the unified dashboard:
 ```bash
-uv run js-render users/<handle>/offers.json --template offers --user-dir users/<handle>/
+uv run js-render users/<handle>/
 ```
 
-Offers.html is the **full catalog** of ALL tracked offers rendered as a single unified table with columns: `#`, `Role`, `Company`, `Location`, `Domain`, `Level / Salary`, `Mission`, `Tools`, `Match`. Deadlines appear as inline badges next to the role name. Match values use CSS classes: `excellent`, `very-good`, `good`.
+Dashboard.html is a **single tabbed HTML** combining: **Offers** (full catalog table with columns: `#`, `Role`, `Company`, `Location`, `Domain`, `Level / Salary`, `Mission`, `Tools`, `Match`), **Run Summary** (tips + admin notes), and **Learning Path** (if user has learning_path in profile.yaml). Deadlines appear as inline badges. The "Last updated" date is shown at the top.
+
+### 4b2. Generic URL pattern check (automated)
+
+Before LLM verification, scan all offer URLs for generic careers page patterns. **Remove** any offer whose URL matches these patterns (no job-specific identifier):
+- `jobs.lever.co/<company>` or `jobs.eu.lever.co/<company>` (no UUID after company name)
+- `apply.workable.com/<company>` (no `/j/<id>` suffix)
+- `jobs.ashbyhq.com/<company>` (no UUID after company name)
+- `boards.greenhouse.io/<company>` (no `/jobs/<id>` suffix)
+- URLs ending in `/careers`, `/jobs`, `/open-roles`, `/hiring`, `/open-positions` with no further path
+- URLs that are clearly a company homepage (`https://company.com/` or `https://company.com`)
+
+These are hub/index pages, not specific listings. Log removed offers with reason "generic careers page URL — no specific job listing linked".
+
+**Exception:** Academic/lab pages (e.g., university department openings pages) where per-position URLs don't exist are acceptable if the page clearly describes specific positions. These should have a note in the `notes` field explaining this.
 
 ### 4c. Additional link verification (LLM)
 
@@ -55,21 +69,21 @@ When in doubt, check copyright dates, last-updated timestamps, and whether any c
 
 ### 4e. Stale offer handling
 
-When removing stale offers from Offers.html, move them to the "Removed Offers" section in `users/<handle>/Job-Search-Reference.md` (under the appropriate subsection) with a brief reason. Also update skill gaps, tips, and adjacent roles sections if market data warrants it.
+When removing stale offers from the dashboard, move them to the "Removed Offers" section in `users/<handle>/Job-Search-Reference.md` (under the appropriate subsection) with a brief reason. Also update skill gaps, tips, and adjacent roles sections if market data warrants it.
 
 ### 4f. Update People to Follow / Contact
 
 During searches, collect interesting people: lab leads, hiring managers, researchers publishing at the intersection of AI and the user's preferred domains. Add them with affiliation, domain, why they're interesting, and how to reach them. Remove people who have moved on or are no longer relevant.
 
-### 4g. Update weekly learning schedule
+### 4g. Update learning path
 
-If the user has a `weekly_schedule` in their profile, review it against the current run's results:
-1. **Check skill relevance** — are the scheduled skills still the most demanded by active offers? Count tool/skill frequency across all offers and compare.
-2. **Suggest adjustments** — if a new skill emerges as high-demand (e.g., a wave of offers asking for Go or Rust), propose swapping or adding it.
-3. **Update resources** — if a scheduled resource link is dead or a better resource exists (newer course, official tutorial updated), replace it.
-4. **Track progress** — if the user mentions completing a resource or achieving proficiency in a skill, move it from `learning` to `strong` in the skills section and propose replacing the schedule slot with the next highest-priority gap.
+If the user has a `learning_path` in their profile, review it against the current run's results:
+1. **Check skill relevance** — are the listed skills still the most demanded by active offers? Count tool/skill frequency across all offers and compare.
+2. **Suggest adjustments** — if a new skill emerges as high-demand (e.g., a wave of offers asking for Go or Rust), propose adding it or re-prioritizing.
+3. **Update resources** — if a resource link is dead or a better resource exists (newer course, official tutorial updated), replace it.
+4. **Track progress** — if the user mentions completing a resource or achieving proficiency in a skill, move it from `learning` to `strong` in the skills section and propose removing or deprioritizing it in the learning path.
 
-Only modify the schedule with user approval. Present proposed changes as a diff in the final report.
+Only modify the learning path with user approval. Present proposed changes as a diff in the final report.
 
 ### 4h. Update Direction.md
 

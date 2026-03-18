@@ -15,6 +15,18 @@ Field guidelines:
 - **`mission`** — company mission in a few words: `"AI for cancer treatment"`, `"Open-source ML tools"`, `"Medical data interop"`. Captures the "why" of the company.
 - **`tools`** — key demanded tools/skills: `"Python, PyTorch, Docker"`, `"LangChain, RAG, Go"`. Focus on the most relevant technical requirements.
 
+**URL requirements — CRITICAL:**
+- **Every `url` must point to a specific job listing**, not a generic careers page, company homepage, or job board search. The URL, when visited, must show a concrete job description with responsibilities/requirements.
+- **Reject generic ATS hub URLs** — these are URLs that point to a company's job listing index, not a specific role:
+  - Lever: `jobs.lever.co/<company>` without a job UUID (e.g., `jobs.lever.co/veepee` is INVALID; `jobs.lever.co/mistral/<uuid>` is valid)
+  - Workable: `apply.workable.com/<company>` without `/j/<id>` (e.g., `apply.workable.com/huggingface` is INVALID)
+  - Ashby: `jobs.ashbyhq.com/<company>` without a job UUID
+  - Greenhouse: `boards.greenhouse.io/<company>` without `/jobs/<id>`
+  - WTTJ: `welcometothejungle.com/.../companies/<co>` without `/jobs/<slug>`
+  - Generic `/careers`, `/jobs`, `/open-roles`, `/hiring` pages
+- **If you can only find the company's careers hub** but not a direct link to the specific role, **do not add the offer**. Note the company name and available roles in the `admin_notes` instead, so the next run can attempt to find direct links.
+- **Academic/lab pages** (e.g., `camma.unistra.fr/opening_scientists/`) are acceptable ONLY when the lab doesn't provide per-position URLs AND the page clearly describes the specific position(s). Note this in the offer's `notes` field.
+
 **Graceful degradation:** If an agent fails or times out, log the failure and continue with results from other agents. Note the gap in the final report. Do not retry failed agents.
 
 ## General agents (use sources-general.yaml, run once for all users)
