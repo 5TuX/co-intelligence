@@ -71,7 +71,7 @@ A Claude Code skill that turns your terminal into a conversational career partne
   Validate every link, remove dead/stale offers
         |
         v
-  Generate Offers.html (persistent catalog) + summary.html (run digest)
+  Generate Dashboard.html (tabbed: offers catalog + run summary + learning path)
         |
         v
   Ask 3-5 targeted questions to learn your preferences better
@@ -95,7 +95,6 @@ Each run takes the full learning from all previous runs into account. The more y
 ├── LICENSE                     # MIT
 ├── pyproject.toml              # Python dependencies
 ├── sources-general.yaml        # Shared job boards (AI/ML focused)
-├── career-reference.md         # General career reference
 ├── feedback_cv_honesty.md      # Shared feedback rules
 ├── job_search/                 # Python automation package
 │   ├── models.py               #   Pydantic schemas (Offer, Source, CleanReport, etc.)
@@ -120,8 +119,7 @@ Each run takes the full learning from all previous runs into account. The more y
     └── your-handle/            # Your data (gitignored, private)
         ├── profile.yaml        # Your preferences, skills, ethical filters
         ├── sources.yaml        # Your custom job sources
-        ├── Offers.html         # Active offers catalog (HTML)
-        ├── summary.html        # Latest run summary (HTML)
+        ├── Dashboard.html      # Unified tabbed dashboard (offers + summary + learning path)
         ├── Direction.md        # Career direction and goals
         ├── CV.md               # Living CV
         ├── Human-Expertise.md  # Your unique strengths
@@ -162,11 +160,11 @@ uv run js-clean users/your-handle/ [--timeout 15] [--dry-run]
 # Validate source YAML files
 uv run js-validate-sources sources-general.yaml users/your-handle/sources.yaml
 
-# Check links in an offers HTML file
-uv run js-validate-links --html users/your-handle/Offers.html --output results.json
+# Check links in an offers JSON file
+uv run js-validate-links users/your-handle/offers.json --output results.json
 
-# Render offers JSON to HTML
-uv run js-render users/your-handle/offers.json --template offers --user-dir users/your-handle/
+# Render unified dashboard (reads offers.json, summary-data.json, profile.yaml)
+uv run js-render users/your-handle/
 ```
 
 ## Customization

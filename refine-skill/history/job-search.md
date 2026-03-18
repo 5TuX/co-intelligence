@@ -22,3 +22,13 @@
 - Before: clean-mode.md 47 lines
 - After: clean-mode.md 67 lines
 - User feedback: Document Foundation /tenders/ page passed both httpx and Playwright checks but showed no actual job listing
+
+## 2026-03-18
+- Changes:
+  - Deleted orphaned `career-reference.md` (unreferenced, content superseded by other reference files)
+  - Fixed nested subagent pattern in `deep-search-tactics.md` — removed "Agent Self-Refinement" section that instructed agents to spawn sub-agents (impossible: subagents can't spawn sub-subagents). Moved refinement to `search-agents.md` as flat fan-out from orchestrator (gap-analysis + non-obvious-strategies agents, conditional on <15 results)
+  - Fixed `deep-search-tactics.md` output format — aligned with full schema from `search-agents.md` (was missing `level`, `salary`, `mission`, `tools` fields)
+  - Fixed `ROADMAP.md` — updated `Offers.html`/`summary.html` references to `Dashboard.html`, marked nested subagent issue as resolved
+  - Fixed `README.md` — removed career-reference.md from tree, updated all `Offers.html`/`summary.html` references to `Dashboard.html`, updated CLI tool examples
+- Research: Claude Code subagents confirmed flat fan-out only (no nesting). Orchestrator-level conditional refinement is the standard pattern.
+- User feedback: never noticed subagent nesting or file staleness issues

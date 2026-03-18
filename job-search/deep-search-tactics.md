@@ -4,26 +4,13 @@ Loaded by the per-user deep search agent. All queries must be **adapted to each 
 
 **Today's date** must be passed to all search agents for `after:` query construction.
 
-## Agent Self-Refinement
-
-Every search agent MUST spawn sub-agents to refine its strategy:
-1. Run initial searches with obvious queries
-2. Spawn **TWO refinement sub-agents**:
-
-   **Sub-agent A (gap analysis):** Analyzes what initial results miss (gaps in geography, domain, seniority). Generates 3-5 alternative query reformulations. Returns only net-new results.
-
-   **Sub-agent B (non-obvious strategies):** Uses tactics H1-H6 below. Constructs composite queries combining ALL operators. Looks for informal hiring posts, recently-funded startups, conference back-channels. Tests non-English queries for bilingual regions. Searches for companies the user would love but hasn't heard of.
-
-3. Merge all result sets before returning
-
-**Conditional refinement:** If initial results yield fewer than 5 offers, always spawn refinement sub-agents. If initial results are plentiful (15+), refinement is optional.
-
 ## Output Format
 
-All agents must return results as a list of objects:
+All agents must return results using the standard format from `search-agents.md`:
 ```json
-{"role": "...", "company": "...", "url": "...", "location": "...", "domain": "...", "source": "...", "notes": "..."}
+[{"role": "...", "company": "...", "url": "...", "location": "...", "domain": "...", "level": "...", "salary": "...", "mission": "...", "tools": "...", "source": "...", "notes": "..."}]
 ```
+See `search-agents.md` for field guidelines (`level`, `salary`, `mission`, `tools` formatting).
 
 ## Tactics
 

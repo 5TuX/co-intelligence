@@ -20,6 +20,10 @@ Things that break skills or degrade quality. Check every skill against these.
 
 8. **`argument-hint` out of sync with actual modes** — The `argument-hint` YAML field controls the hint text shown in the Claude Code UI next to the slash command. When new modes are added to a skill, update `argument-hint` too or users won't discover them.
 
+9. **Schema drift between reference files** — When multiple files define the same output format (e.g., JSON schema for agent results), they can silently diverge. Always have a single source of truth and point to it from secondary files rather than duplicating the schema.
+
+10. **Support files (README, ROADMAP) go stale** — When SKILL.md evolves, support files like README.md, ROADMAP.md, and architecture.md often aren't updated. Check these explicitly each refinement, not just SKILL.md.
+
 ### Structural (degrades quality)
 
 7. **Overloaded single SKILL.md** — Everything in one file = everything loaded every time. Extract reference material to separate files.
@@ -69,11 +73,14 @@ Curated resources on skill design and prompt optimization. Refined over successi
 Observations about specific skills. Updated after refinements.
 
 ### job-search
-- ~180 lines, ~10K chars — OK (was 31K CRITICAL → 12.5K → 9.6K)
+- ~175 lines, ~9.6K chars — OK (was 31K CRITICAL → 12.5K → 9.6K)
 - Extracted to: clean-mode.md, learning-loop.md, search-agents.md, update-phase.md, final-report.md
 - Has Python package for deterministic ops (good pattern)
 - Uses `context: fork` — writes in fork may not persist (pitfall #5)
 - Complex multi-user system with learning loops (young, few runs)
+- Nested subagent pattern was broken (pitfall #4) — restructured to flat fan-out in 2026-03-18
+- `career-reference.md` deleted as orphaned (2026-03-18) — content was superseded by other reference files
+- Support files (README.md, ROADMAP.md) tend to go stale when SKILL.md evolves — check each refinement
 - **SCOPE: search and discovery only.** User explicitly does not want application help (resume tailoring, ATS optimization, cover letters). Do NOT propose application-related features when refining this skill.
 
 ### report
@@ -126,3 +133,10 @@ Chronological record of all refinement sessions.
 - **agent**: removed Unix-only fallback path from chat file description
 - **myplay**, **note**, **report**, **setup**, **sync-skills**, **refine-skill**: no changes needed
 - Pattern observed: fixed-count report formats ("Top 10") become awkward when catalogs are small (<15 offers). Use delta-based reporting instead.
+
+### 2026-03-18 — Full audit (8 skills)
+- **job-search**: deleted orphaned `career-reference.md`, fixed nested subagent pattern in `deep-search-tactics.md` (moved to flat fan-out in `search-agents.md`), aligned output format schema, updated stale `Dashboard.html` references in README.md and ROADMAP.md
+- **setup**: updated stale `architecture.md` — added 3 missing skills to table, removed dead `career/` reference, updated directory tree
+- **agent**, **myplay**, **note**, **report**, **sync-skills**, **refine-skill**: no changes needed
+- Pattern observed: support files (README, ROADMAP, architecture.md) go stale when SKILL.md evolves — check these explicitly each refinement, not just SKILL.md itself
+- New pitfall candidate: reference files with their own output format schemas can drift from the canonical schema in the main spec file. Always have a single source of truth and point to it.

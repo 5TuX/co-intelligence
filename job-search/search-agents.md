@@ -78,11 +78,21 @@ Manage BOTH `sources-general.yaml` AND each user's `sources.yaml`. For each run:
 
 **Prioritize sources not checked in the last 30 days** (check `last_checked` field). Skip sources validated within the last 7 days to save time.
 
-## Post-search agent (runs AFTER search agents return)
+## Refinement agents (spawned by orchestrator AFTER initial search agents return)
+
+**Conditional:** Only spawn if initial search results yield fewer than 15 offers per user.
+
+**Agent: Gap analysis — <handle>**
+Analyzes what initial results miss (gaps in geography, domain, seniority). Generates 3-5 alternative query reformulations targeting the gaps. Uses the user's profile for context. Returns only net-new results in the standard output format.
+
+**Agent: Non-obvious strategies — <handle>**
+Uses tactics from `deep-search-tactics.md` sections G and H. Constructs composite queries combining ALL operators. Looks for informal hiring posts, recently-funded startups, conference back-channels. Tests non-English queries for bilingual regions. Searches for companies the user would love but hasn't heard of. Returns only net-new results in the standard output format.
+
+## Post-search agent (runs AFTER all search and refinement agents return)
 
 **Agent: Strategy suggestions**
 Based on all search results, generate strategy recommendations. Split into:
 - Per-user tips (personalized CV suggestions, skill gap advice, application tactics)
 - Admin-only notes (process improvements, source edits, tool/repo discoveries, SKILL.md changes)
 
-This agent must wait for all search agents to complete before running.
+This agent must wait for all search and refinement agents to complete before running.

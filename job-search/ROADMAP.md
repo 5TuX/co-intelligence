@@ -34,8 +34,7 @@ The best job search is a conversation, not a form. This skill turns Claude Code 
 - [x] Convergence — asks fewer questions as preferences solidify
 
 ### Output & Career Management
-- [x] Styled HTML offer catalogs (`Offers.html`) — persistent across runs
-- [x] Per-run summary digests (`summary.html`) — snapshot with commentary
+- [x] Unified tabbed dashboard (`Dashboard.html`) — offers catalog, run summary, and learning path in one file
 - [x] Automated link validation (async, concurrent)
 - [x] CV suggestions cross-referenced with Human-Expertise profile
 - [x] Career direction tracking (`Direction.md`)
@@ -147,7 +146,7 @@ Issues identified through research and analysis. Some are fixed, some need inves
 - [ ] **`context: fork` vs multi-turn conversation** — Step 7 (conversational feedback) requires back-and-forth with the user. If fork doesn't support this, the entire learning loop needs restructuring (e.g., output questions in final report, handle answers via `/job-search feedback` subcommand).
 - [ ] **CLAUDE.md commit conflict** — global "ask before committing" may conflict with Step 6 auto-commit. Need to decide: override for skill runs, or always ask.
 - [ ] **Agent count explosion** — with refinement sub-agents, a 2-user run could spawn 24+ agents. Consider making refinement conditional (only when initial results < 5 offers).
-- [ ] **Nested subagents may not work** — Claude Code subagents cannot spawn other subagents. The "Agent Self-Refinement" pattern in `deep-search-tactics.md` (where each search agent spawns 2 sub-agents) may silently fail. Need to test. If confirmed, restructure as flat fan-out from the orchestrator instead.
+- [x] **Nested subagents restructured** — moved deep search refinement from nested spawning (broken — subagents can't spawn sub-subagents) to flat fan-out: orchestrator spawns gap-analysis and non-obvious-strategies agents directly after initial search agents return.
 - [ ] **Model routing for cost savings** — search worker agents could use Sonnet (cheaper) while the orchestrator stays on Opus. Set via `CLAUDE_CODE_SUBAGENT_MODEL` env var or `model` frontmatter field.
 - [ ] **Worker return size** — search agents may return too much context, bloating the orchestrator. Cap worker summaries to ~2,000 tokens. Currently no explicit limit.
 - [ ] **`allowed-tools` for read-only agents** — source maintenance and market trends agents should be restricted to `Read, Grep, Glob, WebFetch, WebSearch` to prevent accidental writes.

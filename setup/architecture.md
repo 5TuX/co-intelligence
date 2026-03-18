@@ -11,15 +11,15 @@ $DRIVE/claude/                     CLAUDE.md      → symlink to Drive
   CLAUDE.md                        settings.json  → symlink to Drive
   settings.json                    skills/        → symlink/junction to Drive
   skills/                          local.md       ← plain file, NOT synced
-    note/SKILL.md                  keybindings.json ← plain file (optional)
-    career/SKILL.md
-    job-search/SKILL.md            projects/      ← Claude cache, never touch
-      users/dimit/                 ← career data (git-tracked, inside job-search skill)
-    setup/SKILL.md
-    agent/SKILL.md
+    agent/SKILL.md                 keybindings.json ← plain file (optional)
+    job-search/SKILL.md
+      users/dimit/                 ← career data (inside job-search skill)
+    myplay/SKILL.md                projects/      ← Claude cache, never touch
+    note/SKILL.md
+    refine-skill/SKILL.md
     report/SKILL.md
-
-                                   projects/      ← Claude cache, never touch
+    setup/SKILL.md
+    sync-skills/SKILL.md
 ```
 
 ### Drive Path by OS
@@ -46,7 +46,6 @@ $DRIVE/claude/                     CLAUDE.md      → symlink to Drive
 |---|---|
 | `local.md` | Machine-specific paths |
 | `keybindings.json` | Custom key bindings (optional) |
-| `career/` | Career data: CV, journal, offers, expertise, topics (git-tracked) |
 | `projects/` | Claude's local cache — do not touch |
 
 ### local.md Format
@@ -59,9 +58,11 @@ $DRIVE/claude/                     CLAUDE.md      → symlink to Drive
 
 | Skill | Command | What it does |
 |---|---|---|
-| `note/SKILL.md` | `/note` | Quick capture of gotchas, learnings, tips |
-| `career/SKILL.md` | `/career` | Expertise logging and strengths reinforcement |
-| `job-search/SKILL.md` | `/job-search` | Full career refresh, job search, CV analysis |
-| `setup/SKILL.md` | `/setup` | Verify and repair setup |
 | `agent/SKILL.md` | `/agent` | Multi-agent chat channel |
+| `job-search/SKILL.md` | `/job-search` | Full career refresh, job search, CV analysis |
+| `myplay/SKILL.md` | `/myplay` | Log human expertise moments |
+| `note/SKILL.md` | `/note` | Quick capture of gotchas, learnings, tips |
+| `refine-skill/SKILL.md` | `/refine-skill` | Analyze and improve skills |
 | `report/SKILL.md` | `/report` | Technical report generation |
+| `setup/SKILL.md` | `/setup` | Verify and repair setup |
+| `sync-skills/SKILL.md` | `/sync-skills` | Audit, update docs, commit skills repo |
