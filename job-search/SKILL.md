@@ -134,20 +134,14 @@ This reads `offers.json`, `summary-data.json`, and `profile.yaml` (for schedule)
 
 ### Step 6: Git commits
 
-For the admin user (the operator, e.g. dimit), commit career file changes:
+For each user, only commit if their user directory has a `.git/` subdirectory:
 ```bash
-git -C ~/.claude/skills/job-search/users/<admin-handle> add -A
-git -C ~/.claude/skills/job-search/users/<admin-handle> commit -m "career: job search refresh"
-```
-
-For other users (friends), only commit if their user directory has a `.git/` subdirectory:
-```bash
-# Check first:
 if [ -d ~/.claude/skills/job-search/users/<handle>/.git ]; then
   git -C ~/.claude/skills/job-search/users/<handle> add -A
   git -C ~/.claude/skills/job-search/users/<handle> commit -m "career: job search refresh"
 fi
 ```
+If no `.git/` exists, skip — files are synced via Google Drive.
 
 ### Steps 6.5-7: Post-search learning loop
 

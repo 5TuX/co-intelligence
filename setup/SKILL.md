@@ -35,8 +35,8 @@ cat ~/.claude/local.md
 # Career dir exists and has expected files
 ls ~/.claude/skills/job-search/users/dimit/*.md ~/.claude/skills/job-search/users/dimit/Topics/ || echo "ERROR: career dir missing or incomplete"
 
-# Career dir has git repo
-git -C ~/.claude/skills/job-search/users/dimit log --oneline -1 || echo "ERROR: no git repo in career dir"
+# Career dir has expected files
+ls ~/.claude/skills/job-search/users/dimit/Direction.md ~/.claude/skills/job-search/users/dimit/CV.md > /dev/null 2>&1 && echo "Career files: present" || echo "ERROR: career files missing"
 ```
 
 3. **Report results** clearly:
@@ -61,7 +61,7 @@ git -C ~/.claude/skills/job-search/users/dimit log --oneline -1 || echo "ERROR: 
 | `~/.claude/skills/` | Symlink/Junction → Drive skills dir, contains skill subdirs |
 | `~/.claude/local.md` | Plain file, machine-specific paths |
 | `~/.claude/skills/job-search/users/dimit/` | Directory with Direction.md, Journal.md, CV.md, Human-Expertise.md, Topics/, etc. |
-| `~/.claude/skills/job-search/users/dimit/.git` | Git repo initialized with at least one commit |
+| `~/.claude/skills/job-search/users/dimit/` | Files synced via Google Drive (no git repo required) |
 
 ## First-Time Setup on a New Machine
 
@@ -109,8 +109,7 @@ Create `~/.claude/local.md` with paths for this machine (see `architecture.md` f
 ### Step 7 — Set up career directory
 ```bash
 mkdir -p ~/.claude/skills/job-search/users/dimit/Topics
-# Copy career files from another machine's ~/.claude/skills/job-search/users/dimit/
-cd ~/.claude/skills/job-search/users/dimit && git init && git add -A && git commit -m "career: initial import"
+# Copy career files from another machine or let Google Drive sync them
 ```
 
 ## Known Issues & Gotchas

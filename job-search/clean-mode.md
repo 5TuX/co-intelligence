@@ -73,8 +73,10 @@ For all removed offers (both auto-removed by `js-clean` and LLM-confirmed), appe
 
 Print a summary to the user: N offers checked, N removed, N flagged (N resolved by LLM review).
 
-Commit the changes:
+If the user directory has a `.git/` subdirectory, commit the changes:
 ```bash
-git -C ~/.claude/skills/job-search/users/<handle> add offers.json Dashboard.html Job-Search-Reference.md clean-report.json
-git -C ~/.claude/skills/job-search/users/<handle> commit -m "career: clean — removed N dead/stale offers"
+if [ -d ~/.claude/skills/job-search/users/<handle>/.git ]; then
+  git -C ~/.claude/skills/job-search/users/<handle> add offers.json Dashboard.html Job-Search-Reference.md clean-report.json
+  git -C ~/.claude/skills/job-search/users/<handle> commit -m "career: clean — removed N dead/stale offers"
+fi
 ```

@@ -25,9 +25,4 @@ had a key insight, or brought something irreplaceable to the collaboration.
    - **YYYY-MM-DD** — <one-sentence description>
    ```
 5. If this reveals a *persistent strength* (not a one-off), update the **Strengths Summary** table at the top.
-6. Commit:
-   ```bash
-   git -C ~/.claude/skills/job-search/users/dimit add Human-Expertise.md
-   git -C ~/.claude/skills/job-search/users/dimit commit -m "myplay: <short label>"
-   ```
-7. Confirm in one line what was logged and under which category.
+6. Confirm in one line what was logged and under which category.

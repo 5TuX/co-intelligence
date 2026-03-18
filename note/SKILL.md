@@ -20,9 +20,4 @@ Append a learning note, gotcha, tip, or skill update to the career files.
    - Skill level update → `~/.claude/skills/job-search/users/dimit/Direction.md` (skills inventory section)
    - Both → both files
 3. Append the note with today's date and a brief context tag (e.g. project name or topic).
-4. Commit:
-   ```bash
-   git -C ~/.claude/skills/job-search/users/dimit add -A
-   git -C ~/.claude/skills/job-search/users/dimit commit -m "career: note — <short label>"
-   ```
-5. Confirm in one line what was added and where.
+4. Confirm in one line what was added and where.
