@@ -72,11 +72,14 @@ def render_dashboard(
     ctx: RenderContext,
     summary_data: dict | None = None,
     schedule_data: dict | None = None,
+    comments: dict | None = None,
 ) -> str:
     """Render unified dashboard combining offers, summary, and schedule."""
     env = _get_env()
     template = env.get_template("dashboard.html.j2")
-    return template.render(ctx=ctx, summary=summary_data, schedule=schedule_data)
+    return template.render(
+        ctx=ctx, summary=summary_data, schedule=schedule_data, comments=comments or {},
+    )
 
 
 def _load_json(path: Path) -> dict | None:
@@ -99,6 +102,7 @@ def render_user_dashboard(user_dir: Path) -> Path:
     ctx = RenderContext(**offers_data)
 
     summary_data = _load_json(user_dir / "summary-data.json")
+    comments = _load_json(user_dir / "comments.json") or {}
 
     profile_path = user_dir / "profile.yaml"
     schedule_data = None
@@ -107,7 +111,9 @@ def render_user_dashboard(user_dir: Path) -> Path:
         if sched.get("schedule"):
             schedule_data = sched
 
-    html = render_dashboard(ctx, summary_data=summary_data, schedule_data=schedule_data)
+    html = render_dashboard(
+        ctx, summary_data=summary_data, schedule_data=schedule_data, comments=comments,
+    )
 
     out_file = user_dir / DASHBOARD_OUTPUT
     out_file.write_text(html, encoding="utf-8")

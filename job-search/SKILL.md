@@ -44,6 +44,7 @@ users/<handle>/
 ├── profile.yaml            # Preferences, ethical filters, location, skills, learning path
 ├── sources.yaml            # User-specific job sources
 ├── Dashboard.html          # Unified HTML (offers + summary + schedule, tabbed)
+├── comments.json           # User comments on offers (URL → free-form text), edited via Dashboard
 ├── Job-Search-Reference.md # Removed offers history, skill gaps, tips
 ├── Direction.md            # Vision, goals, skills inventory, roadmap
 ├── CV.md                   # Living CV + portfolio readiness tracker
@@ -92,6 +93,7 @@ For EACH target user:
    - `users/<handle>/feedback.yaml` — raw Q&A history from past runs
    - `users/<handle>/search-log.yaml` — per-run query performance log
    - `users/<handle>/metrics.yaml` — run-over-run quality metrics
+8. Read `users/<handle>/comments.json` — user's free-form comments on offers (keyed by URL). Use these comments as context during search and filtering: they reflect the user's intent (e.g. "applied", "waiting", "not interested", "great fit"), and should influence scoring, prioritization, and which offers to keep or drop. When removing an offer that has a comment, preserve the comment in Job-Search-Reference.md alongside the removal note. When re-rendering the dashboard, pass comments to the template so they appear pre-filled.
 
 ### Step 1.5: Adaptive strategy review (learning loop)
 
@@ -130,7 +132,7 @@ This reads `offers.json`, `summary-data.json`, and `profile.yaml` (for schedule)
 
 **Summary contents:**
 - Urgent deadlines banner
-- Single table of ALL offers found this run with columns: `#`, `Role`, `Company`, `Location`, `Domain`, `Level / Salary`, `Mission`, `Tools`, `Match`. Deadlines appear as inline badges next to the role name. Hidden gems marked in Notes.
+- Single table of ALL offers found this run with columns: `#`, `Role`, `Company`, `Location`, `Domain`, `Level / Salary`, `Mission`, `Tools`, `Published`, `Match`, `Comment`. Deadlines appear as inline badges next to the role name. Hidden gems marked in Notes. The Comment column is user-editable and persisted via `comments.json`.
 - Per-user tips: personalized CV suggestions, skill gap advice, application tactics tailored to their profile. If the user has a `learning_path` in their profile, suggest adjustments based on what the current run's offers demand most
 - **Admin-only notes** (ONLY in the admin/operator's summary): process improvements, proposed source edits, tool/repo discoveries, SKILL.md change suggestions, what worked well vs. what could be better
 

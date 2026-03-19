@@ -34,7 +34,7 @@ After cleaning dead links from `offers.json`, render the unified dashboard:
 uv run js-render users/<handle>/
 ```
 
-Dashboard.html is a **single tabbed HTML** combining: **Offers** (full catalog table with columns: `#`, `Role`, `Company`, `Location`, `Domain`, `Level / Salary`, `Mission`, `Tools`, `Match`), **Run Summary** (tips + admin notes), and **Learning Path** (if user has learning_path in profile.yaml). Deadlines appear as inline badges. The "Last updated" date is shown at the top.
+Dashboard.html is a **single tabbed HTML** combining: **Offers** (full catalog table with columns: `#`, `Role`, `Company`, `Location`, `Domain`, `Level / Salary`, `Mission`, `Tools`, `Published`, `Match`, `Comment`), **Run Summary** (tips + admin notes), and **Learning Path** (if user has learning_path in profile.yaml). Deadlines appear as inline badges. The "Last updated" date is shown at the top. The Comment column is editable — users type free-form notes (e.g. "applied", "not interested") which are persisted in `comments.json`. The renderer reads `comments.json` and pre-fills the fields. **Never overwrite or discard `comments.json`** — it contains the user's manual annotations.
 
 ### 4b2. Generic URL pattern check (automated)
 

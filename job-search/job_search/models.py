@@ -19,6 +19,7 @@ class Offer(BaseModel):
     mission: str = ""  # company mission, e.g. "AI for cancer treatment"
     tools: str = ""  # demanded tools/skills, e.g. "Python, PyTorch, Docker"
     deadline: str | None = None
+    published_date: str | None = None  # when the offer was published (ISO date)
     hidden_gem: bool = False
 
 

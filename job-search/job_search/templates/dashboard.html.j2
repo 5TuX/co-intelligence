@@ -15,8 +15,12 @@
 {# ── Offers tab ── #}
 <section id="tab-offers" class="tab-panel active">
 <h2>All Offers</h2>
+<div class="save-comments-bar">
+  <button class="save-comments-btn">Save Comments</button>
+  <span class="save-status"></span>
+</div>
 <table>
-<tr><th class="sortable">#</th><th class="sortable">Role</th><th class="sortable">Company</th><th class="sortable">Location</th><th class="sortable">Domain</th><th class="sortable">Level / Salary</th><th class="sortable">Mission</th><th class="sortable">Tools</th><th class="sortable">Match</th></tr>
+<tr><th class="sortable">#</th><th class="sortable">Role</th><th class="sortable">Company</th><th class="sortable">Location</th><th class="sortable">Domain</th><th class="sortable">Level / Salary</th><th class="sortable">Mission</th><th class="sortable">Tools</th><th class="sortable">Published</th><th class="sortable">Match</th><th>Comment</th></tr>
 {% for o in ctx.offers %}
 <tr>
   <td>{{ loop.index }}</td>
@@ -27,7 +31,9 @@
   <td>{% if o.level and o.salary %}{{ o.level }} · {{ o.salary }}{% elif o.level %}{{ o.level }}{% elif o.salary %}{{ o.salary }}{% endif %}</td>
   <td>{{ o.mission }}</td>
   <td>{{ o.tools }}</td>
+  <td>{{ o.published_date or "" }}</td>
   <td><span class="match-score">{{ o.match }}</span></td>
+  <td><textarea class="offer-comment" data-url="{{ o.url }}" rows="2">{{ comments.get(o.url, "") }}</textarea></td>
 </tr>
 {% endfor %}
 </table>
