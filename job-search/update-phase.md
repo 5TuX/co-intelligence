@@ -18,6 +18,13 @@ Pool ALL results from general + all user-specific agents. For EACH target user, 
 7. **Cross-user results** — include results from other users' source searches IF they match this user's profile. Exclude results that only match another user's niche.
 8. **Flag concerns** in the "Notes" column (e.g. "warning: generative art — may displace artists"). This is a soft filter: still list a role if the technical match is EXCELLENT, but note the concern.
 
+9. **Apply user comments** — read `comments.json` and apply the full comment rules from SKILL.md Step 1.8 (categories A-D):
+   - **A. Direct actions:** delete/remove requests, applied/tracking protection, rejections, boosts, find-similar
+   - **B. Profile changes:** domain exclusions (`"I don't like [domain]"`) → update profile.yaml, then re-filter ALL offers against the new exclusion. Location/seniority preference changes → update profile.yaml accordingly
+   - **C. Skill changes:** queue for user confirmation — present proposed change, wait for approval before modifying skill files
+   - **D. Neutral:** preserve as context
+   - After processing, remove consumed action comments from `comments.json`
+
 After filtering and scoring, **write `users/<handle>/offers.json`** conforming to the `RenderContext` schema (see `job_search/models.py`).
 The JSON must include all offers, people, freelance platforms, and urgent deadlines.
 

@@ -2,6 +2,16 @@
 
 When clean mode is triggered explicitly via `/job-search clean`, run steps C1-C4 for each target user and then stop (do not continue to the search phase).
 
+## C0. Process user comments
+
+Before cleaning, read `users/<handle>/comments.json` and apply the full comment rules from SKILL.md Step 1.8:
+- **Delete requests** — `"delete this"`, `"remove"`, `"drop"` → remove offer immediately. Archive to Job-Search-Reference.md. Remove comment from `comments.json`.
+- **Rejection comments** — `"not interested"`, `"skip"`, `"pass"`, etc. → same as delete.
+- **Protected offers** — `"applied"`, `"sent CV"`, `"interview"`, `"in progress"` → must NOT be removed even if the link is dead. Mark notes with "link dead but user applied — keeping".
+- **Profile changes** — `"I don't like [domain]"`, `"avoid [industry]"` → update `profile.yaml` exclusions, then remove ALL matching offers. Log in final report.
+- **Skill changes** — comments implying skill modifications → queue for user confirmation (do not apply automatically).
+- Remove consumed action comments from `comments.json` after processing. Keep neutral/tracking comments.
+
 ## C1. Run the automated cleaner
 
 For EACH target user:

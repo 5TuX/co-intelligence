@@ -93,7 +93,31 @@ For EACH target user:
    - `users/<handle>/feedback.yaml` — raw Q&A history from past runs
    - `users/<handle>/search-log.yaml` — per-run query performance log
    - `users/<handle>/metrics.yaml` — run-over-run quality metrics
-8. Read `users/<handle>/comments.json` — user's free-form comments on offers (keyed by URL). Use these comments as context during search and filtering: they reflect the user's intent (e.g. "applied", "waiting", "not interested", "great fit"), and should influence scoring, prioritization, and which offers to keep or drop. When removing an offer that has a comment, preserve the comment in Job-Search-Reference.md alongside the removal note. When re-rendering the dashboard, pass comments to the template so they appear pre-filled.
+8. Read `users/<handle>/comments.json` — user's free-form comments on offers (keyed by URL). Comments are a lightweight command channel. Parse each comment with intent detection (case-insensitive, fuzzy — match the spirit, not exact keywords):
+
+   **A. Direct actions on the offer:**
+   - **Delete/remove:** `"delete this"`, `"remove"`, `"drop"` → Remove offer from catalog. Archive to Job-Search-Reference.md with the comment.
+   - **Applied/tracking:** `"applied"`, `"sent CV"`, `"interview"`, `"in progress"` → **NEVER remove**, even if link dies. Mark "applied — tracking" in notes.
+   - **Rejection:** `"not interested"`, `"skip"`, `"pass"`, `"rejected me"`, `"declined"` → Remove. Archive with comment.
+   - **Deprioritize:** `"waiting"`, `"pending"`, `"maybe"`, `"later"` → Keep but lower priority.
+   - **Boost:** `"great fit"`, `"top choice"`, `"priority"`, `"love this"` → Boost match score +1 (cap 10). Mention in tips.
+   - **Find similar:** `"more like this"`, `"find similar"` → Feed domain/tools/location into search strategy.
+
+   **B. Profile/preference changes** — comments that express a general preference, not just about this offer:
+   - `"I don't like [domain]"`, `"avoid [industry]"`, `"no more [type]"` → **Update `profile.yaml`**: add the domain/industry to `ethical_filter.exclude`. Remove ALL offers matching the excluded domain (not just this one). Log the change in the final report.
+   - `"I want more [domain]"`, `"prioritize [field]"` → **Update `profile.yaml`**: add to `ethical_filter.prioritize` or `ethical_filter.also_look_for`.
+   - `"max [N] years experience"`, `"I'm senior now"` → **Update `seniority`** block in profile.yaml.
+   - `"I moved to [city]"`, `"prefer [location]"` → **Update `location_priority`** in profile.yaml.
+
+   **C. Skill/process changes** — comments that imply modifying the skill itself:
+   - `"add [source] to sources"`, `"check [website]"` → Add to `sources.yaml` (user-level, no confirmation needed).
+   - `"change how [feature] works"`, `"the skill should [do X]"`, `"stop doing [Y]"` → **ASK THE USER TO CONFIRM** before modifying any skill file (SKILL.md, search-agents.md, update-phase.md, etc.). Present the proposed change and wait for approval.
+
+   **D. Neutral comments** — anything that doesn't match A/B/C is informational context. Preserve as-is.
+
+   **Cleanup:** After processing all comments, remove consumed action comments (A-type deletions, B-type preference updates) from `comments.json`. Keep neutral comments and tracking comments ("applied", "waiting", boost comments).
+
+   **Always:** When removing an offer that has a comment, preserve the comment in Job-Search-Reference.md alongside the removal note. When re-rendering the dashboard, pass comments to the template so they appear pre-filled.
 
 ### Step 1.5: Adaptive strategy review (learning loop)
 
