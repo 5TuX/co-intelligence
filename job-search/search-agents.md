@@ -11,7 +11,16 @@
 
 Field guidelines:
 - **`level`** — demanded study level and/or years of experience. Concise format: `"MSc, 5-7y"`, `"3-4y"`, `"PhD pref."`, `"BSc, 2y+"`. Leave empty if not specified.
-- **`salary`** — advertised compensation as gross €/month. Convert all currencies to EUR (approx rates: $1≈€0.92, £1≈€1.17) and divide annual by 12. Concise format: `"€7.5K/mo"`, `"€6.7-11.7K/mo"`. Leave empty if not disclosed.
+- **`salary`** — advertised compensation, **always expressed as gross €/month**. Convert annual to monthly (÷12). Concise format: `"€4.2-6.3K/mo"`, `"€2.3K/mo"`. If source gives net, note it: `"€2.2-2.8K/mo net"`. Convert other currencies to EUR (approx rates: $1≈€0.92, £1≈€1.17). Leave empty if not disclosed.
+
+**Level/salary recovery techniques** — many job boards hide this data from the visible page but embed it in structured data. When scraping, always check:
+1. **Schema.org JSON-LD** (`<script type="application/ld+json">`) — look for `baseSalary` (with `minValue`/`maxValue`/`currency`/`unitText`), `experienceRequirements`, `educationRequirements`, `qualifications`. WTTJ, Built In, and Hellowork reliably embed these.
+2. **Lever API** — for `jobs.lever.co/<company>/<uuid>` listings, fetch `https://api.lever.co/v0/postings/<company>/<uuid>` for structured data including `createdAt`. Note: Lever pages do NOT show salary.
+3. **Built In metadata** — look for `monthsOfExperience` and `credentialCategory` in schema.org data.
+4. **French public sector scales** — INRIA, CNRS, and university positions use published salary grids. INRIA pages show the bracket (e.g., "€2,348–2,631/mo gross"). CAMMA/ICube use IE/IR/CRCN public sector grades.
+5. **ABG pages** — show the thesis subject date next to "Sujet de Thèse" which serves as the publication date.
+6. **Hellowork** — classifies seniority explicitly (e.g., "Confirmé (3 à 5 ans)") in structured data.
+7. **WTTJ Cloudflare workaround** — if initial fetch returns 403, retry; WTTJ JSON-LD contains `baseSalary`, `experienceRequirements`, and `educationRequirements` when accessible.
 - **`mission`** — company mission in a few words: `"AI for cancer treatment"`, `"Open-source ML tools"`, `"Medical data interop"`. Captures the "why" of the company.
 - **`tools`** — key demanded tools/skills: `"Python, PyTorch, Docker"`, `"LangChain, RAG, Go"`. Focus on the most relevant technical requirements.
 
