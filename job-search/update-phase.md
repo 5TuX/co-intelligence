@@ -4,13 +4,19 @@
 
 Pool ALL results from general + all user-specific agents. For EACH target user, filter the pool:
 
-1. **Hard exclude** — apply user's `ethical_filter.exclude` list from profile.yaml. If a company's core business matches an exclusion, drop it entirely — even if the role title sounds technical. Also apply `ethical_filter.exclude_notes` for nuanced rules.
-2. **Prioritize** — score by user's `ethical_filter.prioritize` list. Preferred domains get a boost.
-3. **Also look for** — apply `ethical_filter.also_look_for` for non-AI-centric roles where AI skills are a force multiplier.
-4. **Location scoring** — score by user's `location_priority` (read from profile.yaml). Apply `location_notes` for nuanced location rules.
-5. **Skills match** — score by overlap with user's `skills.strong` + `skills.learning`. Note gaps that the role would help fill.
-6. **Cross-user results** — include results from other users' source searches IF they match this user's profile. Exclude results that only match another user's niche.
-7. **Flag concerns** in the "Notes" column (e.g. "warning: generative art — may displace artists"). This is a soft filter: still list a role if the technical match is EXCELLENT, but note the concern.
+1. **Seniority gate** — read the user's `seniority` block from profile.yaml. **Drop** any offer where:
+   - The required years of experience exceed `seniority.max_required_years` (e.g., a role requiring 5y+ is rejected for a user with max 4y)
+   - The role title or level contains a term in `seniority.reject_roles` (e.g., "senior", "staff", "lead", "confirmed/confirmé")
+   - The required education exceeds what the user holds or is completing (e.g., PhD-required for a BSc holder — but PhD *positions* are fine for MSc students applying to do the PhD)
+   Log rejected offers in `Job-Search-Reference.md` under "Seniority Mismatch" with the reason.
+   **Exception:** keep an offer if `experience_notes` explicitly allows it (e.g., "unless the technical match is exceptional") AND the technical match score is 9+.
+2. **Hard exclude** — apply user's `ethical_filter.exclude` list from profile.yaml. If a company's core business matches an exclusion, drop it entirely — even if the role title sounds technical. Also apply `ethical_filter.exclude_notes` for nuanced rules.
+3. **Prioritize** — score by user's `ethical_filter.prioritize` list. Preferred domains get a boost.
+4. **Also look for** — apply `ethical_filter.also_look_for` for non-AI-centric roles where AI skills are a force multiplier.
+5. **Location scoring** — score by user's `location_priority` (read from profile.yaml). Apply `location_notes` for nuanced location rules.
+6. **Skills match** — score by overlap with user's `skills.strong` + `skills.learning`. Note gaps that the role would help fill.
+7. **Cross-user results** — include results from other users' source searches IF they match this user's profile. Exclude results that only match another user's niche.
+8. **Flag concerns** in the "Notes" column (e.g. "warning: generative art — may displace artists"). This is a soft filter: still list a role if the technical match is EXCELLENT, but note the concern.
 
 After filtering and scoring, **write `users/<handle>/offers.json`** conforming to the `RenderContext` schema (see `job_search/models.py`).
 The JSON must include all offers, people, freelance platforms, and urgent deadlines.
