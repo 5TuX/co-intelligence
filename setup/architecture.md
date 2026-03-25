@@ -13,7 +13,7 @@ $DRIVE/claude/                     CLAUDE.md      → symlink to Drive
   skills/                          keybindings.json ← plain file (optional)
     agent/SKILL.md
     career/SKILL.md                projects/      ← Claude cache, never touch
-    refine-skill/SKILL.md
+    skillsmith/SKILL.md
     report/SKILL.md              ~/.claude.json (local, NOT synced)
     setup/SKILL.md               ───────────────────────────────────
                                  mcpServers:
@@ -56,7 +56,7 @@ DATA_DIR/ (from config.local.yaml) context7    (http, needs API key)
 |---|---|---|
 | `agent/SKILL.md` | `/agent` | Multi-agent chat channel |
 | `career/SKILL.md` | `/career` | Full career refresh, job search, note capture, CV analysis |
-| `refine-skill/SKILL.md` | `/refine-skill` | Analyze and improve skills |
+| `skillsmith/SKILL.md` | `/skillsmith` | Create, refine, and delete skills |
 | `report/SKILL.md` | `/report` | Technical report generation |
 | `setup/SKILL.md` | `/setup` | Verify and repair setup |
 

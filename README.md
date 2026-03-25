@@ -7,7 +7,7 @@ A personal collection of [Claude Code](https://docs.anthropic.com/en/docs/claude
 | Skill | Command | What it does |
 |-------|---------|-------------|
 | **career** | `/career` | AI-powered job search with learning loop, ethical filtering, multi-user support, and note capture |
-| **refine-skill** | `/refine-skill` | Meta-skill that analyzes and improves other skills (and itself) |
+| **skillsmith** | `/skillsmith` | Meta-skill that creates, refines, and deletes other skills (and itself) |
 | **report** | `/report` | Technical report writing with Pandoc ODT/PDF output and BibTeX citations |
 | **agent** | `/agent` | Multi-agent chat channel coordination |
 | **setup** | `/setup` | Verify, repair, or initialize Claude Code setup; `/setup scan` syncs config across machines |
@@ -48,7 +48,7 @@ Skills are automatically available as slash commands in Claude Code.
 │   ├── reference/          #   Extracted protocol files
 │   └── templates/
 │       └── user-template/  #     Blueprint for new users
-├── refine-skill/           # Meta-skill for iterative improvement
+├── skillsmith/             # Meta-skill: create, refine, delete skills
 │   ├── SKILL.md
 │   ├── knowledge.md
 │   ├── analysis.md
@@ -71,7 +71,7 @@ Career user data (CVs, job offers, preferences) lives **outside** the skills dir
 3. Restart your Claude Code session
 4. Invoke with `/your-skill`
 
-See [Anthropic's skill authoring guide](https://platform.claude.com/docs/en/agents-and-tools/agent-skills/best-practices) and use `/refine-skill your-skill` to improve it.
+See [Anthropic's skill authoring guide](https://platform.claude.com/docs/en/agents-and-tools/agent-skills/best-practices) and use `/skillsmith your-skill` to improve it.
 
 ## License
 

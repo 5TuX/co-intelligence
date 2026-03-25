@@ -27,6 +27,13 @@ Token estimate: `chars / 4` (rough for English prose + code).
 8. **Mode organization**: if multi-mode, are modes self-contained?
 9. **argument-hint completeness**: if skill has `argument-hint` in frontmatter, verify all documented modes/args appear in the hint. This controls the UI hint text shown next to the slash command.
 10. **Data separation**: skill directories must contain only code, templates, reference docs, and shared config. Flag any `users/` directory, `profile.yaml`, or per-person subdirectories inside a skill as CRITICAL. User data belongs outside the skill tree (path configured in `config.local.yaml`).
+11. **Description quality (CSO)**: check the `description` field for discoverability issues:
+    - Must start with "Use when..." (trigger-focused)
+    - Must NOT summarize the skill's workflow (Claude may follow the description instead of reading the full skill)
+    - Should be under 500 chars
+    - Should be third person
+    - Should contain concrete triggers, symptoms, and situations — not abstract terms
+    - Name should use only letters, numbers, and hyphens
 
 ### Quality Dimensions
 

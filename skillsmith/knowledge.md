@@ -1,7 +1,7 @@
-# Refine-Skill Knowledge Base
+# Skillsmith Knowledge Base
 
 Living document. Updated after each refinement session.
-Read this at the start of every `/refine-skill` invocation.
+Read this at the start of every `/skillsmith` invocation.
 
 ## Pitfalls
 
@@ -57,6 +57,7 @@ What works well when building and refining skills.
 8. **Keep active context under 60% of window** — ~120K tokens.
 9. **Argument parsing first** — Resolve mode/target before loading anything mode-specific.
 10. **Ask before committing** — Matches user preference, avoids unwanted side effects.
+11. **CSO (Claude Search Optimization)** — Description fields are how Claude decides which skills to load. Use concrete triggers and symptoms, not abstract terms. Include error messages, tool names, and synonyms the user might say. When refining, check if the description contains terms someone would use when they need the skill.
 
 ## References
 
@@ -105,8 +106,10 @@ Observations about specific skills. Updated after refinements.
 - Has `/setup scan` mode to capture live state (MCP servers, plugins, skills) → updates architecture.md for cross-machine sync
 - Expected state (MCP servers, plugins) lives in architecture.md, not hardcoded in SKILL.md — single source of truth
 
-### refine-skill
-- 164 lines, ~7.4K chars — healthy size
+### skillsmith
+- Renamed from `refine-skill` in 2026-03-25. Now covers create, refine, delete, and tidy.
+- Create mode delegates TDD cycle to `superpowers:writing-skills`, then handles repo integration
+- Delete mode checks for cross-skill dependencies before removing
 - Uses knowledge.md + analysis.md reference files
 - Tidy Mode (`tidy-only`) replaces the former standalone `tidy-skills-repo` skill (deleted 2026-03-25)
 - All Mode now uses plan-then-apply: proposes changes for all skills first, then applies after approval
