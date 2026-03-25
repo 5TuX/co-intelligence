@@ -33,3 +33,11 @@ if [ "$CURRENT_HASH" != "$INSTALLED_HASH" ]; then
     uv pip install --python "$VENV_DIR/Scripts/python" -e "$CAREER_DIR" 2>/dev/null || true
   echo "$CURRENT_HASH" > "$MARKER"
 fi
+
+# Output additionalContext for Claude Code session context injection.
+# This mirrors the superpowers pattern — ensures Claude is aware of available skills.
+CONTEXT="co-intelligence plugin loaded. Available skills: career (job search, CV analysis, notes), setup (verify/repair Claude Code setup), skillsmith (create/refine/audit skills), report (technical reports with Quarto), agent (multi-agent chat). Invoke any skill using the Skill tool."
+
+printf '{\n  "hookSpecificOutput": {\n    "hookEventName": "SessionStart",\n    "additionalContext": "%s"\n  }\n}\n' "$CONTEXT"
+
+exit 0

@@ -1,6 +1,7 @@
 ---
 name: skillsmith
-description: Use when the user says /skillsmith or asks to create, refine, delete, or audit Claude Code skills. With no argument, refines all skills.
+description: Use when the user asks to create, refine, delete, or audit Claude Code skills. With no argument, refines all skills.
+argument-hint: "<name> [<changes>] | new <name> | delete <name> | tidy-only | (empty = all)"
 ---
 
 # Skillsmith
