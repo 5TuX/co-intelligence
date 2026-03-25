@@ -6,7 +6,7 @@ description: >
   Proactively offer note mode when something notable happens during a work session.
 disable-model-invocation: true
 context: fork
-argument-hint: "[user1,user2] | clean [handle] | note [handle] <content> | new-user | update-user <handle>"
+argument-hint: "[user1,user2] | clean [user] | note [user] <content> | new-user | update-user <user>"
 ---
 
 # Career — Search, Discovery & Notes (Multi-User)
@@ -38,14 +38,14 @@ The skill directory contains only code, templates, reference docs, and shared co
 /career clean                    → clean mode for ALL users (validate links, remove dead offers)
 /career clean dimit              → clean mode for dimit only
 /career note <content>           → note mode for ADMIN_USER (dimit)
-/career note <handle> <content>  → note mode for specified user
+/career note <user> <content>    → note mode for specified user
 /career new-user                 → interactive user creation (see §New-User Creation)
-/career update-user <handle>     → interactive profile update (see §Update-User)
+/career update-user <user>       → interactive profile update (see §Update-User)
 ```
 
 Parse the argument first. If a comma-separated list, split on `,` and trim whitespace.
 To discover available users, list directories under `DATA_DIR`.
-If a requested handle has no directory, error with: "User '<handle>' not found. Available users: <list>. Use `/career new-user` to create."
+If a requested user has no directory, error with: "User 'X' not found. Available users: <list>. Use `/career new-user` to create."
 
 ## User System
 
@@ -81,13 +81,13 @@ For each user, load any files listed in their `profile.yaml` `feedback_files` fi
 ### Step 0: Parse arguments and determine mode
 
 - If argument is `new-user` → jump to §New-User Creation
-- If argument is `update-user <handle>` → jump to §Update-User
-- If argument starts with `clean` → jump to §Clean Mode. Remaining args (if any) are user handles.
+- If argument is `update-user <name>` → jump to §Update-User
+- If argument starts with `clean` → jump to §Clean Mode. Remaining args (if any) are user names.
 - If argument starts with `note` → jump to §Note Mode.
 - Otherwise → search mode. Determine target users:
   - No argument → all users (list `DATA_DIR` subdirectories)
-  - Comma-separated handles → those users only
-  - Single handle → that user only
+  - Comma-separated names → those users only
+  - Single name → that user only
 
 Read `reference/clean-mode.md` for the full clean mode protocol (C1-C4).
 
@@ -97,7 +97,7 @@ Read `reference/clean-mode.md` for the full clean mode protocol (C1-C4).
 
 When the argument starts with `note`:
 
-1. **Parse handle vs content:** Take the text after `note`. If the first word matches an existing user handle in `DATA_DIR`, use that handle and treat the rest as content. Otherwise, default to `ADMIN_USER` and treat all text as content.
+1. **Parse user vs content:** Take the text after `note`. If the first word matches an existing user directory in `DATA_DIR`, use that as the target user and treat the rest as content. Otherwise, default to `ADMIN_USER` and treat all text as content.
 2. **Classify and route** the content to the right file and section:
    - Technical concept, gotcha, or tool tip → `DATA_DIR/<handle>/journal.md` (under today's date heading, appending to the current session entry if one exists)
    - Skill level update (e.g. "now comfortable with async Python") → `DATA_DIR/<handle>/cv.md` (skills inventory section)
