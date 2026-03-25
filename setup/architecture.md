@@ -17,7 +17,7 @@ $DRIVE/claude/                     CLAUDE.md      → symlink to Drive
     report/SKILL.md              ~/.claude.json (local, NOT synced)
     setup/SKILL.md               ───────────────────────────────────
                                  mcpServers:
-                                   tavily      (stdio, needs API key)
+                                   tavily      (http, needs API key)
 User data (external):              playwright  (stdio, no key)
 DATA_DIR/ (from config.local.yaml) context7    (http, needs API key)
   <admin_user>/

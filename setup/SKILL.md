@@ -129,6 +129,7 @@ Run these in parallel:
 claude mcp list 2>&1
 ```
 Parse the output to extract all configured server names, transport types, and scopes.
+**Filter:** Only track user-configured servers. Ignore platform-managed servers (e.g., `claude.ai Gmail`, `claude.ai Google Calendar`) — these are built-in integrations that vary by account, not part of the reproducible setup.
 
 **Plugins:**
 ```bash
