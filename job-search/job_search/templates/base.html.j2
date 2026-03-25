@@ -6,29 +6,39 @@
 <style>
 body {
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  max-width: 1400px;
+  max-width: 1600px;
   margin: 0 auto;
-  padding: 20px;
-  background: #f8fafc;
-  color: #1e293b;
+  padding: 20px 28px;
+  background: #0f1117;
+  color: #c9d1d9;
 }
-h1, h2, h3 { color: #0f172a; }
-h2 { border-bottom: 2px solid #3b82f6; padding-bottom: 8px; margin-top: 2em; }
+h1 { color: #e6edf3; font-weight: 700; }
+h2 { color: #e6edf3; border-bottom: 2px solid #7c3aed; padding-bottom: 8px; margin-top: 2em; }
+h3 { color: #d1d5db; }
 table {
   width: 100%;
   border-collapse: collapse;
   margin: 1em 0;
-  background: white;
-  border-radius: 8px;
+  background: #161b22;
+  border-radius: 10px;
   overflow: hidden;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  box-shadow: 0 2px 12px rgba(0,0,0,0.4);
+  border: 1px solid #30363d;
+}
+.table-scroll {
+  overflow-x: auto;
+  margin: 1em 0;
 }
 th {
-  background: #1e40af;
-  color: white;
+  background: #1c1f2b;
+  color: #a78bfa;
   padding: 12px 16px;
   text-align: left;
   font-weight: 600;
+  font-size: 0.85em;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  border-bottom: 2px solid #7c3aed;
 }
 th.sortable {
   cursor: pointer;
@@ -36,73 +46,74 @@ th.sortable {
   position: relative;
   padding-right: 24px;
 }
-th.sortable:hover { background: #2550c5; }
+th.sortable:hover { background: #252836; color: #c4b5fd; }
 th.sortable::after {
   content: '\2195';
   position: absolute;
   right: 8px;
-  opacity: 0.5;
+  opacity: 0.4;
   font-size: 0.8em;
 }
 th.sortable.asc::after { content: '\25B2'; opacity: 1; }
 th.sortable.desc::after { content: '\25BC'; opacity: 1; }
 td {
   padding: 10px 16px;
-  border-bottom: 1px solid #e2e8f0;
+  border-bottom: 1px solid #21262d;
+  font-size: 0.9em;
 }
-tr:hover { background: #f1f5f9; }
-a { color: #2563eb; text-decoration: none; }
-a:hover { text-decoration: underline; }
+tr:hover { background: #1c2333; }
+a { color: #a78bfa; text-decoration: none; transition: color 0.15s; }
+a:hover { color: #c4b5fd; text-decoration: underline; }
 .match-score {
   display: inline-block;
   min-width: 28px;
   padding: 2px 8px;
-  border-radius: 4px;
+  border-radius: 6px;
   font-size: 0.85em;
   font-weight: 700;
   text-align: center;
 }
 .deadline-badge {
   display: inline-block;
-  padding: 1px 6px;
-  border-radius: 3px;
-  font-size: 0.75em;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 0.72em;
   font-weight: 600;
   margin-left: 4px;
   vertical-align: middle;
   white-space: nowrap;
 }
-.deadline-badge.urgent { background: #fef2f2; color: #dc2626; border: 1px solid #fca5a5; }
-.deadline-badge.soon { background: #fffbeb; color: #b45309; border: 1px solid #fde68a; }
-.deadline-badge.normal { background: #f0f9ff; color: #64748b; border: 1px solid #bae6fd; }
+.deadline-badge.urgent { background: rgba(248,113,113,0.15); color: #f87171; border: 1px solid rgba(248,113,113,0.3); }
+.deadline-badge.soon { background: rgba(251,191,36,0.12); color: #fbbf24; border: 1px solid rgba(251,191,36,0.25); }
+.deadline-badge.normal { background: rgba(148,163,184,0.1); color: #94a3b8; border: 1px solid rgba(148,163,184,0.2); }
 .date-updated {
-  color: #64748b;
+  color: #6b7280;
   font-size: 0.9em;
 }
-.section-note { font-size: 0.85rem; color: #64748b; margin-bottom: 0.75rem; }
+.section-note { font-size: 0.85rem; color: #6b7280; margin-bottom: 0.75rem; }
 .tips {
-  background: #f0fdf4;
-  border: 1px solid #86efac;
-  border-radius: 8px;
+  background: rgba(52,211,153,0.08);
+  border: 1px solid rgba(52,211,153,0.25);
+  border-radius: 10px;
   padding: 16px 20px;
   margin: 1em 0;
 }
-.tips h3 { color: #166534; margin-top: 0; }
+.tips h3 { color: #34d399; margin-top: 0; }
 .tips ul { margin: 0; padding-left: 1.5em; }
 .admin-notes {
-  background: #fefce8;
-  border: 1px solid #fde047;
-  border-radius: 8px;
+  background: rgba(251,191,36,0.08);
+  border: 1px solid rgba(251,191,36,0.2);
+  border-radius: 10px;
   padding: 16px 20px;
   margin: 1em 0;
 }
-.admin-notes h3 { color: #854d0e; margin-top: 0; }
+.admin-notes h3 { color: #fbbf24; margin-top: 0; }
 .admin-notes ul { margin: 0; padding-left: 1.5em; }
 .tabs {
   display: flex;
   gap: 4px;
   margin: 1.5em 0 0;
-  border-bottom: 2px solid #e2e8f0;
+  border-bottom: 2px solid #21262d;
 }
 .tab {
   padding: 10px 20px;
@@ -110,14 +121,14 @@ a:hover { text-decoration: underline; }
   background: none;
   font-size: 0.95em;
   font-weight: 600;
-  color: #64748b;
+  color: #6b7280;
   cursor: pointer;
   border-bottom: 2px solid transparent;
   margin-bottom: -2px;
   transition: color 0.15s, border-color 0.15s;
 }
-.tab:hover { color: #1e40af; }
-.tab.active { color: #1e40af; border-bottom-color: #1e40af; }
+.tab:hover { color: #a78bfa; }
+.tab.active { color: #a78bfa; border-bottom-color: #7c3aed; }
 .tab-panel { display: none; }
 .tab-panel.active { display: block; }
 .offer-comment {
@@ -126,34 +137,55 @@ a:hover { text-decoration: underline; }
   font-family: inherit;
   font-size: 0.82em;
   padding: 4px 6px;
-  border: 1px solid #cbd5e1;
+  border: 1px solid #30363d;
   border-radius: 4px;
   resize: vertical;
-  background: #f8fafc;
+  background: #0d1117;
+  color: #c9d1d9;
   transition: border-color 0.15s;
 }
-.offer-comment:focus { border-color: #3b82f6; outline: none; background: #fff; }
+.offer-comment:focus { border-color: #7c3aed; outline: none; background: #161b22; }
+.offer-score {
+  width: 56px;
+  padding: 4px 6px;
+  font-family: inherit;
+  font-size: 0.85em;
+  font-weight: 700;
+  text-align: center;
+  border: 1px solid #30363d;
+  border-radius: 4px;
+  background: #0d1117;
+  color: #c9d1d9;
+  transition: border-color 0.15s;
+}
+.offer-score:focus { border-color: #7c3aed; outline: none; background: #161b22; }
 .save-comments-bar {
   display: flex;
   align-items: center;
   gap: 12px;
   margin: 0.5em 0 1em;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: #0f1117;
+  padding: 10px 0;
 }
 .save-comments-bar button {
-  padding: 6px 16px;
-  font-size: 0.85em;
-  font-weight: 600;
+  padding: 10px 28px;
+  font-size: 1em;
+  font-weight: 700;
   border: none;
-  border-radius: 5px;
+  border-radius: 6px;
   cursor: pointer;
   color: white;
-  background: #1e40af;
-  transition: background 0.15s;
+  background: #7c3aed;
+  box-shadow: 0 2px 8px rgba(124,58,237,0.35);
+  transition: background 0.15s, box-shadow 0.15s;
 }
-.save-comments-bar button:hover { background: #2550c5; }
+.save-comments-bar button:hover { background: #6d28d9; box-shadow: 0 3px 12px rgba(124,58,237,0.5); }
 .save-comments-bar .save-status {
   font-size: 0.82em;
-  color: #64748b;
+  color: #6b7280;
 }
 </style>
 </head>
@@ -221,19 +253,27 @@ document.querySelectorAll('.tab').forEach(btn => {
   });
 });
 
-/* Comments: localStorage autosave + download as comments.json */
+/* Comments + Scores: localStorage autosave + download as comments.json */
 (function() {
   const KEY = 'job-search-comments-' + (document.title || 'default');
   const areas = document.querySelectorAll('.offer-comment');
+  const scoreInputs = document.querySelectorAll('.offer-score');
   if (!areas.length) return;
 
   /* Load from localStorage (merges with server-rendered values) */
   try {
     const saved = JSON.parse(localStorage.getItem(KEY) || '{}');
+    const savedScores = saved._scores || {};
     areas.forEach(el => {
       const url = el.dataset.url;
       if (saved[url] !== undefined && saved[url] !== '') {
         el.value = saved[url];
+      }
+    });
+    scoreInputs.forEach(el => {
+      const url = el.dataset.url;
+      if (savedScores[url] !== undefined && savedScores[url] !== '') {
+        el.value = savedScores[url];
       }
     });
   } catch(e) {}
@@ -242,9 +282,13 @@ document.querySelectorAll('.tab').forEach(btn => {
   function saveToLocal() {
     const obj = {};
     areas.forEach(el => { if (el.value.trim()) obj[el.dataset.url] = el.value.trim(); });
+    const scores = {};
+    scoreInputs.forEach(el => { if (el.value !== '') scores[el.dataset.url] = parseInt(el.value, 10); });
+    if (Object.keys(scores).length) obj._scores = scores;
     localStorage.setItem(KEY, JSON.stringify(obj));
   }
   areas.forEach(el => el.addEventListener('input', saveToLocal));
+  scoreInputs.forEach(el => el.addEventListener('input', saveToLocal));
 
   /* Download comments.json button */
   const bar = document.querySelector('.save-comments-bar');
@@ -255,6 +299,9 @@ document.querySelectorAll('.tab').forEach(btn => {
       btn.addEventListener('click', () => {
         const obj = {};
         areas.forEach(el => { if (el.value.trim()) obj[el.dataset.url] = el.value.trim(); });
+        const scores = {};
+        scoreInputs.forEach(el => { if (el.value !== '') scores[el.dataset.url] = parseInt(el.value, 10); });
+        if (Object.keys(scores).length) obj._scores = scores;
         const blob = new Blob([JSON.stringify(obj, null, 2) + '\n'], {type: 'application/json'});
         const a = document.createElement('a');
         a.href = URL.createObjectURL(blob);

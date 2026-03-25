@@ -20,7 +20,9 @@
   <span class="save-status"></span>
 </div>
 <table>
-<tr><th class="sortable">#</th><th class="sortable">Role</th><th class="sortable">Company</th><th class="sortable">Location</th><th class="sortable">Domain</th><th class="sortable">Level / Salary</th><th class="sortable">Mission</th><th class="sortable">Tools</th><th class="sortable">Published</th><th class="sortable">Match</th><th>Comment</th></tr>
+{% set scores = comments.get('_scores', {}) %}
+<div class="table-scroll">
+<tr><th class="sortable">#</th><th class="sortable">Role</th><th class="sortable">Company</th><th class="sortable">Location</th><th class="sortable">Domain</th><th class="sortable">Level / Salary</th><th class="sortable">Mission</th><th class="sortable">Tools</th><th class="sortable">Published</th><th class="sortable">Match</th><th class="sortable">Your Score</th><th>Comment</th></tr>
 {% for o in ctx.offers %}
 <tr>
   <td>{{ loop.index }}</td>
@@ -33,10 +35,12 @@
   <td>{{ o.tools }}</td>
   <td>{{ o.published_date or "" }}</td>
   <td><span class="match-score">{{ o.match }}</span></td>
+  <td><input type="number" class="offer-score" data-url="{{ o.url }}" min="0" max="10" step="1" value="{{ scores.get(o.url, '') }}"></td>
   <td><textarea class="offer-comment" data-url="{{ o.url }}" rows="2">{{ comments.get(o.url, "") }}</textarea></td>
 </tr>
 {% endfor %}
 </table>
+</div>
 
 {% if ctx.people %}
 <h2>People to Follow / Contact</h2>
@@ -44,10 +48,10 @@
 <tr><th>Person</th><th>Affiliation</th><th>Domain</th><th>How to reach</th></tr>
 {% for p in ctx.people %}
 <tr>
-  <td>{{ p.name }}</td>
+  <td>{% if p.url %}<a href="{{ p.url }}" target="_blank">{{ p.name }}</a>{% else %}<a href="https://scholar.google.com/scholar?q={{ p.name | urlencode }}" target="_blank">{{ p.name }}</a>{% endif %}</td>
   <td>{{ p.affiliation }}</td>
   <td>{{ p.domain }}</td>
-  <td>{{ p.reach }}</td>
+  <td>{% if '@' in p.reach %}<a href="mailto:{{ p.reach }}">{{ p.reach }}</a>{% elif p.reach.startswith('http') %}<a href="{{ p.reach }}" target="_blank">{{ p.reach }}</a>{% else %}{{ p.reach }}{% endif %}</td>
 </tr>
 {% endfor %}
 </table>
