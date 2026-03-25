@@ -12,14 +12,16 @@ $DRIVE/claude/                     CLAUDE.md      → symlink to Drive
   settings.json                    skills/        → symlink/junction to Drive
   skills/                          keybindings.json ← plain file (optional)
     agent/SKILL.md
-    job-search/SKILL.md            projects/      ← Claude cache, never touch
-      users/dimit/
-    note/SKILL.md                ~/.claude.json (local, NOT synced)
-                                 ───────────────────────────────────
-    refine-skill/SKILL.md        mcpServers:
-    report/SKILL.md                tavily      (stdio, needs API key)
-    setup/SKILL.md                 playwright  (stdio, no key)
-    tidy-skills-repo/SKILL.md      context7    (http, needs API key)
+    career/SKILL.md                projects/      ← Claude cache, never touch
+    refine-skill/SKILL.md
+    report/SKILL.md              ~/.claude.json (local, NOT synced)
+    setup/SKILL.md               ───────────────────────────────────
+                                 mcpServers:
+                                   tavily      (stdio, needs API key)
+User data (external):              playwright  (stdio, no key)
+~/Documents/_me/references/        context7    (http, needs API key)
+  career/dimit/
+  career/iliasse/
 ```
 
 ### Drive Path by OS
@@ -53,12 +55,10 @@ $DRIVE/claude/                     CLAUDE.md      → symlink to Drive
 | Skill | Command | What it does |
 |---|---|---|
 | `agent/SKILL.md` | `/agent` | Multi-agent chat channel |
-| `job-search/SKILL.md` | `/job-search` | Full career refresh, job search, CV analysis |
-| `note/SKILL.md` | `/note` | Quick capture of gotchas, learnings, tips |
+| `career/SKILL.md` | `/career` | Full career refresh, job search, note capture, CV analysis |
 | `refine-skill/SKILL.md` | `/refine-skill` | Analyze and improve skills |
 | `report/SKILL.md` | `/report` | Technical report generation |
 | `setup/SKILL.md` | `/setup` | Verify and repair setup |
-| `tidy-skills-repo/SKILL.md` | `/tidy-skills-repo` | Audit, update docs, commit skills repo |
 
 ### Plugin
 

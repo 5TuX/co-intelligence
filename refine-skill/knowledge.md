@@ -74,26 +74,23 @@ Curated resources on skill design and prompt optimization. Refined over successi
 
 Observations about specific skills. Updated after refinements.
 
-### job-search
-- ~186 lines, ~12.5K chars — OK (was 31K CRITICAL → 14.9K → 12.5K after comments extraction)
-- Extracted to: clean-mode.md, learning-loop.md, search-agents.md, update-phase.md, final-report.md
+### career
+- ~216 lines, ~13.4K chars — WARN (approaching 15K truncation limit, monitor)
+- Renamed from `job-search` in v2.0.0 (2026-03-25). Absorbed the `note` skill as `/career note` mode.
+- User data externalized from `users/<handle>/` to `~/Documents/_me/references/career/<handle>/` (outside skill dir)
+- User template moved from `users/_example/` to `templates/user-template/`
+- Python package renamed from `job_search` to `career`; CLI commands from `js-*` to `career-*`
+- Extracted to: clean-mode.md, learning-loop.md, search-agents.md, update-phase.md, final-report.md, comments-processing.md, new-user-flow.md, update-user-flow.md
 - Has Python package for deterministic ops (good pattern)
 - Uses `context: fork` — writes in fork may not persist (pitfall #5)
 - Complex multi-user system with learning loops (young, few runs)
-- Nested subagent pattern was broken (pitfall #4) — restructured to flat fan-out in 2026-03-18
-- `career-reference.md` deleted as orphaned (2026-03-18) — content was superseded by other reference files
-- Support files (README.md, ROADMAP.md) tend to go stale when SKILL.md evolves — check each refinement
+- Support files (README.md) tend to go stale when SKILL.md evolves — check each refinement
 - **SCOPE: search and discovery only.** User explicitly does not want application help (resume tailoring, ATS optimization, cover letters). Do NOT propose application-related features when refining this skill.
 
 ### report
 - 195 lines, ~8.1K chars — healthy size
 - Good patterns: modes, anti-AI rules, verification steps
 - Extracted reference material to context/ directory
-
-### note
-- 29 lines, ~1.2K chars — minimal, focused
-- Single purpose, clear steps
-- Had stale file references (Summary.md, Learning path.md) — fixed 2026-03-16
 
 ### agent
 - 62 lines, ~2.2K chars — healthy size
