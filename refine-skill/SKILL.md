@@ -3,7 +3,7 @@ name: refine-skill
 description: >
   Use when the user says /refine-skill to analyze and improve Claude Code skills.
   With no argument, refines all skills. Use "tidy-only" to only audit/commit the repo.
-argument-hint: "<name> [apply <changes>] | tidy-only | (empty = all)"
+argument-hint: "<name> [<changes>] | tidy-only | (empty = all)"
 ---
 
 # Refine Skill
@@ -16,13 +16,13 @@ Accumulates knowledge over time in `knowledge.md` — gets better at refining wi
 ```
 /refine-skill                       → refine all skills sequentially, then tidy repo
 /refine-skill <name>                → refine one skill, then tidy repo
-/refine-skill <name> apply <changes> → apply user-specified changes + auto-discovered refinements, then tidy repo
+/refine-skill <name> <changes>      → user-specified changes + auto-discovered refinements, then tidy repo
 /refine-skill tidy-only             → only audit structure, update docs, commit
 ```
 
 Parse $ARGUMENTS. If `tidy-only`, jump to Tidy Mode. Otherwise, proceed with refinement.
 If empty, list directories in `~/.claude/skills/` and process each one sequentially.
-If arguments contain `apply`, split into skill name and change request (everything after `apply`).
+First word is the skill name; everything after it is the desired changes (if any).
 Verify `~/.claude/skills/<target>/SKILL.md` exists. If not, list available skills and stop.
 
 ## Step 1 — Understand the Skill
@@ -63,7 +63,7 @@ Wait for answers before proceeding.
 ## Step 5 — Propose Changes
 
 Combine insights from your understanding, research, user feedback, and knowledge.md pitfalls.
-If user provided changes via `apply`, include those as `[USER]` changes (priority) alongside auto-discovered `[REFINE]` changes. Propose:
+If user provided desired changes in the arguments, include those as `[USER]` changes (priority) alongside auto-discovered `[REFINE]` changes. Propose:
 
 1. A numbered list of improvements with rationale.
 2. For each, a diff preview showing the actual change.
