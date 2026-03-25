@@ -1,5 +1,11 @@
 # setup — Refinement History
 
+## 2026-03-25 (b)
+- Changes: added `/setup scan` mode (discover live MCP servers, plugins, skills → update architecture.md for cross-machine sync). Moved expected state table from SKILL.md to architecture.md (single source of truth). Made verification checks read from architecture.md instead of hardcoded values. Added `argument-hint: "[scan]"` to frontmatter.
+- Before: 201 lines, 9,693 chars
+- After: 248 lines, 10,470 chars
+- User feedback: "setup must have a mode to scan the current setup (new plugins/MCPs) and update itself so other machines can sync"
+
 ## 2026-03-25
 - Changes: deduplicated identical Windows/Linux MCP add templates into single "all platforms" block
 - Before: 10,028 chars, 208 lines

@@ -4,33 +4,52 @@ description: >
   Use when the user says /setup or asks to verify, repair, or initialize
   the Claude Code setup on the current machine.
 disable-model-invocation: true
+argument-hint: "[scan]"
 ---
 
-# Claude Code Setup Verifier & Repair
+# Claude Code Setup Verifier, Repair & Sync
 
 Check that all symlinks, config files, and paths are correctly configured.
-Fix anything broken. For architecture details and drive paths, see `architecture.md`
-in this skill's directory.
+Fix anything broken. Scan the live setup to keep `architecture.md` in sync across machines.
+For architecture details and drive paths, see `architecture.md` in this skill's directory.
 
-## Verification Instructions
+## Argument Parsing
+
+```
+/setup          → verify and repair (default)
+/setup scan     → scan current machine, update architecture.md for cross-machine sync
+```
+
+- If argument is `scan` → jump to §Scan Mode
+- Otherwise → verification mode (default)
+
+---
+
+## Verification Mode (default)
+
+### Step 1: Detect environment
 
 1. **Detect the Drive root**: resolve the symlink target of `~/.claude/CLAUDE.md` and extract the Drive root path from it (everything before `/claude/CLAUDE.md`).
 
 2. **Detect the Python command**: On Windows, Python is typically `python` (not `python3`). Try `python --version` first; fall back to `python3`. Use whichever works for all subsequent Python commands in this session. Assign it to a shell variable: `PY=$(command -v python3 || command -v python)`.
 
-3. **Run all verification tests**. Each check below MUST be a **separate, independent Bash call** so that one failure does not cancel the others. Run independent checks in parallel where possible.
+3. **Read expected state**: Read `architecture.md` § "Expected State" to get the expected MCP servers, plugins, and checks. Do NOT hardcode these — always read from architecture.md.
 
-### Check: Symlinks
+### Step 2: Run verification tests
+
+Each check below MUST be a **separate, independent Bash call** so that one failure does not cancel the others. Run independent checks in parallel where possible.
+
+#### Check: Symlinks
 ```bash
 ls -la ~/.claude/CLAUDE.md ~/.claude/settings.json ~/.claude/skills
 ```
 
-### Check: CLAUDE.md readable
+#### Check: CLAUDE.md readable
 ```bash
 head -1 ~/.claude/CLAUDE.md
 ```
 
-### Check: settings.json valid JSON
+#### Check: settings.json valid JSON
 **Important (Windows):** `$HOME` in Git Bash expands to `/c/Users/...` which Python cannot read. Always use `os.environ.get('USERPROFILE', os.path.expanduser('~'))` inside Python to build paths, or pass the path as a `sys.argv` argument resolved by the shell with `"$(cygpath -w ~/.claude/settings.json)"` on Windows.
 
 ```bash
@@ -39,22 +58,23 @@ SETTINGS="$(cygpath -w ~/.claude/settings.json 2>/dev/null || echo ~/.claude/set
 $PY -c "import json,sys; json.load(open(sys.argv[1])); print('settings.json: valid JSON')" "$SETTINGS"
 ```
 
-### Check: Skills populated
+#### Check: Skills populated
 ```bash
 ls ~/.claude/skills/
 ```
 
-### Check: Career dir
+#### Check: Career dir
 ```bash
 ls ~/Documents/_me/references/career/dimit/*.md ~/Documents/_me/references/career/dimit/Topics/ 2>&1 || echo "ERROR: career dir missing or incomplete"
 ```
 
-### Check: Career key files
+#### Check: Career key files
 ```bash
 ls ~/Documents/_me/references/career/dimit/goals.md ~/Documents/_me/references/career/dimit/cv.md > /dev/null 2>&1 && echo "Career files: present" || echo "ERROR: career files missing"
 ```
 
-### Check: Plugin enabled
+#### Check: Plugins enabled
+Read the "Expected Plugins" table from `architecture.md`. For each plugin, verify it's present in `settings.json`:
 ```bash
 PY=$(command -v python3 2>/dev/null || command -v python 2>/dev/null)
 SETTINGS="$(cygpath -w ~/.claude/settings.json 2>/dev/null || echo ~/.claude/settings.json)"
@@ -65,50 +85,99 @@ print('superpowers plugin:', 'enabled' if d.get('enabledPlugins',{}).get('superp
 " "$SETTINGS"
 ```
 
-### Check: MCP servers configured
-Use `claude mcp list` which checks all scopes (local, user, plugins). Parse its output for the expected server names.
+#### Check: MCP servers configured
+Read the "Expected MCP Servers" table from `architecture.md` to get the list of expected server names. Then check each:
 ```bash
 MCP_OUT=$(claude mcp list 2>&1)
 echo "$MCP_OUT"
-for srv in playwright tavily context7; do
+# Check each server from architecture.md Expected MCP Servers table
+for srv in <names from architecture.md>; do
   echo "$MCP_OUT" | grep -qi "$srv" && echo "MCP $srv: configured" || echo "MCP $srv: MISSING"
 done
 ```
 
-5. **Report results** clearly:
-   - List each check as PASS or FAIL with the actual value found
-   - For any FAIL, explain what is wrong and what the expected value should be
+### Step 3: Report and fix
 
-6. **Offer to fix** any failed checks by **printing the commands the user should run** (prefixed with `!` so they can paste directly into the Claude Code prompt). Do NOT edit config files directly — give the user the commands and let them execute.
-   - Missing or broken symlink → print the PowerShell (Windows) or `ln -s` (Linux/Mac) command (see `architecture.md` for drive paths by OS)
-   - Missing career dir → flag for manual action (needs files from another machine)
-   - Missing git repo in career dir → print `git init && git add -A && git commit -m "career: initial import"`
-   - Missing plugin → print `/plugin install superpowers@claude-plugins-official`
-   - Missing MCP server → print `claude mcp add` commands (see templates below); prompt user for API keys
-   - Ask user before making any changes
+**Report results** clearly:
+- List each check as PASS or FAIL with the actual value found
+- For any FAIL, explain what is wrong and what the expected value should be
 
-   **MCP add templates (all platforms):**
-   ```
-   ! claude mcp add -s user playwright -- npx -y @playwright/mcp@latest
-   ! claude mcp add -s user -t http tavily "https://mcp.tavily.com/mcp/?tavilyApiKey=<KEY>"
-   ! claude mcp add -s user -t http context7 "https://mcp.context7.com/mcp" -H "CONTEXT7_API_KEY: <KEY>"
-   ```
+**Offer to fix** any failed checks by **printing the commands the user should run** (prefixed with `!` so they can paste directly into the Claude Code prompt). Do NOT edit config files directly — give the user the commands and let them execute.
+- Missing or broken symlink → print the PowerShell (Windows) or `ln -s` (Linux/Mac) command (see `architecture.md` for drive paths by OS)
+- Missing career dir → flag for manual action (needs files from another machine)
+- Missing plugin → print the install command
+- Missing MCP server → print `claude mcp add` commands from `architecture.md` § "MCP add commands"; prompt user for API keys
+- Ask user before making any changes
 
-7. After fixing, **re-run verification** and confirm all checks pass.
+After fixing, **re-run verification** and confirm all checks pass.
 
-## Expected Passing State
+---
 
-| Check | Expected |
-|---|---|
-| `~/.claude/CLAUDE.md` | Symlink → Drive path, readable |
-| `~/.claude/settings.json` | Symlink → Drive path, valid JSON |
-| `~/.claude/skills/` | Symlink/Junction → Drive skills dir, contains skill subdirs |
-| `~/Documents/_me/references/career/dimit/` | Directory with goals.md, journal.md, cv.md, market.md, Topics/, etc. |
-| `~/Documents/_me/references/career/dimit/` | Files synced via Google Drive (no git repo required) |
-| `settings.json` → `enabledPlugins` | `superpowers@claude-plugins-official: true` |
-| `~/.claude.json` → `mcpServers.tavily` | stdio, `npx tavily-mcp@latest`, env `TAVILY_API_KEY` set |
-| `~/.claude.json` → `mcpServers.playwright` | stdio, `npx @playwright/mcp@latest` |
-| `~/.claude.json` → `mcpServers.context7` | http, `https://mcp.context7.com/mcp`, header `CONTEXT7_API_KEY` set |
+## Scan Mode (`/setup scan`)
+
+Captures the live setup state and updates `architecture.md` so other machines can sync.
+
+### Step 1: Discover live state
+
+Run these in parallel:
+
+**MCP servers:**
+```bash
+claude mcp list 2>&1
+```
+Parse the output to extract all configured server names, transport types, and scopes.
+
+**Plugins:**
+```bash
+PY=$(command -v python3 2>/dev/null || command -v python 2>/dev/null)
+SETTINGS="$(cygpath -w ~/.claude/settings.json 2>/dev/null || echo ~/.claude/settings.json)"
+$PY -c "
+import json, sys
+d = json.load(open(sys.argv[1]))
+plugins = d.get('enabledPlugins', {})
+for name, enabled in plugins.items():
+    if enabled: print(name)
+" "$SETTINGS"
+```
+
+**Skills:**
+```bash
+ls ~/.claude/skills/
+```
+
+### Step 2: Compare against architecture.md
+
+Read `architecture.md` and compare:
+- **Skills table** — any new skill directories? Any removed?
+- **Expected MCP Servers table** — any new servers discovered? Any listed but not installed?
+- **Expected Plugins table** — any new plugins enabled? Any removed?
+- **Architecture diagram** — does it still reflect reality?
+
+### Step 3: Show diff and update
+
+Present the differences clearly:
+```
+New since last scan:
+  + MCP server: <name> (<transport>)
+  + Plugin: <name>
+  + Skill: <name>/
+
+Removed since last scan:
+  - MCP server: <name>
+  - Skill: <name>/
+
+Unchanged: <count> MCP servers, <count> plugins, <count> skills
+```
+
+If there are changes:
+1. Update `architecture.md`: Skills table, Expected MCP Servers table, Expected Plugins table, architecture diagram, and MCP add commands section (add install commands for new servers).
+2. Show the diff of `architecture.md`.
+3. Ask: "Commit these changes? Other machines will pick up the new expected state via Drive sync."
+4. If approved, commit: `git -C ~/.claude/skills add setup/architecture.md && git -C ~/.claude/skills commit -m "setup: scan — update expected state"`
+
+If no changes: "Setup is in sync with architecture.md — nothing to update."
+
+---
 
 ## First-Time Setup on a New Machine
 
@@ -156,34 +225,12 @@ mkdir -p ~/Documents/_me/references/career/dimit/Topics
 # Copy career files from another machine or let Google Drive sync them
 ```
 
-### Step 7 — Enable the superpowers plugin
-
-The plugin is already declared in `settings.json` (synced via Drive). Verify it loaded:
-```bash
-claude /plugins
-```
-If not listed, install it:
-```
-/plugin install superpowers@claude-plugins-official
-```
+### Step 7 — Enable plugins
+Read `architecture.md` § "Expected Plugins" and install any listed plugins.
 
 ### Step 8 — Configure MCP servers
-
-MCP servers are **local** (not synced), so you must configure them per machine using `claude mcp add`.
-
-**Windows:**
-```bash
-claude mcp add -s user playwright -- npx -y @playwright/mcp@latest
-claude mcp add -s user -t http tavily "https://mcp.tavily.com/mcp/?tavilyApiKey=<YOUR_KEY>"
-claude mcp add -s user -t http context7 "https://mcp.context7.com/mcp" -H "CONTEXT7_API_KEY: <YOUR_KEY>"
-```
-
-**Linux / Mac:**
-```bash
-claude mcp add -s user playwright -- npx -y @playwright/mcp@latest
-claude mcp add -s user -t http tavily "https://mcp.tavily.com/mcp/?tavilyApiKey=<YOUR_KEY>"
-claude mcp add -s user -t http context7 "https://mcp.context7.com/mcp" -H "CONTEXT7_API_KEY: <YOUR_KEY>"
-```
+MCP servers are **local** (not synced), so you must configure them per machine.
+Read `architecture.md` § "MCP add commands" and run each command, substituting your API keys.
 
 **API keys:** Get tavily key from https://tavily.com, context7 key from https://context7.com. Playwright needs no key.
 

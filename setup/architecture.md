@@ -87,3 +87,30 @@ claude mcp add -s user -t http context7 "https://mcp.context7.com/mcp" -H "CONTE
 | tavily | https://tavily.com | HTTP (key in URL) |
 | context7 | https://context7.com | HTTP (key in header) |
 | playwright | (no key needed) | stdio |
+
+## Expected State
+
+The verification mode (`/setup`) checks the current machine against this table.
+The scan mode (`/setup scan`) updates this table from the live machine state.
+
+| Check | Expected |
+|---|---|
+| `~/.claude/CLAUDE.md` | Symlink → Drive path, readable |
+| `~/.claude/settings.json` | Symlink → Drive path, valid JSON |
+| `~/.claude/skills/` | Symlink/Junction → Drive skills dir, contains skill subdirs |
+| `~/Documents/_me/references/career/dimit/` | Directory with goals.md, journal.md, cv.md, market.md, Topics/, etc. |
+| `settings.json` → `enabledPlugins` | `superpowers@claude-plugins-official: true` |
+
+### Expected MCP Servers
+
+| Server | Transport | Needs API key |
+|---|---|---|
+| playwright | stdio | no |
+| tavily | HTTP | yes |
+| context7 | HTTP | yes |
+
+### Expected Plugins
+
+| Plugin | Location |
+|---|---|
+| `superpowers@claude-plugins-official` | `settings.json` (synced) |

@@ -97,9 +97,11 @@ Observations about specific skills. Updated after refinements.
 - Multi-mode with clear format specifications
 
 ### setup
-- 203 lines, ~9.6K chars — WARN (size)
+- 248 lines, ~10.5K chars — WARN (size, but well under 15K)
 - Good: extracted architecture to separate file
 - Has verification with PASS/FAIL output
+- Has `/setup scan` mode to capture live state (MCP servers, plugins, skills) → updates architecture.md for cross-machine sync
+- Expected state (MCP servers, plugins) lives in architecture.md, not hardcoded in SKILL.md — single source of truth
 
 ### refine-skill
 - 164 lines, ~7.4K chars — healthy size
