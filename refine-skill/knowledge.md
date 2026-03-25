@@ -22,7 +22,9 @@ Things that break skills or degrade quality. Check every skill against these.
 
 9. **Schema drift between reference files** — When multiple files define the same output format (e.g., JSON schema for agent results), they can silently diverge. Always have a single source of truth and point to it from secondary files rather than duplicating the schema.
 
-10. **Support files (README, ROADMAP) go stale** — When SKILL.md evolves, support files like README.md, ROADMAP.md, and architecture.md often aren't updated. Check these explicitly each refinement, not just SKILL.md.
+10. **Broken file references after renames** — When user files or reference files are renamed/restructured, skills that reference the old names silently break. During health check, extract all file paths from SKILL.md and reference files and verify each exists on disk. This is CRITICAL, not just structural.
+
+11. **Support files (README, ROADMAP) go stale** — When SKILL.md evolves, support files like README.md, ROADMAP.md, and architecture.md often aren't updated. Check these explicitly each refinement, not just SKILL.md.
 
 ### Structural (degrades quality)
 
@@ -88,10 +90,6 @@ Observations about specific skills. Updated after refinements.
 - Good patterns: modes, anti-AI rules, verification steps
 - Extracted reference material to context/ directory
 
-### myplay
-- 34 lines, ~1.5K chars — minimal, focused
-- Single purpose, clear steps
-
 ### note
 - 29 lines, ~1.2K chars — minimal, focused
 - Single purpose, clear steps
@@ -145,6 +143,6 @@ Chronological record of all refinement sessions.
 - **job-search**: extracted comments.json processing (~2.5K chars) to `reference/comments-processing.md` (14,984→~12,500 chars, was dangerously near 15K truncation)
 - **report**: added Quarto 1.8+ features to tips (brand support, PDF accessibility, Typst, lualatex)
 - **setup**: deduplicated identical Windows/Linux MCP templates into single block
-- **agent**, **myplay**, **note**: no changes needed
+- **agent**, **note**: no changes needed
 - Research: Quarto 1.8+ (brand, PDF/A, Typst), Claude Code skill char budget = 2% of context window, hooks for guaranteed execution, A2A/ACP protocols (not relevant for lightweight agent skill)
 - Pattern observed: user prefers unified plan-then-apply over per-skill apply in All Mode

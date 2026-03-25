@@ -86,7 +86,7 @@ Read `reference/deep-search-tactics.md` for the full tactics reference. Adapt al
 - Use the user's location_priority for geographic targeting
 - Use the user's ethical_filter.prioritize for domain-specific dork queries
 - Use the user's search_notes for company/lab-specific searches
-- Read the user's Direction.md to determine seniority level for negative keyword filtering
+- Read the user's goals.md to determine seniority level for negative keyword filtering
 
 **Agent: Community & social search — <handle>**
 Search non-traditional sources invisible to standard ATS dorking:
@@ -147,7 +147,7 @@ Manage BOTH `sources-general.yaml` AND each user's `sources.yaml`. For each run:
    - Page has a single publication date with no recent updates
    - Content is a static article describing a hiring initiative, not a live listing
    Mark these with `source_type: announcement` or `source_type: news` and record `published_date`.
-   **Staleness threshold**: sources with `source_type: announcement` or `news` whose `published_date` is older than 6 months are likely obsolete. Either remove them (archive to Job-Search-Reference.md with reason) or convert to a tip (e.g., "European AI Office hires technology specialists — check EPSO/EU careers portal directly").
+   **Staleness threshold**: sources with `source_type: announcement` or `news` whose `published_date` is older than 6 months are likely obsolete. Either remove them (archive to archive.md with reason) or convert to a tip (e.g., "European AI Office hires technology specialists — check EPSO/EU careers portal directly").
 4. **Discover new sources** — search the web for:
    - Job boards and aggregators recommended by AI/ML professionals (blog posts, Reddit, HN, Twitter/X)
    - Niche boards matching target users' profiles

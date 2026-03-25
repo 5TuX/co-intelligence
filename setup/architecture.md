@@ -14,8 +14,8 @@ $DRIVE/claude/                     CLAUDE.md      → symlink to Drive
     agent/SKILL.md
     job-search/SKILL.md            projects/      ← Claude cache, never touch
       users/dimit/
-    myplay/SKILL.md              ~/.claude.json (local, NOT synced)
-    note/SKILL.md                ───────────────────────────────────
+    note/SKILL.md                ~/.claude.json (local, NOT synced)
+                                 ───────────────────────────────────
     refine-skill/SKILL.md        mcpServers:
     report/SKILL.md                tavily      (stdio, needs API key)
     setup/SKILL.md                 playwright  (stdio, no key)
@@ -54,7 +54,6 @@ $DRIVE/claude/                     CLAUDE.md      → symlink to Drive
 |---|---|---|
 | `agent/SKILL.md` | `/agent` | Multi-agent chat channel |
 | `job-search/SKILL.md` | `/job-search` | Full career refresh, job search, CV analysis |
-| `myplay/SKILL.md` | `/myplay` | Log human expertise moments |
 | `note/SKILL.md` | `/note` | Quick capture of gotchas, learnings, tips |
 | `refine-skill/SKILL.md` | `/refine-skill` | Analyze and improve skills |
 | `report/SKILL.md` | `/report` | Technical report generation |

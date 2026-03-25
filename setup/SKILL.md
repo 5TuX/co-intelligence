@@ -51,7 +51,7 @@ ls ~/.claude/skills/job-search/users/dimit/*.md ~/.claude/skills/job-search/user
 
 ### Check: Career key files
 ```bash
-ls ~/.claude/skills/job-search/users/dimit/Direction.md ~/.claude/skills/job-search/users/dimit/CV.md > /dev/null 2>&1 && echo "Career files: present" || echo "ERROR: career files missing"
+ls ~/.claude/skills/job-search/users/dimit/goals.md ~/.claude/skills/job-search/users/dimit/cv.md > /dev/null 2>&1 && echo "Career files: present" || echo "ERROR: career files missing"
 ```
 
 ### Check: Plugin enabled
@@ -103,7 +103,7 @@ done
 | `~/.claude/CLAUDE.md` | Symlink → Drive path, readable |
 | `~/.claude/settings.json` | Symlink → Drive path, valid JSON |
 | `~/.claude/skills/` | Symlink/Junction → Drive skills dir, contains skill subdirs |
-| `~/.claude/skills/job-search/users/dimit/` | Directory with Direction.md, Journal.md, CV.md, Human-Expertise.md, Topics/, etc. |
+| `~/.claude/skills/job-search/users/dimit/` | Directory with goals.md, journal.md, cv.md, market.md, Topics/, etc. |
 | `~/.claude/skills/job-search/users/dimit/` | Files synced via Google Drive (no git repo required) |
 | `settings.json` → `enabledPlugins` | `superpowers@claude-plugins-official: true` |
 | `~/.claude.json` → `mcpServers.tavily` | stdio, `npx tavily-mcp@latest`, env `TAVILY_API_KEY` set |

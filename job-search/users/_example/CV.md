@@ -20,6 +20,16 @@
 ## Technical Skills
 <!-- Grouped by category -->
 
+## Skills Inventory
+<!-- Self-assessed skill levels (0-10) — updated by /note when skill levels change -->
+
+## Strengths
+<!-- What you bring to human-AI collaboration that AI can't replicate -->
+<!-- Updated by /note when you catch a bug, have a key insight, or make a judgment call -->
+
+| Strength | Evidence |
+|---|---|
+
 ## Languages
 -
 

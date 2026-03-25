@@ -46,7 +46,7 @@ site:<domain> ("<skill-1>" OR "<skill-2>") ("<location>" OR "remote") after:<30d
 
 **ATS domains:** boards.greenhouse.io, jobs.lever.co, jobs.ashbyhq.com, jobs.smartrecruiters.com, wd1.myworkdayjobs.com, careers.icims.com, apply.workable.com, recruitee.com, jobs.personio.de, apply.jazz.co
 
-**Negative keywords** — read user's Direction.md for seniority, then exclude mismatches:
+**Negative keywords** — read user's goals.md for seniority, then exclude mismatches:
 - Always: `-"director" -"VP" -"head of" -"chief"`
 - If experienced: `-"intern" -"stage" -"stagiaire"`
 - From ethical_filter.exclude: `-"consulting" -"consultant"` etc.

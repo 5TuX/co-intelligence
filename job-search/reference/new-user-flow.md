@@ -32,10 +32,9 @@ After collecting answers, auto-generate:
 - `users/<handle>/profile.yaml` (from answers, following the same schema as existing profiles — see `users/_example/profile.yaml`)
 - `users/<handle>/sources.yaml` (seeded from question 6 answers, or empty with a comment)
 - Skeleton career files in `users/<handle>/` (copy from `users/_example/` and customize):
-  - `Direction.md` — with sections for vision, goals, skills inventory (from Q3), roadmap
-  - `CV.md` — skeleton with sections to fill
-  - `Job-Search-Reference.md` — empty template with standard sections
-  - `Journal.md` — initialized with creation date entry
-  - `Human-Expertise.md` — empty template
+  - `goals.md` — with sections for vision, goals, skills inventory (from Q3), roadmap
+  - `cv.md` — skeleton with sections to fill, including a strengths section for human expertise
+  - `archive.md` — empty template with standard sections
+  - `journal.md` — initialized with creation date entry
 
 Confirm to the operator: "Created user '<handle>' with profile and skeleton files. Run `/job-search <handle>` to start their first search."

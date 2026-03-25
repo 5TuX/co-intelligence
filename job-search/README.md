@@ -120,20 +120,19 @@ Each run takes the full learning from all previous runs into account. The more y
     ├── _example/               # Template — copy this to create your profile
     │   ├── profile.yaml
     │   ├── sources.yaml
-    │   ├── Direction.md
-    │   ├── CV.md
-    │   ├── Human-Expertise.md
-    │   ├── Job-Search-Reference.md
-    │   └── Journal.md
+    │   ├── goals.md
+    │   ├── cv.md
+    │   ├── archive.md
+    │   └── journal.md
     └── your-handle/            # Your data (gitignored, private)
         ├── profile.yaml        # Your preferences, skills, ethical filters
         ├── sources.yaml        # Your custom job sources
         ├── Dashboard.html      # Unified tabbed dashboard (offers + summary + learning path)
-        ├── Direction.md        # Career direction and goals
-        ├── CV.md               # Living CV
-        ├── Human-Expertise.md  # Your unique strengths
-        ├── Journal.md          # Session log
-        ├── Job-Search-Reference.md  # Removed offers, tips
+        ├── goals.md            # Career direction and goals
+        ├── cv.md               # Living CV (includes strengths section)
+        ├── journal.md          # Session log
+        ├── archive.md          # Removed offers, tips
+        ├── market.md           # Market demand data
         ├── learned-preferences.md   # Auto-built preference model
         ├── feedback.yaml       # Q&A history from feedback loops
         ├── search-log.yaml     # Query performance tracking

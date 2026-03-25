@@ -22,7 +22,8 @@ Token estimate: `chars / 4` (rough for English prose + code).
 4. **Error handling**: does it handle missing/invalid arguments explicitly?
 5. **Verification steps**: count lines with "verify", "confirm", "check", "test", "PASS/FAIL".
 6. **Reference file usage**: count "see " or "read " pointing to other files.
-7. **Step count**: count `##` action headers.
+7. **Broken references**: extract all file paths mentioned in SKILL.md and reference files (patterns: backtick paths like \`reference/foo.md\`, \`users/<handle>/bar.md\`). Verify each referenced file exists on disk. Report any broken references as CRITICAL.
+8. **Step count**: count `##` action headers.
 8. **Mode organization**: if multi-mode, are modes self-contained?
 9. **argument-hint completeness**: if skill has `argument-hint` in frontmatter, verify all documented modes/args appear in the hint. This controls the UI hint text shown next to the slash command.
 

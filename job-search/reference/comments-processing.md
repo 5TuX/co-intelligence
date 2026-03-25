@@ -4,7 +4,7 @@ Read `users/<handle>/comments.json` — user's free-form comments and scores on 
 
 ## A. Direct actions on the offer
 
-- **Delete/remove:** `"delete this"`, `"remove"`, `"drop"` → Remove offer from catalog. Archive to Job-Search-Reference.md with the comment.
+- **Delete/remove:** `"delete this"`, `"remove"`, `"drop"` → Remove offer from catalog. Archive to archive.md with the comment.
 - **Applied/tracking:** `"applied"`, `"sent CV"`, `"interview"`, `"in progress"` → **NEVER remove**, even if link dies. Mark "applied — tracking" in notes.
 - **Rejection:** `"not interested"`, `"skip"`, `"pass"`, `"rejected me"`, `"declined"` → Remove. Archive with comment.
 - **Deprioritize:** `"waiting"`, `"pending"`, `"maybe"`, `"later"` → Keep but lower priority.
@@ -33,4 +33,4 @@ Anything that doesn't match A/B/C is informational context. Preserve as-is.
 
 After processing all comments, remove consumed action comments (A-type deletions, B-type preference updates) from `comments.json`. Keep neutral comments, tracking comments ("applied", "waiting", boost comments), and the `_scores` object.
 
-**Always:** When removing an offer that has a comment, preserve the comment in Job-Search-Reference.md alongside the removal note. When re-rendering the dashboard, pass comments to the template so they appear pre-filled.
+**Always:** When removing an offer that has a comment, preserve the comment in archive.md alongside the removal note. When re-rendering the dashboard, pass comments to the template so they appear pre-filled.

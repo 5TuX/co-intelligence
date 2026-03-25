@@ -8,7 +8,7 @@ Pool ALL results from general + all user-specific agents. For EACH target user, 
    - The required years of experience exceed `seniority.max_required_years` (e.g., a role requiring 5y+ is rejected for a user with max 4y)
    - The role title or level contains a term in `seniority.reject_roles` (e.g., "senior", "staff", "lead", "confirmed/confirmé")
    - The required education exceeds what the user holds or is completing (e.g., PhD-required for a BSc holder — but PhD *positions* are fine for MSc students applying to do the PhD)
-   Log rejected offers in `Job-Search-Reference.md` under "Seniority Mismatch" with the reason.
+   Log rejected offers in `archive.md` under "Seniority Mismatch" with the reason.
    **Exception:** keep an offer if `experience_notes` explicitly allows it (e.g., "unless the technical match is exceptional") AND the technical match score is 9+.
 2. **Hard exclude** — apply user's `ethical_filter.exclude` list from profile.yaml. If a company's core business matches an exclusion, drop it entirely — even if the role title sounds technical. Also apply `ethical_filter.exclude_notes` for nuanced rules.
 3. **Prioritize** — score by user's `ethical_filter.prioritize` list. Preferred domains get a boost.
@@ -82,7 +82,7 @@ When in doubt, check copyright dates, last-updated timestamps, and whether any c
 
 ### 4e. Stale offer handling
 
-When removing stale offers from the dashboard, move them to the "Removed Offers" section in `users/<handle>/Job-Search-Reference.md` (under the appropriate subsection) with a brief reason. Also update skill gaps, tips, and adjacent roles sections if market data warrants it.
+When removing stale offers from the dashboard, move them to the "Removed Offers" section in `users/<handle>/archive.md` (under the appropriate subsection) with a brief reason. Also update skill gaps, tips, and adjacent roles sections if market data warrants it.
 
 ### 4f. Update People to Follow / Contact
 
@@ -109,10 +109,10 @@ If the user has a `learning_path` in their profile, **update it every run** — 
 
 **This step is mandatory every run.** Write the updated learning path directly to `profile.yaml`. Summarize changes in the final report (e.g., "Learning path: re-prioritized Docker to P1, added CUDA, removed FastAPI").
 
-### 4h. Update Direction.md
+### 4h. Update goals.md
 
-Update `users/<handle>/Direction.md` — update skill levels if recent work changed them, add new skill gaps, refresh market demand notes.
+Update `users/<handle>/goals.md` — update skill levels if recent work changed them, add new skill gaps, refresh market demand notes.
 
 ### 4i. CV suggestions
 
-Suggest CV improvements based on what current offers are asking for. Cross-reference with the user's `Human-Expertise.md` to highlight underrepresented strengths. **Display proposed changes for user approval before writing to CV.md.**
+Suggest CV improvements based on what current offers are asking for. Cross-reference with the user's strengths section in `cv.md` to highlight underrepresented strengths. **Display proposed changes for user approval before writing to cv.md.**

@@ -45,11 +45,11 @@ users/<handle>/
 ├── sources.yaml            # User-specific job sources
 ├── Dashboard.html          # Unified HTML (offers + summary + schedule, tabbed)
 ├── comments.json           # User comments + scores on offers (URL → text, _scores → {URL → int}), edited via Dashboard
-├── Job-Search-Reference.md # Removed offers history, skill gaps, tips
-├── Direction.md            # Vision, goals, skills inventory, roadmap
-├── CV.md                   # Living CV + portfolio readiness tracker
-├── Human-Expertise.md      # Strengths profile, expertise log
-├── Journal.md              # Chronological session log
+├── archive.md              # Removed offers history, skill gaps, tips
+├── goals.md                # Vision, goals, roadmap
+├── cv.md                   # Living CV + skills inventory + strengths + portfolio
+├── market.md               # Market demand, skill gaps, trends
+├── journal.md              # Chronological session log
 ├── Topics/                 # Standalone thematic notes (optional)
 ├── learned-preferences.md  # Auto-generated preference model (learning loop)
 ├── feedback.yaml           # Q&A history from conversational feedback (learning loop)
@@ -83,7 +83,7 @@ Read `reference/clean-mode.md` for the full clean mode protocol (C1-C4).
 
 For EACH target user:
 1. Read `users/<handle>/profile.yaml` — extract location_priority, skills, ethical_filter, search_notes, feedback_files, learning_path
-2. Read career files from `users/<handle>/`: `Direction.md`, `CV.md`, `Human-Expertise.md`, `Journal.md`, `Job-Search-Reference.md`
+2. Read career files from `users/<handle>/`: `goals.md`, `cv.md`, `journal.md`, `archive.md`
 3. Read existing `users/<handle>/Dashboard.html` (or `Offers.html` if Dashboard.html doesn't exist yet) to know what's already tracked
 4. Read `users/<handle>/sources.yaml` for user-specific sources
 5. Read `sources-general.yaml` (shared, read once)
@@ -122,7 +122,7 @@ Read `reference/search-agents.md` for agent specifications, output format, and f
 
 ### Steps 3-4: Distribution & update phase
 
-Read `reference/update-phase.md` for the full protocol. Covers: ethical filtering, location/skills scoring, offers.json generation, link validation, HTML rendering, LLM verification, stale offer handling, people tracking, learning path updates, Direction.md updates, and CV suggestions.
+Read `reference/update-phase.md` for the full protocol. Covers: ethical filtering, location/skills scoring, offers.json generation, link validation, HTML rendering, LLM verification, stale offer handling, people tracking, learning path updates, goals.md updates, and CV suggestions.
 
 **Gate rule: No offer enters offers.json without a verified link pointing to the actual job listing.** If a URL cannot be confirmed to show the specific position, drop the offer entirely. A working URL that doesn't show the offer is the same as a dead link.
 

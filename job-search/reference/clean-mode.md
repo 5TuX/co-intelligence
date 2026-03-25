@@ -5,7 +5,7 @@ When clean mode is triggered explicitly via `/job-search clean`, run steps C1-C4
 ## C0. Process user comments
 
 Before cleaning, read `users/<handle>/comments.json` and apply the full comment rules from SKILL.md Step 1.8:
-- **Delete requests** — `"delete this"`, `"remove"`, `"drop"` → remove offer immediately. Archive to Job-Search-Reference.md. Remove comment from `comments.json`.
+- **Delete requests** — `"delete this"`, `"remove"`, `"drop"` → remove offer immediately. Archive to archive.md. Remove comment from `comments.json`.
 - **Rejection comments** — `"not interested"`, `"skip"`, `"pass"`, etc. → same as delete.
 - **Protected offers** — `"applied"`, `"sent CV"`, `"interview"`, `"in progress"` → must NOT be removed even if the link is dead. Mark notes with "link dead but user applied — keeping".
 - **Profile changes** — `"I don't like [domain]"`, `"avoid [industry]"` → update `profile.yaml` exclusions, then remove ALL matching offers. Log in final report.
@@ -74,7 +74,7 @@ After removing soft-dead offers, update `offers.json` and re-render (same as C2)
 
 ## C3. Archive removed offers
 
-For all removed offers (both auto-removed by `js-clean` and LLM-confirmed), append to the "Removed Offers" section of `users/<handle>/Job-Search-Reference.md`:
+For all removed offers (both auto-removed by `js-clean` and LLM-confirmed), append to the "Removed Offers" section of `users/<handle>/archive.md`:
 - Use the existing location-based subsection structure (Strasbourg, France/Nearby, Remote International, etc.)
 - Format: `- ~~Company — Role~~ — <reason> (<date>)`
 - The `detail` field from clean-report.json provides the reason.
@@ -86,7 +86,7 @@ Print a summary to the user: N offers checked, N removed, N flagged (N resolved 
 If the user directory has a `.git/` subdirectory, commit the changes:
 ```bash
 if [ -d ~/.claude/skills/job-search/users/<handle>/.git ]; then
-  git -C ~/.claude/skills/job-search/users/<handle> add offers.json Dashboard.html Job-Search-Reference.md clean-report.json
+  git -C ~/.claude/skills/job-search/users/<handle> add offers.json Dashboard.html archive.md clean-report.json
   git -C ~/.claude/skills/job-search/users/<handle> commit -m "career: clean — removed N dead/stale offers"
 fi
 ```
