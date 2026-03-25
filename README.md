@@ -13,7 +13,6 @@ A personal collection of [Claude Code](https://docs.anthropic.com/en/docs/claude
 | **myplay** | `/myplay` | Log moments of demonstrated human expertise |
 | **agent** | `/agent` | Multi-agent chat channel coordination |
 | **setup** | `/setup` | Verify, repair, or initialize Claude Code setup on a machine |
-| **sync-skills** | `/sync-skills` | Commit and push skill changes to the repo |
 
 ## Installation
 
@@ -49,14 +48,16 @@ Skills are automatically available as slash commands in Claude Code.
 │   │   ├── sources.py      #     CLI: js-validate-sources
 │   │   └── templates/      #     Jinja2 HTML templates
 │   ├── sources-general.yaml
-│   ├── deep-search-tactics.md
-│   ├── clean-mode.md       #   Clean mode protocol (extracted from SKILL.md)
-│   ├── learning-loop.md    #   Learning loop protocol (extracted from SKILL.md)
-│   ├── search-agents.md    #   Search agent specifications (extracted from SKILL.md)
-│   ├── update-phase.md     #   Distribution & update phase (extracted from SKILL.md)
-│   ├── final-report.md     #   Final report format (extracted from SKILL.md)
-│   ├── new-user-flow.md    #   New user creation flow
-│   ├── update-user-flow.md #   User profile update flow
+│   ├── reference/           #   Extracted protocol files
+│   │   ├── clean-mode.md
+│   │   ├── comments-processing.md
+│   │   ├── deep-search-tactics.md
+│   │   ├── final-report.md
+│   │   ├── learning-loop.md
+│   │   ├── new-user-flow.md
+│   │   ├── search-agents.md
+│   │   ├── update-phase.md
+│   │   └── update-user-flow.md
 │   └── users/              #   Per-user data (gitignored)
 │       └── _example/       #     Template for new users
 ├── refine-skill/           # Meta-skill for iterative improvement
@@ -70,11 +71,9 @@ Skills are automatically available as slash commands in Claude Code.
 │   └── SKILL.md
 ├── myplay/                 # Human expertise logging
 │   └── SKILL.md
-├── setup/                  # Environment setup
-│   ├── SKILL.md
-│   └── architecture.md     #   Drive paths and symlink layout by OS
-└── sync-skills/            # Repo commit + push
-    └── SKILL.md
+└── setup/                  # Environment setup
+    ├── SKILL.md
+    └── architecture.md     #   Drive paths and symlink layout by OS
 ```
 
 ## Privacy

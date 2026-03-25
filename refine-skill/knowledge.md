@@ -73,7 +73,7 @@ Curated resources on skill design and prompt optimization. Refined over successi
 Observations about specific skills. Updated after refinements.
 
 ### job-search
-- ~175 lines, ~9.6K chars — OK (was 31K CRITICAL → 12.5K → 9.6K)
+- ~186 lines, ~12.5K chars — OK (was 31K CRITICAL → 14.9K → 12.5K after comments extraction)
 - Extracted to: clean-mode.md, learning-loop.md, search-agents.md, update-phase.md, final-report.md
 - Has Python package for deterministic ops (good pattern)
 - Uses `context: fork` — writes in fork may not persist (pitfall #5)
@@ -84,7 +84,7 @@ Observations about specific skills. Updated after refinements.
 - **SCOPE: search and discovery only.** User explicitly does not want application help (resume tailoring, ATS optimization, cover letters). Do NOT propose application-related features when refining this skill.
 
 ### report
-- 166 lines, ~6.5K chars — healthy size
+- 195 lines, ~8.1K chars — healthy size
 - Good patterns: modes, anti-AI rules, verification steps
 - Extracted reference material to context/ directory
 
@@ -102,17 +102,15 @@ Observations about specific skills. Updated after refinements.
 - Multi-mode with clear format specifications
 
 ### setup
-- 123 lines, ~4.8K chars — healthy size
+- 203 lines, ~9.6K chars — WARN (size)
 - Good: extracted architecture to separate file
 - Has verification with PASS/FAIL output
 
-### sync-skills
-- 101 lines, ~3.2K chars — healthy size
-- Well-structured 8-step workflow with safety checks
-
 ### refine-skill
-- 128 lines, ~4.9K chars — healthy size
+- 164 lines, ~7.4K chars — healthy size
 - Uses knowledge.md + analysis.md reference files
+- Tidy Mode (`tidy-only`) replaces the former standalone `tidy-skills-repo` skill (deleted 2026-03-25)
+- All Mode now uses plan-then-apply: proposes changes for all skills first, then applies after approval
 
 ## Refinement Log
 
@@ -124,7 +122,7 @@ Chronological record of all refinement sessions.
 - **setup**: fixed stale file reference (Summary.md → Direction.md)
 - **report**: removed self-contradicting em dash in ban rule, added pandoc install check
 - **agent**: simplified cross-platform path, added write verification, renumbered steps
-- **myplay**, **sync-skills**, **refine-skill**: no changes needed
+- **myplay**, **tidy-skills-repo**, **refine-skill**: no changes needed
 - Pattern observed: `Summary.md` was referenced in 3 skills but never existed — likely a renamed/removed file
 
 ### 2026-03-18 — Full audit (8 skills, context7-mcp deleted)
@@ -140,3 +138,13 @@ Chronological record of all refinement sessions.
 - **agent**, **myplay**, **note**, **report**, **sync-skills**, **refine-skill**: no changes needed
 - Pattern observed: support files (README, ROADMAP, architecture.md) go stale when SKILL.md evolves — check these explicitly each refinement, not just SKILL.md itself
 - New pitfall candidate: reference files with their own output format schemas can drift from the canonical schema in the main spec file. Always have a single source of truth and point to it.
+
+### 2026-03-25 — Full audit (8→7 skills)
+- **refine-skill**: simplified argument parsing (removed `self` and `push`, merged `<name>` and `<name> apply`), embedded self-refinement logic into Step 1, changed tidy argument to `tidy-only`, All Mode now uses plan-then-apply workflow
+- **tidy-skills-repo**: DELETED — fully redundant with `/refine-skill tidy-only`
+- **job-search**: extracted comments.json processing (~2.5K chars) to `reference/comments-processing.md` (14,984→~12,500 chars, was dangerously near 15K truncation)
+- **report**: added Quarto 1.8+ features to tips (brand support, PDF accessibility, Typst, lualatex)
+- **setup**: deduplicated identical Windows/Linux MCP templates into single block
+- **agent**, **myplay**, **note**: no changes needed
+- Research: Quarto 1.8+ (brand, PDF/A, Typst), Claude Code skill char budget = 2% of context window, hooks for guaranteed execution, A2A/ACP protocols (not relevant for lightweight agent skill)
+- Pattern observed: user prefers unified plan-then-apply over per-skill apply in All Mode

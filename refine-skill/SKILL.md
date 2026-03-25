@@ -2,8 +2,8 @@
 name: refine-skill
 description: >
   Use when the user says /refine-skill to analyze and improve Claude Code skills.
-  With no argument, refines all skills. Use "self" to refine the refiner itself.
-argument-hint: "<skill-name> | self | <name> apply <changes> | (empty = all)"
+  With no argument, refines all skills. Use "tidy-only" to only audit/commit the repo.
+argument-hint: "<name> [apply <changes>] | tidy-only | (empty = all)"
 ---
 
 # Refine Skill
@@ -14,13 +14,15 @@ Accumulates knowledge over time in `knowledge.md` — gets better at refining wi
 ## Argument Parsing
 
 ```
-/refine-skill          → refine all skills in ~/.claude/skills/ sequentially
-/refine-skill <name>   → refine ~/.claude/skills/<name>/SKILL.md
-/refine-skill self     → refine this skill (refine-skill itself)
+/refine-skill                       → refine all skills sequentially, then tidy repo
+/refine-skill <name>                → refine one skill, then tidy repo
+/refine-skill <name> apply <changes> → apply user-specified changes + auto-discovered refinements, then tidy repo
+/refine-skill tidy-only             → only audit structure, update docs, commit
 ```
 
-Parse $ARGUMENTS. If empty, list directories in `~/.claude/skills/` and process each one sequentially.
-If `self`, set target to `refine-skill`.
+Parse $ARGUMENTS. If `tidy-only`, jump to Tidy Mode. Otherwise, proceed with refinement.
+If empty, list directories in `~/.claude/skills/` and process each one sequentially.
+If arguments contain `apply`, split into skill name and change request (everything after `apply`).
 Verify `~/.claude/skills/<target>/SKILL.md` exists. If not, list available skills and stop.
 
 ## Step 1 — Understand the Skill
@@ -30,6 +32,7 @@ Verify `~/.claude/skills/<target>/SKILL.md` exists. If not, list available skill
 3. Read the target skill's `SKILL.md` entirely.
 4. List all files in the target skill's directory. Read key reference files to understand the full picture.
 5. **Summarize in your own words:** What does this skill do? What is its core workflow? What problem does it solve for the user?
+6. If target is `refine-skill`: also review `knowledge.md` for stale/redundant entries, and check if SKILL.md instructions match what actually happens during refinements.
 
 ## Step 2 — Research Best Practices
 
@@ -59,7 +62,8 @@ Wait for answers before proceeding.
 
 ## Step 5 — Propose Changes
 
-Combine insights from your understanding, research, user feedback, and knowledge.md pitfalls. Propose:
+Combine insights from your understanding, research, user feedback, and knowledge.md pitfalls.
+If user provided changes via `apply`, include those as `[USER]` changes (priority) alongside auto-discovered `[REFINE]` changes. Propose:
 
 1. A numbered list of improvements with rationale.
 2. For each, a diff preview showing the actual change.
@@ -87,35 +91,64 @@ Ask: "Apply all, pick specific numbers, or skip?"
    ```
 4. If a new pitfall or strategy was discovered: "Add to knowledge base? (y/n)"
 5. If references in `knowledge.md` seem outdated, propose updates.
-6. Ask user before committing.
 
-## Self-Refinement
+## Step 7 — Tidy the Repo
 
-When argument is `self`:
-- Review `knowledge.md` for stale or redundant entries.
-- Check if SKILL.md instructions match what actually happens during refinements.
-- Search online for newer Claude Code skill design resources and prompt optimization techniques.
-- Propose knowledge.md updates.
+Runs automatically after refinements. Also available standalone via `/refine-skill tidy-only`.
+Operates on `~/.claude/skills/`.
+
+### 7a. Audit Structure
+1. List all skill directories.
+2. For each, verify `SKILL.md` exists and has valid YAML frontmatter (name, description).
+3. Flag: missing `SKILL.md`, brackets `[]{}` in YAML description, nested `.git` dirs, ungitignored user data/credentials, orphan directories.
+4. Report as table. Auto-fix safe issues (e.g., missing `.gitkeep`). Ask before destructive fixes.
+
+### 7b. Update README
+Compare `~/.claude/skills/README.md` against actual contents:
+- Skills table: every skill dir with SKILL.md listed with correct name, command, description.
+- Directory structure tree: reflects actual files.
+- Installation section: still accurate.
+Apply updates if needed. Show diff.
+
+### 7c. Check .gitignore
+Verify coverage: `**/users/*/` (except `_example/`), `*.html` (generated), `.env`, `credentials.*`, `*.key`, `__pycache__/`, `*.pyc`, `uv.lock`. Propose additions if needed.
+
+### 7d. Show Changes
+```bash
+git -C ~/.claude/skills diff --stat
+git -C ~/.claude/skills status
+```
+Group by skill: modified files, new untracked, deleted.
+
+### 7e. Safety Check
+Scan for sensitive content before staging:
+- Files in `users/` (except `_example/`) about to be committed
+- `.env`, `.key`, `credentials.*` files
+- Files containing `API_KEY=`, `password=`, `token=`
+If warnings, stop and ask.
+
+### 7f. Commit
+1. Stage: `git -C ~/.claude/skills add -A`
+2. Draft concise commit message (list changed skills, nature of changes).
+3. Show draft. Ask user to confirm or edit.
+4. Commit.
+
+### 7g. User Data Repos
+Check for nested user data repos: `find ~/.claude/skills -path "*/users/*/.git" -maxdepth 4`.
+For each, show status and offer to commit separately.
 
 ## All Mode (default)
 
 When no argument is provided:
 - List all skill directories in `~/.claude/skills/`.
-- For each skill: run Steps 1-6. Between skills, summarize what was done and ask "Continue to next skill?"
-- At the end, show a summary table of all skills with changes made.
+- **Plan phase:** For each skill, run Steps 1-5 (understand, research, health check, questions, propose). Collect all proposed changes across all skills into a single unified plan.
+- **Present the unified plan** to the user: one numbered list covering all skills with changes. Ask: "Apply all, pick specific numbers, or skip?"
+- **Apply phase:** After user approval, apply all approved changes (Step 6) across all skills.
+- Then run Step 7 (tidy).
 
-## Apply Mode (`/refine-skill <name> apply <changes>`)
+## Tidy Mode (`/refine-skill tidy-only`)
 
-When the user provides specific changes to apply:
-
-1. Parse: skill name + everything after "apply" is the user's change request.
-2. Run Steps 1-3 as usual (understand + research + health check).
-3. **Merge two change sources:**
-   - The user's requested changes (priority — apply these first).
-   - Refinements discovered through research and analysis (propose alongside).
-4. Show unified proposal: user changes marked `[USER]`, auto-discovered marked `[REFINE]`.
-5. Apply all approved changes in one pass.
-6. Record in history, noting which changes were user-driven vs. auto-discovered.
+Skip Steps 1-6. Run Step 7 directly.
 
 ## Rules
 
@@ -124,3 +157,5 @@ When the user provides specific changes to apply:
 - Understand before optimizing — read the skill, research the domain, then propose.
 - Keep SKILL.md files under 15K chars (hard limit); prefer under 200 lines but don't sacrifice substance for brevity.
 - Ask before committing (user preference).
+- Never commit user data to the skills repo.
+- Always update README if skills were added or removed.

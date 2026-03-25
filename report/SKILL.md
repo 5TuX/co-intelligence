@@ -183,6 +183,10 @@ Print summary: `Result: N PASS / M FAIL`. Do NOT auto-fix.
 - Multi-format: add `pdf:` or `html:` sections to `_quarto.yml` for simultaneous output
 - Callout blocks: `:::{.callout-note}` / `:::{.callout-warning}` for structured asides
 - Quarto uses Pandoc under the hood — all Pandoc filters and features still work
+- `_brand.yml`: define colors, logos, fonts once — applied consistently across all outputs (1.8+)
+- `pdf-standard: pdf/a` in `_quarto.yml` for archival-quality PDF output (1.9+)
+- Typst is now a first-class output format — faster compilation than LaTeX with growing parity (1.7+)
+- Default LaTeX engine changed to lualatex in 1.8 — better Unicode and font support
 
 ## Zotero tip
 

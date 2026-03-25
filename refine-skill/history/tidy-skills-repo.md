@@ -1,4 +1,4 @@
-# sync-skills — Refinement History
+# tidy-skills-repo — Refinement History
 
 ## 2026-03-16
 - Changes: none — skill is clean and well-structured

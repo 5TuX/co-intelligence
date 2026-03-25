@@ -87,14 +87,7 @@ done
    - Missing MCP server → print `claude mcp add` commands (see templates below); prompt user for API keys
    - Ask user before making any changes
 
-   **MCP add templates (Windows):**
-   ```
-   ! claude mcp add -s user playwright -- npx -y @playwright/mcp@latest
-   ! claude mcp add -s user -t http tavily "https://mcp.tavily.com/mcp/?tavilyApiKey=<KEY>"
-   ! claude mcp add -s user -t http context7 "https://mcp.context7.com/mcp" -H "CONTEXT7_API_KEY: <KEY>"
-   ```
-
-   **MCP add templates (Linux / Mac):**
+   **MCP add templates (all platforms):**
    ```
    ! claude mcp add -s user playwright -- npx -y @playwright/mcp@latest
    ! claude mcp add -s user -t http tavily "https://mcp.tavily.com/mcp/?tavilyApiKey=<KEY>"

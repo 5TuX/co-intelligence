@@ -1,5 +1,12 @@
 # job-search — Refinement History
 
+## 2026-03-25
+- Changes: extracted comments.json processing (~2.5K chars) to `reference/comments-processing.md`, replaced inline block with pointer
+- Before: 14,984 chars, 209 lines
+- After: ~12,500 chars, ~186 lines
+- Research: ATS landscape unchanged; skill scope (discovery only) remains correct
+- User feedback: simplify without losing content
+
 ## 2026-03-16
 - Changes: extracted 4 sections to reference files to fix CRITICAL size issue (>15K silent truncation)
   - `clean-mode.md` — C1-C4 clean protocol

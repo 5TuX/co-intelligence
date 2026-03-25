@@ -19,7 +19,7 @@ $DRIVE/claude/                     CLAUDE.md      → symlink to Drive
     refine-skill/SKILL.md        mcpServers:
     report/SKILL.md                tavily      (stdio, needs API key)
     setup/SKILL.md                 playwright  (stdio, no key)
-    sync-skills/SKILL.md           context7    (http, needs API key)
+    tidy-skills-repo/SKILL.md      context7    (http, needs API key)
 ```
 
 ### Drive Path by OS
@@ -59,7 +59,7 @@ $DRIVE/claude/                     CLAUDE.md      → symlink to Drive
 | `refine-skill/SKILL.md` | `/refine-skill` | Analyze and improve skills |
 | `report/SKILL.md` | `/report` | Technical report generation |
 | `setup/SKILL.md` | `/setup` | Verify and repair setup |
-| `sync-skills/SKILL.md` | `/sync-skills` | Audit, update docs, commit skills repo |
+| `tidy-skills-repo/SKILL.md` | `/tidy-skills-repo` | Audit, update docs, commit skills repo |
 
 ### Plugin
 
