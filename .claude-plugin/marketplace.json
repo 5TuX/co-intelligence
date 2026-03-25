@@ -9,8 +9,11 @@
     {
       "name": "co-intelligence",
       "description": "Career search, skill authoring, setup verification, reports, multi-agent chat",
-      "version": "1.1.0",
-      "source": "./",
+      "version": "1.1.1",
+      "source": {
+        "source": "github",
+        "repo": "5TuX/co-intelligence"
+      },
       "author": {
         "name": "Dimitris Klockenbring",
         "email": "klockenbring@users.noreply.github.com"
