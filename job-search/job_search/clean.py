@@ -16,7 +16,7 @@ from urllib.parse import urlparse
 
 from .links import validate_links
 from .models import CleanReport, CleanedOffer, RenderContext
-from .render import render, render_user_dashboard
+from .render import render_user_dashboard
 
 AUTO_REMOVE = {"dead", "expired", "stale_announcement"}
 FLAG_STATUSES = {"redirect", "captcha", "error"}
@@ -154,7 +154,7 @@ def main() -> None:
         prog="js-clean",
         description="Clean dead/stale offers from the job-search catalog",
     )
-    parser.add_argument("user_dir", help="User directory (e.g. users/dimit/)")
+    parser.add_argument("user_dir", help="User directory containing offers.json")
     parser.add_argument(
         "--timeout", type=int, default=15, help="Request timeout in seconds"
     )

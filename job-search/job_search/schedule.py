@@ -68,7 +68,7 @@ def main() -> None:
         prog="js-schedule",
         description="Render learning path from profile.yaml to HTML",
     )
-    parser.add_argument("user_dir", help="User directory (e.g. users/dimit/)")
+    parser.add_argument("user_dir", help="User directory containing profile.yaml")
     args = parser.parse_args()
 
     user_dir = Path(args.user_dir)

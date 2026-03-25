@@ -25,6 +25,7 @@ class Offer(BaseModel):
 
 class Person(BaseModel):
     name: str
+    url: str = ""  # profile page (lab page, Google Scholar, etc.)
     affiliation: str = ""
     domain: str = ""
     reach: str = ""  # how to contact
