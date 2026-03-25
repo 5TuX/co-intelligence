@@ -71,66 +71,20 @@ $DRIVE/claude/                     CLAUDE.md      → symlink to Drive
 
 MCP servers are configured in `~/.claude.json` (local, not synced) under the `mcpServers` key. API keys are **never synced** — each machine needs its own keys.
 
-#### Windows templates (`cmd /c` wrapper required)
+#### MCP add commands (cross-platform)
 
-```json
-"mcpServers": {
-  "tavily": {
-    "type": "stdio",
-    "command": "cmd",
-    "args": ["/c", "npx", "-y", "tavily-mcp@latest"],
-    "env": {
-      "TAVILY_API_KEY": "<YOUR_TAVILY_KEY>"
-    }
-  },
-  "playwright": {
-    "type": "stdio",
-    "command": "cmd",
-    "args": ["/c", "npx", "-y", "@playwright/mcp@latest"],
-    "env": {}
-  },
-  "context7": {
-    "type": "http",
-    "url": "https://mcp.context7.com/mcp",
-    "headers": {
-      "CONTEXT7_API_KEY": "<YOUR_CONTEXT7_KEY>"
-    }
-  }
-}
-```
+Use `claude mcp add -s user` to install globally. Tavily and context7 use HTTP transport (no npx needed). Playwright uses stdio.
 
-#### Linux / Mac templates (bare `npx`)
-
-```json
-"mcpServers": {
-  "tavily": {
-    "type": "stdio",
-    "command": "npx",
-    "args": ["-y", "tavily-mcp@latest"],
-    "env": {
-      "TAVILY_API_KEY": "<YOUR_TAVILY_KEY>"
-    }
-  },
-  "playwright": {
-    "type": "stdio",
-    "command": "npx",
-    "args": ["-y", "@playwright/mcp@latest"],
-    "env": {}
-  },
-  "context7": {
-    "type": "http",
-    "url": "https://mcp.context7.com/mcp",
-    "headers": {
-      "CONTEXT7_API_KEY": "<YOUR_CONTEXT7_KEY>"
-    }
-  }
-}
+```bash
+claude mcp add -s user playwright -- npx -y @playwright/mcp@latest
+claude mcp add -s user -t http tavily "https://mcp.tavily.com/mcp/?tavilyApiKey=<YOUR_TAVILY_KEY>"
+claude mcp add -s user -t http context7 "https://mcp.context7.com/mcp" -H "CONTEXT7_API_KEY: <YOUR_CONTEXT7_KEY>"
 ```
 
 #### API Key Sources
 
-| Server | Get key at | Env/header name |
+| Server | Get key at | Transport |
 |---|---|---|
-| tavily | https://tavily.com | `TAVILY_API_KEY` |
-| context7 | https://context7.com | `CONTEXT7_API_KEY` (header) |
-| playwright | (no key needed) | — |
+| tavily | https://tavily.com | HTTP (key in URL) |
+| context7 | https://context7.com | HTTP (key in header) |
+| playwright | (no key needed) | stdio |

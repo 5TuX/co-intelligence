@@ -66,22 +66,13 @@ print('superpowers plugin:', 'enabled' if d.get('enabledPlugins',{}).get('superp
 ```
 
 ### Check: MCP servers configured
+Use `claude mcp list` which checks all scopes (local, user, plugins). Parse its output for the expected server names.
 ```bash
-PY=$(command -v python3 2>/dev/null || command -v python 2>/dev/null)
-CJSON="$(cygpath -w ~/.claude.json 2>/dev/null || echo ~/.claude.json)"
-$PY -c "
-import json, sys
-try:
-    d = json.load(open(sys.argv[1]))
-    servers = d.get('mcpServers', {})
-    expected = {'tavily', 'playwright', 'context7'}
-    found = set(servers.keys()) & expected
-    missing = expected - found
-    for s in sorted(found): print(f'MCP {s}: configured')
-    for s in sorted(missing): print(f'MCP {s}: MISSING')
-except Exception as e:
-    print(f'ERROR reading .claude.json: {e}')
-" "$CJSON"
+MCP_OUT=$(claude mcp list 2>&1)
+echo "$MCP_OUT"
+for srv in playwright tavily context7; do
+  echo "$MCP_OUT" | grep -qi "$srv" && echo "MCP $srv: configured" || echo "MCP $srv: MISSING"
+done
 ```
 
 5. **Report results** clearly:
@@ -98,16 +89,16 @@ except Exception as e:
 
    **MCP add templates (Windows):**
    ```
-   ! claude mcp add playwright -- cmd /c npx -y @playwright/mcp@latest
-   ! claude mcp add tavily -e TAVILY_API_KEY=<KEY> -- cmd /c npx -y tavily-mcp@latest
-   ! claude mcp add context7 --transport http --url https://mcp.context7.com/mcp --header "CONTEXT7_API_KEY: <KEY>"
+   ! claude mcp add -s user playwright -- npx -y @playwright/mcp@latest
+   ! claude mcp add -s user -t http tavily "https://mcp.tavily.com/mcp/?tavilyApiKey=<KEY>"
+   ! claude mcp add -s user -t http context7 "https://mcp.context7.com/mcp" -H "CONTEXT7_API_KEY: <KEY>"
    ```
 
    **MCP add templates (Linux / Mac):**
    ```
-   ! claude mcp add playwright -- npx -y @playwright/mcp@latest
-   ! claude mcp add tavily -e TAVILY_API_KEY=<KEY> -- npx -y tavily-mcp@latest
-   ! claude mcp add context7 --transport http --url https://mcp.context7.com/mcp --header "CONTEXT7_API_KEY: <KEY>"
+   ! claude mcp add -s user playwright -- npx -y @playwright/mcp@latest
+   ! claude mcp add -s user -t http tavily "https://mcp.tavily.com/mcp/?tavilyApiKey=<KEY>"
+   ! claude mcp add -s user -t http context7 "https://mcp.context7.com/mcp" -H "CONTEXT7_API_KEY: <KEY>"
    ```
 
 7. After fixing, **re-run verification** and confirm all checks pass.
@@ -189,16 +180,16 @@ MCP servers are **local** (not synced), so you must configure them per machine u
 
 **Windows:**
 ```bash
-claude mcp add playwright -- cmd /c npx -y @playwright/mcp@latest
-claude mcp add tavily -e TAVILY_API_KEY=<YOUR_KEY> -- cmd /c npx -y tavily-mcp@latest
-claude mcp add context7 --transport http --url https://mcp.context7.com/mcp --header "CONTEXT7_API_KEY: <YOUR_KEY>"
+claude mcp add -s user playwright -- npx -y @playwright/mcp@latest
+claude mcp add -s user -t http tavily "https://mcp.tavily.com/mcp/?tavilyApiKey=<YOUR_KEY>"
+claude mcp add -s user -t http context7 "https://mcp.context7.com/mcp" -H "CONTEXT7_API_KEY: <YOUR_KEY>"
 ```
 
 **Linux / Mac:**
 ```bash
-claude mcp add playwright -- npx -y @playwright/mcp@latest
-claude mcp add tavily -e TAVILY_API_KEY=<YOUR_KEY> -- npx -y tavily-mcp@latest
-claude mcp add context7 --transport http --url https://mcp.context7.com/mcp --header "CONTEXT7_API_KEY: <YOUR_KEY>"
+claude mcp add -s user playwright -- npx -y @playwright/mcp@latest
+claude mcp add -s user -t http tavily "https://mcp.tavily.com/mcp/?tavilyApiKey=<YOUR_KEY>"
+claude mcp add -s user -t http context7 "https://mcp.context7.com/mcp" -H "CONTEXT7_API_KEY: <YOUR_KEY>"
 ```
 
 **API keys:** Get tavily key from https://tavily.com, context7 key from https://context7.com. Playwright needs no key.
@@ -212,4 +203,5 @@ claude mcp add context7 --transport http --url https://mcp.context7.com/mcp --he
 - **Windows `/skills` panel**: Claude Code does not follow symlinks when scanning `skills/`. Use a Junction for the `skills/` directory.
 - **Windows SymbolicLink for files**: Requires Developer Mode enabled in Windows Settings, or running PowerShell as admin.
 - **Career dir not synced via Drive**: `~/.claude/skills/job-search/users/dimit/` is local and git-tracked. To migrate to a new machine, copy the directory.
+- **`claude mcp add` default scope is `local`**: Without `-s user`, servers are added to the project-local config and won't appear globally. Always use `-s user` for user-wide MCP servers.
 - **Fixing broken links**: If Drive folder is renamed/remounted, symlinks break. Delete the broken link and re-run the relevant setup step.
