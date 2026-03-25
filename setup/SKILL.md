@@ -204,4 +204,5 @@ claude mcp add -s user -t http context7 "https://mcp.context7.com/mcp" -H "CONTE
 - **Windows SymbolicLink for files**: Requires Developer Mode enabled in Windows Settings, or running PowerShell as admin.
 - **Career dir not synced via Drive**: `~/.claude/skills/job-search/users/dimit/` is local and git-tracked. To migrate to a new machine, copy the directory.
 - **`claude mcp add` default scope is `local`**: Without `-s user`, servers are added to the project-local config and won't appear globally. Always use `-s user` for user-wide MCP servers.
+- **Windows Git Bash mangles `/c` arg**: `claude mcp add ... -- cmd /c npx ...` in Git Bash translates `/c` to `C:/`, breaking the command. After adding playwright on Windows, verify `~/.claude.json` and manually fix `"C:/"` to `"/c"` if needed.
 - **Fixing broken links**: If Drive folder is renamed/remounted, symlinks break. Delete the broken link and re-run the relevant setup step.
