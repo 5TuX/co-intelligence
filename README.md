@@ -10,7 +10,7 @@ A personal collection of [Claude Code](https://docs.anthropic.com/en/docs/claude
 | **refine-skill** | `/refine-skill` | Meta-skill that analyzes and improves other skills (and itself) |
 | **report** | `/report` | Technical report writing with Pandoc ODT/PDF output and BibTeX citations |
 | **agent** | `/agent` | Multi-agent chat channel coordination |
-| **setup** | `/setup` | Verify, repair, or initialize Claude Code setup on a machine |
+| **setup** | `/setup` | Verify, repair, or initialize Claude Code setup; `/setup scan` syncs config across machines |
 
 ## Installation
 
