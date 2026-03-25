@@ -88,13 +88,27 @@ except Exception as e:
    - List each check as PASS or FAIL with the actual value found
    - For any FAIL, explain what is wrong and what the expected value should be
 
-6. **Offer to fix** any failed checks:
-   - Missing or broken symlink → recreate it (see `architecture.md` for drive paths by OS)
+6. **Offer to fix** any failed checks by **printing the commands the user should run** (prefixed with `!` so they can paste directly into the Claude Code prompt). Do NOT edit config files directly — give the user the commands and let them execute.
+   - Missing or broken symlink → print the PowerShell (Windows) or `ln -s` (Linux/Mac) command (see `architecture.md` for drive paths by OS)
    - Missing career dir → flag for manual action (needs files from another machine)
-   - Missing git repo in career dir → `git init && git add -A && git commit -m "career: initial import"`
-   - Missing plugin → add `enabledPlugins` key to `settings.json` (see `architecture.md`)
-   - Missing MCP server → add to `~/.claude.json` `mcpServers` block (see `architecture.md` for templates); prompt user for API keys
+   - Missing git repo in career dir → print `git init && git add -A && git commit -m "career: initial import"`
+   - Missing plugin → print `/plugin install superpowers@claude-plugins-official`
+   - Missing MCP server → print `claude mcp add` commands (see templates below); prompt user for API keys
    - Ask user before making any changes
+
+   **MCP add templates (Windows):**
+   ```
+   ! claude mcp add playwright -- cmd /c npx -y @playwright/mcp@latest
+   ! claude mcp add tavily -e TAVILY_API_KEY=<KEY> -- cmd /c npx -y tavily-mcp@latest
+   ! claude mcp add context7 --transport http --url https://mcp.context7.com/mcp --header "CONTEXT7_API_KEY: <KEY>"
+   ```
+
+   **MCP add templates (Linux / Mac):**
+   ```
+   ! claude mcp add playwright -- npx -y @playwright/mcp@latest
+   ! claude mcp add tavily -e TAVILY_API_KEY=<KEY> -- npx -y tavily-mcp@latest
+   ! claude mcp add context7 --transport http --url https://mcp.context7.com/mcp --header "CONTEXT7_API_KEY: <KEY>"
+   ```
 
 7. After fixing, **re-run verification** and confirm all checks pass.
 
@@ -171,18 +185,23 @@ If not listed, install it:
 
 ### Step 8 — Configure MCP servers
 
-MCP servers live in `~/.claude.json` under the `mcpServers` key. This file is **local** (not synced), so you must configure it per machine.
+MCP servers are **local** (not synced), so you must configure them per machine using `claude mcp add`.
 
-See `architecture.md` for the full JSON templates. The key steps:
+**Windows:**
+```bash
+claude mcp add playwright -- cmd /c npx -y @playwright/mcp@latest
+claude mcp add tavily -e TAVILY_API_KEY=<YOUR_KEY> -- cmd /c npx -y tavily-mcp@latest
+claude mcp add context7 --transport http --url https://mcp.context7.com/mcp --header "CONTEXT7_API_KEY: <YOUR_KEY>"
+```
 
-1. Open (or create) `~/.claude.json` and add the `mcpServers` block.
-2. For **playwright** — no secrets needed, just add the config.
-3. For **tavily** — get your API key from https://tavily.com and set `TAVILY_API_KEY`.
-4. For **context7** — get your API key from https://context7.com and set the `CONTEXT7_API_KEY` header.
+**Linux / Mac:**
+```bash
+claude mcp add playwright -- npx -y @playwright/mcp@latest
+claude mcp add tavily -e TAVILY_API_KEY=<YOUR_KEY> -- npx -y tavily-mcp@latest
+claude mcp add context7 --transport http --url https://mcp.context7.com/mcp --header "CONTEXT7_API_KEY: <YOUR_KEY>"
+```
 
-**Windows note:** MCP stdio servers must use `cmd /c npx ...` (not bare `npx`) because Claude Code on Windows needs `cmd` as the shell wrapper.
-
-**Linux / Mac:** Use `npx` directly as the command (no `cmd /c` wrapper).
+**API keys:** Get tavily key from https://tavily.com, context7 key from https://context7.com. Playwright needs no key.
 
 ## Known Issues & Gotchas
 
