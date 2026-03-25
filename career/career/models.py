@@ -1,4 +1,4 @@
-"""Pydantic models for job-search skill data."""
+"""Pydantic models for career skill data."""
 
 from __future__ import annotations
 
@@ -87,7 +87,7 @@ class CleanedOffer(BaseModel):
 
 
 class CleanReport(BaseModel):
-    """Output of js-clean."""
+    """Output of career-clean."""
 
     date: str
     total_checked: int

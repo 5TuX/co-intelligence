@@ -46,12 +46,12 @@ ls ~/.claude/skills/
 
 ### Check: Career dir
 ```bash
-ls ~/.claude/skills/job-search/users/dimit/*.md ~/.claude/skills/job-search/users/dimit/Topics/ 2>&1 || echo "ERROR: career dir missing or incomplete"
+ls ~/Documents/_me/references/career/dimit/*.md ~/Documents/_me/references/career/dimit/Topics/ 2>&1 || echo "ERROR: career dir missing or incomplete"
 ```
 
 ### Check: Career key files
 ```bash
-ls ~/.claude/skills/job-search/users/dimit/goals.md ~/.claude/skills/job-search/users/dimit/cv.md > /dev/null 2>&1 && echo "Career files: present" || echo "ERROR: career files missing"
+ls ~/Documents/_me/references/career/dimit/goals.md ~/Documents/_me/references/career/dimit/cv.md > /dev/null 2>&1 && echo "Career files: present" || echo "ERROR: career files missing"
 ```
 
 ### Check: Plugin enabled
@@ -103,8 +103,8 @@ done
 | `~/.claude/CLAUDE.md` | Symlink → Drive path, readable |
 | `~/.claude/settings.json` | Symlink → Drive path, valid JSON |
 | `~/.claude/skills/` | Symlink/Junction → Drive skills dir, contains skill subdirs |
-| `~/.claude/skills/job-search/users/dimit/` | Directory with goals.md, journal.md, cv.md, market.md, Topics/, etc. |
-| `~/.claude/skills/job-search/users/dimit/` | Files synced via Google Drive (no git repo required) |
+| `~/Documents/_me/references/career/dimit/` | Directory with goals.md, journal.md, cv.md, market.md, Topics/, etc. |
+| `~/Documents/_me/references/career/dimit/` | Files synced via Google Drive (no git repo required) |
 | `settings.json` → `enabledPlugins` | `superpowers@claude-plugins-official: true` |
 | `~/.claude.json` → `mcpServers.tavily` | stdio, `npx tavily-mcp@latest`, env `TAVILY_API_KEY` set |
 | `~/.claude.json` → `mcpServers.playwright` | stdio, `npx @playwright/mcp@latest` |
@@ -152,7 +152,7 @@ New-Item -ItemType Junction -Path "$env:USERPROFILE\.claude\skills" -Target "$DR
 
 ### Step 6 — Set up career directory
 ```bash
-mkdir -p ~/.claude/skills/job-search/users/dimit/Topics
+mkdir -p ~/Documents/_me/references/career/dimit/Topics
 # Copy career files from another machine or let Google Drive sync them
 ```
 
@@ -195,7 +195,7 @@ claude mcp add -s user -t http context7 "https://mcp.context7.com/mcp" -H "CONTE
 - **Windows `ln -s` for dirs**: Git Bash `ln -s` on a directory creates a copy, not a link. Always use PowerShell `New-Item -ItemType Junction`.
 - **Windows `/skills` panel**: Claude Code does not follow symlinks when scanning `skills/`. Use a Junction for the `skills/` directory.
 - **Windows SymbolicLink for files**: Requires Developer Mode enabled in Windows Settings, or running PowerShell as admin.
-- **Career dir not synced via Drive**: `~/.claude/skills/job-search/users/dimit/` is local and git-tracked. To migrate to a new machine, copy the directory.
+- **Career dir not synced via Drive**: `~/Documents/_me/references/career/dimit/` is local and git-tracked. To migrate to a new machine, copy the directory.
 - **`claude mcp add` default scope is `local`**: Without `-s user`, servers are added to the project-local config and won't appear globally. Always use `-s user` for user-wide MCP servers.
 - **Windows Git Bash mangles `/c` arg**: `claude mcp add ... -- cmd /c npx ...` in Git Bash translates `/c` to `C:/`, breaking the command. After adding playwright on Windows, verify `~/.claude.json` and manually fix `"C:/"` to `"/c"` if needed.
 - **Fixing broken links**: If Drive folder is renamed/remounted, symlinks break. Delete the broken link and re-run the relevant setup step.

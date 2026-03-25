@@ -6,10 +6,9 @@ A personal collection of [Claude Code](https://docs.anthropic.com/en/docs/claude
 
 | Skill | Command | What it does |
 |-------|---------|-------------|
-| **job-search** | `/job-search` | AI-powered job search with learning loop, ethical filtering, multi-user support |
+| **career** | `/career` | AI-powered job search with learning loop, ethical filtering, multi-user support, and note capture |
 | **refine-skill** | `/refine-skill` | Meta-skill that analyzes and improves other skills (and itself) |
 | **report** | `/report` | Technical report writing with Pandoc ODT/PDF output and BibTeX citations |
-| **note** | `/note` | Quick capture of learnings, gotchas, tips to career files |
 | **agent** | `/agent` | Multi-agent chat channel coordination |
 | **setup** | `/setup` | Verify, repair, or initialize Claude Code setup on a machine |
 
@@ -19,8 +18,8 @@ A personal collection of [Claude Code](https://docs.anthropic.com/en/docs/claude
 # Clone into your Claude Code skills directory
 git clone https://github.com/YOUR_USERNAME/claude-skills.git ~/.claude/skills
 
-# Install job-search Python dependencies
-cd ~/.claude/skills/job-search && uv sync
+# Install career Python dependencies
+cd ~/.claude/skills/career && uv sync
 ```
 
 Skills are automatically available as slash commands in Claude Code.
@@ -30,52 +29,40 @@ Skills are automatically available as slash commands in Claude Code.
 ```
 ~/.claude/skills/
 ├── README.md               # This file
-├── .gitignore              # Excludes user data, generated HTML, secrets
+├── .gitignore              # Excludes generated HTML, secrets
 ├── agent/                  # Multi-agent chat coordination
 │   └── SKILL.md
-├── job-search/             # AI job search engine
-│   ├── SKILL.md            #   Orchestration (~178 lines)
+├── career/                 # AI career management engine
+│   ├── SKILL.md            #   Orchestration (search, clean, note modes)
 │   ├── README.md           #   Detailed documentation
-│   ├── ROADMAP.md          #   Development roadmap
 │   ├── pyproject.toml      #   Python dependencies
-│   ├── job_search/         #   Python automation package
+│   ├── career/             #   Python automation package
 │   │   ├── models.py       #     Pydantic schemas
-│   │   ├── clean.py        #     CLI: js-clean (link validator + offer cleaner)
-│   │   ├── render.py       #     CLI: js-render (JSON → HTML)
-│   │   ├── schedule.py     #     CLI: js-schedule (profile → schedule.html)
-│   │   ├── links.py        #     CLI: js-validate-links
-│   │   ├── sources.py      #     CLI: js-validate-sources
+│   │   ├── clean.py        #     CLI: career-clean (link validator + offer cleaner)
+│   │   ├── render.py       #     CLI: career-render (JSON → HTML)
+│   │   ├── schedule.py     #     CLI: career-schedule (profile → learning path)
+│   │   ├── links.py        #     CLI: career-validate-links
+│   │   ├── sources.py      #     CLI: career-validate-sources
 │   │   └── templates/      #     Jinja2 HTML templates
 │   ├── sources-general.yaml
-│   ├── reference/           #   Extracted protocol files
-│   │   ├── clean-mode.md
-│   │   ├── comments-processing.md
-│   │   ├── deep-search-tactics.md
-│   │   ├── final-report.md
-│   │   ├── learning-loop.md
-│   │   ├── new-user-flow.md
-│   │   ├── search-agents.md
-│   │   ├── update-phase.md
-│   │   └── update-user-flow.md
-│   └── users/              #   Per-user data (gitignored)
-│       └── _example/       #     Template for new users (goals.md, cv.md, archive.md, journal.md)
+│   ├── reference/          #   Extracted protocol files
+│   └── templates/
+│       └── user-template/  #     Blueprint for new users
 ├── refine-skill/           # Meta-skill for iterative improvement
-│   ├── SKILL.md            #   Main instructions
-│   ├── knowledge.md        #   Living knowledge base (pitfalls, strategies)
-│   ├── analysis.md         #   Health check rubric
-│   └── history/            #   Per-skill refinement logs
+│   ├── SKILL.md
+│   ├── knowledge.md
+│   ├── analysis.md
+│   └── history/
 ├── report/                 # Technical report writing
-│   └── SKILL.md
-├── note/                   # Quick note capture
 │   └── SKILL.md
 └── setup/                  # Environment setup
     ├── SKILL.md
-    └── architecture.md     #   Drive paths and symlink layout by OS
+    └── architecture.md
 ```
 
-## Privacy
+## User Data
 
-All personal data (career files, CVs, job offers, preferences) lives in gitignored `users/` directories. The repo contains only skill logic, templates, and shared configuration. Each user can optionally track their private data in a separate git repo inside their user directory.
+Career user data (CVs, job offers, preferences) lives **outside** the skills directory at `~/Documents/_me/references/career/<handle>/`. This separates code from data and keeps the skills repo clean.
 
 ## Creating New Skills
 

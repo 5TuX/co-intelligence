@@ -1,8 +1,8 @@
-"""Render job-search JSON data to HTML via Jinja2 templates.
+"""Render career JSON data to HTML via Jinja2 templates.
 
 CLI:
-  uv run js-render <user-dir>              # unified dashboard (default)
-  uv run js-render <json> --template offers --user-dir <path>  # legacy single template
+  uv run career-render <user-dir>              # unified dashboard (default)
+  uv run career-render <json> --template offers --user-dir <path>  # legacy single template
 """
 
 from __future__ import annotations
@@ -123,8 +123,8 @@ def render_user_dashboard(user_dir: Path) -> Path:
 
 def main() -> None:
     parser = argparse.ArgumentParser(
-        prog="js-render",
-        description="Render job-search data to HTML",
+        prog="career-render",
+        description="Render career data to HTML",
     )
     parser.add_argument(
         "path",

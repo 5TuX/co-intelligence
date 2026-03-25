@@ -1,6 +1,6 @@
 # Job Search Reference
 
-Reference data for the `/job-search` skill — removed/archived offers history, skill gaps, role targets, and tips.
+Reference data for the `/career` skill — removed/archived offers history, skill gaps, role targets, and tips.
 Active offers are in `Offers.html`.
 
 ---

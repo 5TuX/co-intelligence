@@ -1,8 +1,8 @@
-"""Async link validation for job-search offers.
+"""Async link validation for career offers.
 
 CLI:
-  uv run js-validate-links <json-file> --output <results.json> [--timeout 15]
-  uv run js-validate-links --html <Offers.html> --output <results.json>
+  uv run career-validate-links <json-file> --output <results.json> [--timeout 15]
+  uv run career-validate-links --html <Offers.html> --output <results.json>
 """
 
 from __future__ import annotations
@@ -120,7 +120,7 @@ async def validate_links(
     """Validate a list of URLs concurrently."""
     semaphore = asyncio.Semaphore(CONCURRENCY)
     async with httpx.AsyncClient(
-        headers={"User-Agent": "Mozilla/5.0 (job-search-validator)"},
+        headers={"User-Agent": "Mozilla/5.0 (career-validator)"},
     ) as client:
         tasks = [check_link(client, url, semaphore, timeout) for url in urls]
         return await asyncio.gather(*tasks)
@@ -128,8 +128,8 @@ async def validate_links(
 
 def main() -> None:
     parser = argparse.ArgumentParser(
-        prog="js-validate-links",
-        description="Validate URLs from job-search data",
+        prog="career-validate-links",
+        description="Validate URLs from career data",
     )
     group = parser.add_mutually_exclusive_group(required=True)
     group.add_argument("json_file", nargs="?", help="JSON file (RenderContext schema)")

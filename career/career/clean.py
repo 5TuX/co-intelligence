@@ -1,7 +1,7 @@
-"""Clean stale/dead offers from the job-search catalog.
+"""Clean stale/dead offers from the career catalog.
 
 CLI:
-  uv run js-clean <user-dir> [--timeout 15] [--dry-run]
+  uv run career-clean <user-dir> [--timeout 15] [--dry-run]
 """
 
 from __future__ import annotations
@@ -151,8 +151,8 @@ async def clean_offers(
 
 def main() -> None:
     parser = argparse.ArgumentParser(
-        prog="js-clean",
-        description="Clean dead/stale offers from the job-search catalog",
+        prog="career-clean",
+        description="Clean dead/stale offers from the career catalog",
     )
     parser.add_argument("user_dir", help="User directory containing offers.json")
     parser.add_argument(

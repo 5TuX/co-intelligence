@@ -1,16 +1,17 @@
 ---
-name: job-search
+name: career
 description: >
-  Use when the user says /job-search or asks for a full career refresh,
-  job search, CV analysis, or skill gap review.
+  Use when the user says /career, /note, or asks for a full career refresh,
+  job search, CV analysis, skill gap review, or wants to capture a learning note.
+  Proactively offer note mode when something notable happens during a work session.
 disable-model-invocation: true
 context: fork
-argument-hint: "[user1,user2] | all | clean [handle] | new-user | update-user <handle>"
+argument-hint: "[user1,user2] | clean [handle] | note [handle] <content> | new-user | update-user <handle>"
 ---
 
-# Job Search & Career Refresh (Multi-User)
+# Career — Search, Discovery & Notes (Multi-User)
 
-Full career refresh — job **discovery**, CV refinement, skill gap analysis.
+Full career refresh — job **discovery**, CV refinement, skill gap analysis, and **note capture**.
 Runs in a forked context to avoid polluting the main conversation.
 Supports multiple users with independent profiles, preferences, and career files.
 
@@ -18,29 +19,41 @@ Supports multiple users with independent profiles, preferences, and career files
 
 **Admin identity:** The admin/operator is always the user running the Claude Code session. Other users are "friends." Admin sees process notes in their summary; friends only get personalized tips.
 
+## Configuration
+
+```
+DATA_DIR: ~/Documents/_me/references/career
+ADMIN_USER: dimit
+```
+
+All user data lives OUTSIDE this skill directory, under `DATA_DIR/<handle>/`.
+The skill directory contains only code, templates, reference docs, and shared configuration.
+
 ## Argument Parsing
 
 ```
-/job-search                       → search for ALL users (list dirs under users/)
-/job-search dimit                 → search for dimit only
-/job-search dimit,alice           → search for listed users
-/job-search clean                 → clean mode for ALL users (validate links, remove dead offers)
-/job-search clean dimit           → clean mode for dimit only
-/job-search new-user              → interactive user creation (see §New-User Creation)
-/job-search update-user <handle>  → interactive profile update (see §Update-User)
+/career                          → search for ALL users (list dirs under DATA_DIR)
+/career dimit                    → search for dimit only
+/career dimit,alice              → search for listed users
+/career clean                    → clean mode for ALL users (validate links, remove dead offers)
+/career clean dimit              → clean mode for dimit only
+/career note <content>           → note mode for ADMIN_USER (dimit)
+/career note <handle> <content>  → note mode for specified user
+/career new-user                 → interactive user creation (see §New-User Creation)
+/career update-user <handle>     → interactive profile update (see §Update-User)
 ```
 
 Parse the argument first. If a comma-separated list, split on `,` and trim whitespace.
-To discover available users, list directories under `users/` within this skill's directory.
-If a requested handle has no directory, error with: "User '<handle>' not found. Available users: <list>. Use `/job-search new-user` to create."
+To discover available users, list directories under `DATA_DIR`.
+If a requested handle has no directory, error with: "User '<handle>' not found. Available users: <list>. Use `/career new-user` to create."
 
 ## User System
 
-All user data lives in `users/<handle>/` within this skill's directory (`~/.claude/skills/job-search/users/<handle>/`).
+All user data lives in `DATA_DIR/<handle>/` (`~/Documents/_me/references/career/<handle>/`).
 
 Each user has:
 ```
-users/<handle>/
+DATA_DIR/<handle>/
 ├── profile.yaml            # Preferences, ethical filters, location, skills, learning path
 ├── sources.yaml            # User-specific job sources
 ├── Dashboard.html          # Unified HTML (offers + summary + schedule, tabbed)
@@ -70,8 +83,9 @@ For each user, load any files listed in their `profile.yaml` `feedback_files` fi
 - If argument is `new-user` → jump to §New-User Creation
 - If argument is `update-user <handle>` → jump to §Update-User
 - If argument starts with `clean` → jump to §Clean Mode. Remaining args (if any) are user handles.
+- If argument starts with `note` → jump to §Note Mode.
 - Otherwise → search mode. Determine target users:
-  - No argument → all users (list `users/` subdirectories)
+  - No argument → all users (list `DATA_DIR` subdirectories)
   - Comma-separated handles → those users only
   - Single handle → that user only
 
@@ -79,21 +93,37 @@ Read `reference/clean-mode.md` for the full clean mode protocol (C1-C4).
 
 ---
 
+### Note Mode
+
+When the argument starts with `note`:
+
+1. **Parse handle vs content:** Take the text after `note`. If the first word matches an existing user handle in `DATA_DIR`, use that handle and treat the rest as content. Otherwise, default to `ADMIN_USER` and treat all text as content.
+2. **Classify and route** the content to the right file and section:
+   - Technical concept, gotcha, or tool tip → `DATA_DIR/<handle>/journal.md` (under today's date heading, appending to the current session entry if one exists)
+   - Skill level update (e.g. "now comfortable with async Python") → `DATA_DIR/<handle>/cv.md` (skills inventory section)
+   - Human expertise moment (caught a bug, key insight, judgment call) → `DATA_DIR/<handle>/cv.md` (strengths section)
+   - Multiple targets → append to each
+3. **Append** with today's date and a brief context tag (e.g. project name or topic).
+4. **Git commit** if `DATA_DIR/<handle>/.git/` exists.
+5. **Confirm** in one line what was added and where.
+
+---
+
 ### Step 1: Read user data
 
 For EACH target user:
-1. Read `users/<handle>/profile.yaml` — extract location_priority, skills, ethical_filter, search_notes, feedback_files, learning_path
-2. Read career files from `users/<handle>/`: `goals.md`, `cv.md`, `journal.md`, `archive.md`
-3. Read existing `users/<handle>/Dashboard.html` (or `Offers.html` if Dashboard.html doesn't exist yet) to know what's already tracked
-4. Read `users/<handle>/sources.yaml` for user-specific sources
+1. Read `DATA_DIR/<handle>/profile.yaml` — extract location_priority, skills, ethical_filter, search_notes, feedback_files, learning_path
+2. Read career files from `DATA_DIR/<handle>/`: `goals.md`, `cv.md`, `journal.md`, `archive.md`
+3. Read existing `DATA_DIR/<handle>/Dashboard.html` (or `Offers.html` if Dashboard.html doesn't exist yet) to know what's already tracked
+4. Read `DATA_DIR/<handle>/sources.yaml` for user-specific sources
 5. Read `sources-general.yaml` (shared, read once)
 6. Load feedback files listed in profile.yaml
 7. Read learning-loop files (if they exist — gracefully skip if missing):
-   - `users/<handle>/learned-preferences.md` — accumulated preference model from past feedback
-   - `users/<handle>/feedback.yaml` — raw Q&A history from past runs
-   - `users/<handle>/search-log.yaml` — per-run query performance log
-   - `users/<handle>/metrics.yaml` — run-over-run quality metrics
-8. Read `users/<handle>/comments.json` and process per `reference/comments-processing.md` (intent detection, scoring overrides, profile updates, cleanup).
+   - `DATA_DIR/<handle>/learned-preferences.md` — accumulated preference model from past feedback
+   - `DATA_DIR/<handle>/feedback.yaml` — raw Q&A history from past runs
+   - `DATA_DIR/<handle>/search-log.yaml` — per-run query performance log
+   - `DATA_DIR/<handle>/metrics.yaml` — run-over-run quality metrics
+8. Read `DATA_DIR/<handle>/comments.json` and process per `reference/comments-processing.md` (intent detection, scoring overrides, profile updates, cleanup).
 
 ### Step 1.5: Adaptive strategy review (learning loop)
 
@@ -132,10 +162,10 @@ For EVERY target user, ALWAYS generate the unified `Dashboard.html`.
 
 The dashboard combines all views in a single tabbed HTML file: **Offers** (persistent catalog), **Run Summary** (tips + admin notes), and **Learning Path** (if the user has a learning_path in profile.yaml). The "Last updated" date is shown at the top.
 
-1. Write `users/<handle>/summary-data.json` — same `RenderContext` schema as offers.json, but add `tips` (per-user advice) and `admin_notes` (admin-only process notes). Mark hidden gems with `hidden_gem: true`.
+1. Write `DATA_DIR/<handle>/summary-data.json` — same `RenderContext` schema as offers.json, but add `tips` (per-user advice) and `admin_notes` (admin-only process notes). Mark hidden gems with `hidden_gem: true`.
 2. Render the unified dashboard:
 ```bash
-uv run js-render users/<handle>/
+uv run career-render DATA_DIR/<handle>/
 ```
 This reads `offers.json`, `summary-data.json`, and `profile.yaml` (for schedule) and produces a single `Dashboard.html`.
 
@@ -149,9 +179,9 @@ This reads `offers.json`, `summary-data.json`, and `profile.yaml` (for schedule)
 
 For each user, only commit if their user directory has a `.git/` subdirectory:
 ```bash
-if [ -d ~/.claude/skills/job-search/users/<handle>/.git ]; then
-  git -C ~/.claude/skills/job-search/users/<handle> add -A
-  git -C ~/.claude/skills/job-search/users/<handle> commit -m "career: job search refresh"
+if [ -d DATA_DIR/<handle>/.git ]; then
+  git -C DATA_DIR/<handle> add -A
+  git -C DATA_DIR/<handle> commit -m "career: job search refresh"
 fi
 ```
 If no `.git/` exists, skip — files are synced via Google Drive.
@@ -181,6 +211,6 @@ Read `reference/final-report.md` for the required report format. All sections ar
 | Learning loop protocol | `reference/learning-loop.md` |
 | New-user creation flow | `reference/new-user-flow.md` |
 | Update-user flow | `reference/update-user-flow.md` |
-| HTML templates & models | `job_search/templates/`, `job_search/models.py` |
+| HTML templates & models | `career/templates/`, `career/models.py` |
 | General sources | `sources-general.yaml` |
-| User-specific sources | `users/<handle>/sources.yaml` |
+| User-specific sources | `DATA_DIR/<handle>/sources.yaml` |

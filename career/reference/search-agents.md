@@ -73,12 +73,12 @@ Search the web for new AI-powered job search strategies, tools, and repos (e.g. 
 **Agent: Market trends + skill gaps**
 Search the internet for current AI/ML job market trends. Cross-reference with ALL target users' skill levels to identify highest-ROI gaps. Search for cool ideas around users' recent work topics.
 
-## Per-user agents (use users/<handle>/sources.yaml, one set per user)
+## Per-user agents (use DATA_DIR/<handle>/sources.yaml, one set per user)
 
 For EACH target user, spawn:
 
 **Agent: User-specific source search — <handle>**
-Search all sources in `users/<handle>/sources.yaml`. Follow the user's `search_notes` from their profile — these contain specific labs, companies, institutions, and domains to check. Include clickable URLs. Apply that user's ethical filtering.
+Search all sources in `DATA_DIR/<handle>/sources.yaml`. Follow the user's `search_notes` from their profile — these contain specific labs, companies, institutions, and domains to check. Include clickable URLs. Apply that user's ethical filtering.
 
 **Agent: Deep search — <handle>**
 Read `reference/deep-search-tactics.md` for the full tactics reference. Adapt all strategies to this user's profile:

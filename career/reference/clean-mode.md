@@ -1,10 +1,10 @@
-# Clean Mode (`/job-search clean [handles]`)
+# Clean Mode (`/career clean [handles]`)
 
-When clean mode is triggered explicitly via `/job-search clean`, run steps C1-C4 for each target user and then stop (do not continue to the search phase).
+When clean mode is triggered explicitly via `/career clean`, run steps C1-C4 for each target user and then stop (do not continue to the search phase).
 
 ## C0. Process user comments
 
-Before cleaning, read `users/<handle>/comments.json` and apply the full comment rules from SKILL.md Step 1.8:
+Before cleaning, read `DATA_DIR/<handle>/comments.json` and apply the full comment rules from SKILL.md Step 1.8:
 - **Delete requests** — `"delete this"`, `"remove"`, `"drop"` → remove offer immediately. Archive to archive.md. Remove comment from `comments.json`.
 - **Rejection comments** — `"not interested"`, `"skip"`, `"pass"`, etc. → same as delete.
 - **Protected offers** — `"applied"`, `"sent CV"`, `"interview"`, `"in progress"` → must NOT be removed even if the link is dead. Mark notes with "link dead but user applied — keeping".
@@ -16,10 +16,10 @@ Before cleaning, read `users/<handle>/comments.json` and apply the full comment 
 
 For EACH target user:
 ```bash
-uv run js-clean users/<handle>/ --timeout 15
+uv run career-clean DATA_DIR/<handle>/ --timeout 15
 ```
 
-Read the generated `users/<handle>/clean-report.json`.
+Read the generated `DATA_DIR/<handle>/clean-report.json`.
 
 ## C1.5. Generic URL pattern check
 
@@ -46,7 +46,7 @@ For each offer in `flagged_offers` from the clean report:
 
 After review, if any additional offers were removed, update `offers.json` and re-render:
 ```bash
-uv run js-render users/<handle>/
+uv run career-render DATA_DIR/<handle>/
 ```
 
 ## C2.5. Soft dead link scan (LLM content verification)
@@ -74,7 +74,7 @@ After removing soft-dead offers, update `offers.json` and re-render (same as C2)
 
 ## C3. Archive removed offers
 
-For all removed offers (both auto-removed by `js-clean` and LLM-confirmed), append to the "Removed Offers" section of `users/<handle>/archive.md`:
+For all removed offers (both auto-removed by `career-clean` and LLM-confirmed), append to the "Removed Offers" section of `DATA_DIR/<handle>/archive.md`:
 - Use the existing location-based subsection structure (Strasbourg, France/Nearby, Remote International, etc.)
 - Format: `- ~~Company — Role~~ — <reason> (<date>)`
 - The `detail` field from clean-report.json provides the reason.
@@ -85,8 +85,8 @@ Print a summary to the user: N offers checked, N removed, N flagged (N resolved 
 
 If the user directory has a `.git/` subdirectory, commit the changes:
 ```bash
-if [ -d ~/.claude/skills/job-search/users/<handle>/.git ]; then
-  git -C ~/.claude/skills/job-search/users/<handle> add offers.json Dashboard.html archive.md clean-report.json
-  git -C ~/.claude/skills/job-search/users/<handle> commit -m "career: clean — removed N dead/stale offers"
+if [ -d DATA_DIR/<handle>/.git ]; then
+  git -C DATA_DIR/<handle> add offers.json Dashboard.html archive.md clean-report.json
+  git -C DATA_DIR/<handle> commit -m "career: clean — removed N dead/stale offers"
 fi
 ```

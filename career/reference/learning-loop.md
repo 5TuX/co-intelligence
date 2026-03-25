@@ -36,7 +36,7 @@ After generating results but before the final report, update the learning-loop f
 
 ### 6.5a: Update search-log.yaml
 
-Append this run's search performance to `users/<handle>/search-log.yaml`:
+Append this run's search performance to `DATA_DIR/<handle>/search-log.yaml`:
 ```yaml
 - run: <run_number>
   date: <today>
@@ -54,7 +54,7 @@ Estimate query-level performance as best you can — exact attribution isn't cri
 
 ### 6.5b: Update metrics.yaml
 
-Append this run's metrics to `users/<handle>/metrics.yaml`:
+Append this run's metrics to `DATA_DIR/<handle>/metrics.yaml`:
 ```yaml
 - run: <run_number>
   date: <today>
@@ -110,7 +110,7 @@ Before I wrap up, a few quick questions to sharpen future runs:
 
 ### After the user answers
 
-1. **Record in `feedback.yaml`** — append to `users/<handle>/feedback.yaml`:
+1. **Record in `feedback.yaml`** — append to `DATA_DIR/<handle>/feedback.yaml`:
 ```yaml
 - run: <run_number>
   date: <today>
@@ -120,7 +120,7 @@ Before I wrap up, a few quick questions to sharpen future runs:
       signal: "<extracted preference signal, e.g.: location_weight: strasbourg++++, seniority_flex: true_for_strasbourg>"
 ```
 
-2. **Regenerate `learned-preferences.md`** — read the FULL `feedback.yaml` history and regenerate `users/<handle>/learned-preferences.md` with these sections:
+2. **Regenerate `learned-preferences.md`** — read the FULL `feedback.yaml` history and regenerate `DATA_DIR/<handle>/learned-preferences.md` with these sections:
 
 ```markdown
 ## Learned Preferences (auto-generated from <N> runs of feedback)
@@ -145,6 +145,6 @@ Last updated: <date> | Based on: <N> Q&A exchanges across <M> runs
 
 4. **Commit the learning-loop files:**
 ```bash
-git -C ~/.claude/skills/job-search/users/<handle> add feedback.yaml search-log.yaml metrics.yaml learned-preferences.md
-git -C ~/.claude/skills/job-search/users/<handle> commit -m "career: learning loop update (run <N>)"
+git -C DATA_DIR/<handle> add feedback.yaml search-log.yaml metrics.yaml learned-preferences.md
+git -C DATA_DIR/<handle> commit -m "career: learning loop update (run <N>)"
 ```

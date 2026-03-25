@@ -1,7 +1,7 @@
 # Journal
 
-<!-- Chronological log of job search sessions -->
-<!-- Auto-updated after each /job-search run -->
+<!-- Chronological log of career sessions -->
+<!-- Auto-updated after each /career run -->
 
 ## Session Log
 

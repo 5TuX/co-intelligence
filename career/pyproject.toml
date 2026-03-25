@@ -1,14 +1,14 @@
 [project]
-name = "job-search"
-version = "0.1.0"
-description = "Claude Code skill for automated job-search: link validation, offer cleaning, dashboard rendering, and schedule planning."
+name = "career"
+version = "2.0.0"
+description = "Claude Code skill for career management: job discovery, note capture, link validation, offer cleaning, dashboard rendering, and schedule planning."
 readme = "README.md"
 license = "MIT"
 requires-python = ">=3.11"
 authors = [
     { name = "Dimitris Klockenbring", email = "klockenbring@users.noreply.github.com" },
 ]
-keywords = ["claude-code", "job-search", "automation", "skill"]
+keywords = ["claude-code", "career", "job-search", "automation", "skill"]
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Intended Audience :: Developers",
@@ -25,16 +25,16 @@ dependencies = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/5TuX/job-search-skill"
-Repository = "https://github.com/5TuX/job-search-skill"
-Issues = "https://github.com/5TuX/job-search-skill/issues"
+Homepage = "https://github.com/5TuX/career-skill"
+Repository = "https://github.com/5TuX/career-skill"
+Issues = "https://github.com/5TuX/career-skill/issues"
 
 [project.scripts]
-js-render = "job_search.render:main"
-js-validate-links = "job_search.links:main"
-js-validate-sources = "job_search.sources:main"
-js-clean = "job_search.clean:main"
-js-schedule = "job_search.schedule:main"
+career-render = "career.render:main"
+career-validate-links = "career.links:main"
+career-validate-sources = "career.sources:main"
+career-clean = "career.clean:main"
+career-schedule = "career.schedule:main"
 
 [build-system]
 requires = ["hatchling"]

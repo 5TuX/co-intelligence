@@ -1,6 +1,4 @@
-# User private data (career files, CVs, preferences, job offers)
-**/users/*/
-!**/users/_example/
+# User data lives externally at ~/Documents/_me/references/career/<handle>/
 
 # Python
 __pycache__/

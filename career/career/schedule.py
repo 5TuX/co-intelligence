@@ -1,6 +1,6 @@
 """Build learning-path context from profile.yaml for dashboard rendering.
 
-CLI: uv run js-schedule <user-dir>
+CLI: uv run career-schedule <user-dir>
 
 Reads profile.yaml (single source of truth), renders schedule.html.
 """
@@ -65,7 +65,7 @@ def build_schedule_context(profile_path: Path) -> dict:
 
 def main() -> None:
     parser = argparse.ArgumentParser(
-        prog="js-schedule",
+        prog="career-schedule",
         description="Render learning path from profile.yaml to HTML",
     )
     parser.add_argument("user_dir", help="User directory containing profile.yaml")

@@ -1,6 +1,6 @@
 # Comments Processing Protocol
 
-Read `users/<handle>/comments.json` — user's free-form comments and scores on offers. Top-level keys are URL → comment text. The reserved `_scores` key holds a `{ URL → integer }` map of the user's own match scores (0-10). Parse each comment with intent detection (case-insensitive, fuzzy — match the spirit, not exact keywords). **User scores:** When `_scores` is present, compare each user score against the system `match` score. If they diverge by ≥2 points, note the gap in admin_notes and adjust the system score toward the user's score (set system score = user score). This lets the user override AI scoring. Preserve `_scores` in `comments.json` across runs (do not remove on cleanup).
+Read `DATA_DIR/<handle>/comments.json` — user's free-form comments and scores on offers. Top-level keys are URL → comment text. The reserved `_scores` key holds a `{ URL → integer }` map of the user's own match scores (0-10). Parse each comment with intent detection (case-insensitive, fuzzy — match the spirit, not exact keywords). **User scores:** When `_scores` is present, compare each user score against the system `match` score. If they diverge by ≥2 points, note the gap in admin_notes and adjust the system score toward the user's score (set system score = user score). This lets the user override AI scoring. Preserve `_scores` in `comments.json` across runs (do not remove on cleanup).
 
 ## A. Direct actions on the offer
 

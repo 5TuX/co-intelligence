@@ -1,6 +1,6 @@
-"""Source YAML validation for job-search skill.
+"""Source YAML validation for career skill.
 
-CLI: uv run js-validate-sources <yaml-file> [<yaml-file2>...]
+CLI: uv run career-validate-sources <yaml-file> [<yaml-file2>...]
 """
 
 from __future__ import annotations
@@ -64,8 +64,8 @@ def validate_sources_file(path: Path) -> dict:
 
 def main() -> None:
     parser = argparse.ArgumentParser(
-        prog="js-validate-sources",
-        description="Validate job-search source YAML files",
+        prog="career-validate-sources",
+        description="Validate career source YAML files",
     )
     parser.add_argument("yaml_files", nargs="+", help="YAML files to validate")
     parser.add_argument("--output", help="Write JSON report to file (default: stdout)")

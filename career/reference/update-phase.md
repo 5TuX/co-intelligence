@@ -25,7 +25,7 @@ Pool ALL results from general + all user-specific agents. For EACH target user, 
    - **D. Neutral:** preserve as context
    - After processing, remove consumed action comments from `comments.json`
 
-After filtering and scoring, **write `users/<handle>/offers.json`** conforming to the `RenderContext` schema (see `job_search/models.py`).
+After filtering and scoring, **write `DATA_DIR/<handle>/offers.json`** conforming to the `RenderContext` schema (see `career/models.py`).
 The JSON must include all offers, people, freelance platforms, and urgent deadlines.
 
 ## Step 4: Update phase (per user)
@@ -36,7 +36,7 @@ For EACH target user:
 
 Run the link validator against the offers JSON:
 ```bash
-uv run js-validate-links users/<handle>/offers.json --output users/<handle>/link-results.json
+uv run career-validate-links DATA_DIR/<handle>/offers.json --output DATA_DIR/<handle>/link-results.json
 ```
 Read `link-results.json`. Remove offers with status `dead` or `expired`. Mark `captcha` offers as UNCERTAIN in notes. Log removed offers.
 
@@ -44,7 +44,7 @@ Read `link-results.json`. Remove offers with status `dead` or `expired`. Mark `c
 
 After cleaning dead links from `offers.json`, render the unified dashboard:
 ```bash
-uv run js-render users/<handle>/
+uv run career-render DATA_DIR/<handle>/
 ```
 
 Dashboard.html is a **single tabbed HTML** combining: **Offers** (full catalog table with columns: `#`, `Role`, `Company`, `Location`, `Domain`, `Level / Salary`, `Mission`, `Tools`, `Published`, `Match`, `Comment`), **Run Summary** (tips + admin notes), and **Learning Path** (if user has learning_path in profile.yaml). Deadlines appear as inline badges. The "Last updated" date is shown at the top. The Comment column is editable — users type free-form notes (e.g. "applied", "not interested") which are persisted in `comments.json`. The renderer reads `comments.json` and pre-fills the fields. **Never overwrite or discard `comments.json`** — it contains the user's manual annotations.
@@ -82,7 +82,7 @@ When in doubt, check copyright dates, last-updated timestamps, and whether any c
 
 ### 4e. Stale offer handling
 
-When removing stale offers from the dashboard, move them to the "Removed Offers" section in `users/<handle>/archive.md` (under the appropriate subsection) with a brief reason. Also update skill gaps, tips, and adjacent roles sections if market data warrants it.
+When removing stale offers from the dashboard, move them to the "Removed Offers" section in `DATA_DIR/<handle>/archive.md` (under the appropriate subsection) with a brief reason. Also update skill gaps, tips, and adjacent roles sections if market data warrants it.
 
 ### 4f. Update People to Follow / Contact
 
@@ -111,7 +111,7 @@ If the user has a `learning_path` in their profile, **update it every run** — 
 
 ### 4h. Update goals.md
 
-Update `users/<handle>/goals.md` — update skill levels if recent work changed them, add new skill gaps, refresh market demand notes.
+Update `DATA_DIR/<handle>/goals.md` — update skill levels if recent work changed them, add new skill gaps, refresh market demand notes.
 
 ### 4i. CV suggestions
 
