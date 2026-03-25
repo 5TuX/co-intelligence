@@ -37,6 +37,24 @@ ls ~/.claude/skills/job-search/users/dimit/*.md ~/.claude/skills/job-search/user
 
 # Career dir has expected files
 ls ~/.claude/skills/job-search/users/dimit/Direction.md ~/.claude/skills/job-search/users/dimit/CV.md > /dev/null 2>&1 && echo "Career files: present" || echo "ERROR: career files missing"
+
+# Plugin enabled
+python3 -c "import json; d=json.load(open('$HOME/.claude/settings.json')); print('superpowers plugin:', 'enabled' if d.get('enabledPlugins',{}).get('superpowers@claude-plugins-official') else 'MISSING')"
+
+# MCP servers configured
+python3 -c "
+import json, sys
+try:
+    d = json.load(open('$HOME/.claude.json'))
+    servers = d.get('mcpServers', {})
+    expected = {'tavily', 'playwright', 'context7'}
+    found = set(servers.keys()) & expected
+    missing = expected - found
+    for s in sorted(found): print(f'MCP {s}: configured')
+    for s in sorted(missing): print(f'MCP {s}: MISSING')
+except Exception as e:
+    print(f'ERROR reading .claude.json: {e}')
+"
 ```
 
 3. **Report results** clearly:
@@ -48,6 +66,8 @@ ls ~/.claude/skills/job-search/users/dimit/Direction.md ~/.claude/skills/job-sea
    - Missing `local.md` → create it with inferred paths
    - Missing career dir → flag for manual action (needs files from another machine)
    - Missing git repo in career dir → `git init && git add -A && git commit -m "career: initial import"`
+   - Missing plugin → add `enabledPlugins` key to `settings.json` (see `architecture.md`)
+   - Missing MCP server → add to `~/.claude.json` `mcpServers` block (see `architecture.md` for templates); prompt user for API keys
    - Ask user before making any changes
 
 5. After fixing, **re-run verification** and confirm all checks pass.
@@ -62,6 +82,10 @@ ls ~/.claude/skills/job-search/users/dimit/Direction.md ~/.claude/skills/job-sea
 | `~/.claude/local.md` | Plain file, machine-specific paths |
 | `~/.claude/skills/job-search/users/dimit/` | Directory with Direction.md, Journal.md, CV.md, Human-Expertise.md, Topics/, etc. |
 | `~/.claude/skills/job-search/users/dimit/` | Files synced via Google Drive (no git repo required) |
+| `settings.json` → `enabledPlugins` | `superpowers@claude-plugins-official: true` |
+| `~/.claude.json` → `mcpServers.tavily` | stdio, `npx tavily-mcp@latest`, env `TAVILY_API_KEY` set |
+| `~/.claude.json` → `mcpServers.playwright` | stdio, `npx @playwright/mcp@latest` |
+| `~/.claude.json` → `mcpServers.context7` | http, `https://mcp.context7.com/mcp`, header `CONTEXT7_API_KEY` set |
 
 ## First-Time Setup on a New Machine
 
@@ -111,6 +135,32 @@ Create `~/.claude/local.md` with paths for this machine (see `architecture.md` f
 mkdir -p ~/.claude/skills/job-search/users/dimit/Topics
 # Copy career files from another machine or let Google Drive sync them
 ```
+
+### Step 8 — Enable the superpowers plugin
+
+The plugin is already declared in `settings.json` (synced via Drive). Verify it loaded:
+```bash
+claude /plugins
+```
+If not listed, install it:
+```
+/plugin install superpowers@claude-plugins-official
+```
+
+### Step 9 — Configure MCP servers
+
+MCP servers live in `~/.claude.json` under the `mcpServers` key. This file is **local** (not synced), so you must configure it per machine.
+
+See `architecture.md` for the full JSON templates. The key steps:
+
+1. Open (or create) `~/.claude.json` and add the `mcpServers` block.
+2. For **playwright** — no secrets needed, just add the config.
+3. For **tavily** — get your API key from https://tavily.com and set `TAVILY_API_KEY`.
+4. For **context7** — get your API key from https://context7.com and set the `CONTEXT7_API_KEY` header.
+
+**Windows note:** MCP stdio servers must use `cmd /c npx ...` (not bare `npx`) because Claude Code on Windows needs `cmd` as the shell wrapper.
+
+**Linux / Mac:** Use `npx` directly as the command (no `cmd /c` wrapper).
 
 ## Known Issues & Gotchas
 

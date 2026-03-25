@@ -12,14 +12,14 @@ $DRIVE/claude/                     CLAUDE.md      → symlink to Drive
   settings.json                    skills/        → symlink/junction to Drive
   skills/                          local.md       ← plain file, NOT synced
     agent/SKILL.md                 keybindings.json ← plain file (optional)
-    job-search/SKILL.md
-      users/dimit/                 ← career data (inside job-search skill)
-    myplay/SKILL.md                projects/      ← Claude cache, never touch
-    note/SKILL.md
-    refine-skill/SKILL.md
-    report/SKILL.md
-    setup/SKILL.md
-    sync-skills/SKILL.md
+    job-search/SKILL.md            projects/      ← Claude cache, never touch
+      users/dimit/
+    myplay/SKILL.md              ~/.claude.json (local, NOT synced)
+    note/SKILL.md                ───────────────────────────────────
+    refine-skill/SKILL.md        mcpServers:
+    report/SKILL.md                tavily      (stdio, needs API key)
+    setup/SKILL.md                 playwright  (stdio, no key)
+    sync-skills/SKILL.md           context7    (http, needs API key)
 ```
 
 ### Drive Path by OS
@@ -46,6 +46,7 @@ $DRIVE/claude/                     CLAUDE.md      → symlink to Drive
 |---|---|
 | `local.md` | Machine-specific paths |
 | `keybindings.json` | Custom key bindings (optional) |
+| `~/.claude.json` | Claude Code state + MCP server config (machine-local) |
 | `projects/` | Claude's local cache — do not touch |
 
 ### local.md Format
@@ -66,3 +67,77 @@ $DRIVE/claude/                     CLAUDE.md      → symlink to Drive
 | `report/SKILL.md` | `/report` | Technical report generation |
 | `setup/SKILL.md` | `/setup` | Verify and repair setup |
 | `sync-skills/SKILL.md` | `/sync-skills` | Audit, update docs, commit skills repo |
+
+### Plugin
+
+| Setting | Location | Value |
+|---|---|---|
+| `enabledPlugins` | `settings.json` (synced) | `"superpowers@claude-plugins-official": true` |
+
+### MCP Servers
+
+MCP servers are configured in `~/.claude.json` (local, not synced) under the `mcpServers` key. API keys are **never synced** — each machine needs its own keys.
+
+#### Windows templates (`cmd /c` wrapper required)
+
+```json
+"mcpServers": {
+  "tavily": {
+    "type": "stdio",
+    "command": "cmd",
+    "args": ["/c", "npx", "-y", "tavily-mcp@latest"],
+    "env": {
+      "TAVILY_API_KEY": "<YOUR_TAVILY_KEY>"
+    }
+  },
+  "playwright": {
+    "type": "stdio",
+    "command": "cmd",
+    "args": ["/c", "npx", "-y", "@playwright/mcp@latest"],
+    "env": {}
+  },
+  "context7": {
+    "type": "http",
+    "url": "https://mcp.context7.com/mcp",
+    "headers": {
+      "CONTEXT7_API_KEY": "<YOUR_CONTEXT7_KEY>"
+    }
+  }
+}
+```
+
+#### Linux / Mac templates (bare `npx`)
+
+```json
+"mcpServers": {
+  "tavily": {
+    "type": "stdio",
+    "command": "npx",
+    "args": ["-y", "tavily-mcp@latest"],
+    "env": {
+      "TAVILY_API_KEY": "<YOUR_TAVILY_KEY>"
+    }
+  },
+  "playwright": {
+    "type": "stdio",
+    "command": "npx",
+    "args": ["-y", "@playwright/mcp@latest"],
+    "env": {}
+  },
+  "context7": {
+    "type": "http",
+    "url": "https://mcp.context7.com/mcp",
+    "headers": {
+      "CONTEXT7_API_KEY": "<YOUR_CONTEXT7_KEY>"
+    }
+  }
+}
+```
+
+#### API Key Sources
+
+| Server | Get key at | Env/header name |
+|---|---|---|
+| tavily | https://tavily.com | `TAVILY_API_KEY` |
+| context7 | https://context7.com | `CONTEXT7_API_KEY` (header) |
+| playwright | (no key needed) | — |
