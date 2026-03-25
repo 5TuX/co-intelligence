@@ -21,23 +21,21 @@ Supports multiple users with independent profiles, preferences, and career files
 
 ## Configuration
 
-```
-DATA_DIR: ~/Documents/_me/references/career
-ADMIN_USER: dimit
-```
+Read `~/.claude/skills/config.local.yaml` to get:
+- `data_dir` → **DATA_DIR** (where user data lives, outside this skill directory)
+- `admin_user` → **ADMIN_USER** (default user for `/career note`)
 
-All user data lives OUTSIDE this skill directory, under `DATA_DIR/<handle>/`.
-The skill directory contains only code, templates, reference docs, and shared configuration.
+If `config.local.yaml` is missing, error: "Missing config — copy `config.local.yaml.example` to `config.local.yaml` and fill in your values."
 
 ## Argument Parsing
 
 ```
 /career                          → search for ALL users (list dirs under DATA_DIR)
-/career dimit                    → search for dimit only
-/career dimit,alice              → search for listed users
+/career <user>                   → search for one user
+/career <user1>,<user2>          → search for listed users
 /career clean                    → clean mode for ALL users (validate links, remove dead offers)
-/career clean dimit              → clean mode for dimit only
-/career note <content>           → note mode for ADMIN_USER (dimit)
+/career clean <user>             → clean mode for one user
+/career note <content>           → note mode for ADMIN_USER
 /career note <user> <content>    → note mode for specified user
 /career new-user                 → interactive user creation (see §New-User Creation)
 /career update-user <user>       → interactive profile update (see §Update-User)
@@ -49,7 +47,7 @@ If a requested user has no directory, error with: "User 'X' not found. Available
 
 ## User System
 
-All user data lives in `DATA_DIR/<handle>/` (`~/Documents/_me/references/career/<handle>/`).
+All user data lives in `DATA_DIR/<handle>/` (path from `config.local.yaml`).
 
 Each user has:
 ```

@@ -19,9 +19,9 @@ $DRIVE/claude/                     CLAUDE.md      → symlink to Drive
                                  mcpServers:
                                    tavily      (stdio, needs API key)
 User data (external):              playwright  (stdio, no key)
-~/Documents/_me/references/        context7    (http, needs API key)
-  career/dimit/
-  career/iliasse/
+DATA_DIR/ (from config.local.yaml) context7    (http, needs API key)
+  <admin_user>/
+  <other users>/
 ```
 
 ### Drive Path by OS
@@ -98,7 +98,7 @@ The scan mode (`/setup scan`) updates this table from the live machine state.
 | `~/.claude/CLAUDE.md` | Symlink → Drive path, readable |
 | `~/.claude/settings.json` | Symlink → Drive path, valid JSON |
 | `~/.claude/skills/` | Symlink/Junction → Drive skills dir, contains skill subdirs |
-| `~/Documents/_me/references/career/dimit/` | Directory with goals.md, journal.md, cv.md, market.md, Topics/, etc. |
+| `DATA_DIR/ADMIN_USER/` | Directory with goals.md, journal.md, cv.md, market.md, Topics/, etc. (paths from config.local.yaml) |
 | `settings.json` → `enabledPlugins` | `superpowers@claude-plugins-official: true` |
 
 ### Expected MCP Servers

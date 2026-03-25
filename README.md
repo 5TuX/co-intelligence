@@ -62,7 +62,7 @@ Skills are automatically available as slash commands in Claude Code.
 
 ## User Data
 
-Career user data (CVs, job offers, preferences) lives **outside** the skills directory at `~/Documents/_me/references/career/<handle>/`. This separates code from data and keeps the skills repo clean.
+Career user data (CVs, job offers, preferences) lives **outside** the skills directory at `DATA_DIR/<handle>/` (configured in `config.local.yaml`). This separates code from data and keeps the skills repo clean.
 
 ## Creating New Skills
 

@@ -154,5 +154,5 @@ Skip Steps 1-6. Run Step 7 directly.
 - Keep SKILL.md files under 15K chars (hard limit); prefer under 200 lines but don't sacrifice substance for brevity.
 - Ask before committing (user preference).
 - Never commit user data to the skills repo.
-- Enforce data separation: skill directories contain code and config only. User/personal data must live outside `~/.claude/skills/` (e.g., `~/Documents/_me/references/`). Flag violations during health check and tidy.
+- Enforce data separation: skill directories contain code and config only. User/personal data must live outside `~/.claude/skills/` (path configured in `config.local.yaml`). Flag violations during health check and tidy.
 - Always update README if skills were added or removed.

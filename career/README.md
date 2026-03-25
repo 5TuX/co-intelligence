@@ -39,8 +39,8 @@ A Claude Code skill that turns your terminal into a conversational career partne
    /career new-user
 
    # Option B: Manual setup
-   cp -r templates/user-template ~/Documents/_me/references/career/your-handle
-   # Edit ~/Documents/_me/references/career/your-handle/profile.yaml with your details
+   cp -r templates/user-template DATA_DIR/your-handle
+   # Edit DATA_DIR/your-handle/profile.yaml with your details
    ```
 
 4. Run your first search:
@@ -141,16 +141,12 @@ Each run takes the full learning from all previous runs into account. The more y
 
 ## User Data
 
-User data lives **outside** the skill directory, at:
-
-```
-~/Documents/_me/references/career/<handle>/
-```
+User data lives **outside** the skill directory, at `DATA_DIR/<handle>/` (configured in `config.local.yaml`).
 
 This keeps personal career files (CVs, preferences, job offers, journals) completely separate from the skill code. Each user's directory contains:
 
 ```
-~/Documents/_me/references/career/your-handle/
+DATA_DIR/your-handle/
 ├── profile.yaml        # Your preferences, skills, ethical filters
 ├── sources.yaml        # Your custom job sources
 ├── Dashboard.html      # Unified tabbed dashboard (offers + summary + learning path)
@@ -168,7 +164,7 @@ This keeps personal career files (CVs, preferences, job offers, journals) comple
 
 ## User Data Privacy
 
-All personal data lives at `~/Documents/_me/references/career/your-handle/`, **outside** the skill directory. The repo never contains anyone's CV, preferences, job offers, or career files. Because user data is stored separately from the skill, there is no risk of accidentally committing personal information when updating the skill itself. Each user can optionally track their own data in a separate private git repo inside their user directory.
+All personal data lives at `DATA_DIR/your-handle/` (see `config.local.yaml`), **outside** the skill directory. The repo never contains anyone's CV, preferences, job offers, or career files. Because user data is stored separately from the skill, there is no risk of accidentally committing personal information when updating the skill itself. Each user can optionally track their own data in a separate private git repo inside their user directory.
 
 ## Commands
 
@@ -187,26 +183,26 @@ All personal data lives at `~/Documents/_me/references/career/your-handle/`, **o
 
 ```bash
 # Generate learning path HTML (reads from profile.yaml, no duplication)
-uv run career-schedule ~/Documents/_me/references/career/your-handle/
+uv run career-schedule DATA_DIR/your-handle/
 
 # Clean dead/stale offers (auto-removes dead, flags CAPTCHA/redirect for review)
-uv run career-clean ~/Documents/_me/references/career/your-handle/ [--timeout 15] [--dry-run]
+uv run career-clean DATA_DIR/your-handle/ [--timeout 15] [--dry-run]
 
 # Validate source YAML files
-uv run career-validate-sources sources-general.yaml ~/Documents/_me/references/career/your-handle/sources.yaml
+uv run career-validate-sources sources-general.yaml DATA_DIR/your-handle/sources.yaml
 
 # Check links in an offers JSON file
-uv run career-validate-links ~/Documents/_me/references/career/your-handle/offers.json --output results.json
+uv run career-validate-links DATA_DIR/your-handle/offers.json --output results.json
 
 # Render unified dashboard (reads offers.json, summary-data.json, profile.yaml)
-uv run career-render ~/Documents/_me/references/career/your-handle/
+uv run career-render DATA_DIR/your-handle/
 ```
 
 ## Customization
 
 ### Adding Sources
 
-Edit `~/Documents/_me/references/career/your-handle/sources.yaml` to add job boards, company career pages, or niche sources specific to your search. See `templates/user-template/sources.yaml` for the format.
+Edit `DATA_DIR/your-handle/sources.yaml` to add job boards, company career pages, or niche sources specific to your search. See `templates/user-template/sources.yaml` for the format.
 
 To contribute sources that benefit everyone, add them to `sources-general.yaml` and open a PR.
 

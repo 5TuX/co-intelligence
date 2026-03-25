@@ -22,7 +22,7 @@ Thanks for your interest in improving the career skill.
 - `SKILL.md` is the main entry point. Keep it under 500 lines / 10K chars (Anthropic hard limit is 15K)
 - Reference docs go in `reference/` — loaded on demand, not at startup
 - YAML frontmatter in `SKILL.md` must not contain `[]` or `{}` (breaks Claude Code)
-- User data stays in `DATA_DIR/<handle>/` (at `~/Documents/_me/references/career/<handle>/`) which is gitignored
+- User data stays in `DATA_DIR/<handle>/` (configured in `config.local.yaml`) which is gitignored
 - `templates/user-template/` is the template — keep it clean and generic
 
 ## Code style

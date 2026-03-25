@@ -26,7 +26,7 @@ Things that break skills or degrade quality. Check every skill against these.
 
 11. **Support files (README, ROADMAP) go stale** — When SKILL.md evolves, support files like README.md, ROADMAP.md, and architecture.md often aren't updated. Check these explicitly each refinement, not just SKILL.md.
 
-12. **User data inside skill directory** — storing personal data (profiles, CVs, job offers) inside `~/.claude/skills/<skill>/` couples code to data, bloats the repo, and requires complex .gitignore rules. User data should live outside the skill tree entirely (e.g., `~/Documents/_me/references/`). The skill references the external path via a config constant (like `DATA_DIR`).
+12. **User data inside skill directory** — storing personal data (profiles, CVs, job offers) inside `~/.claude/skills/<skill>/` couples code to data, bloats the repo, and requires complex .gitignore rules. User data should live outside the skill tree entirely (path configured in `config.local.yaml`). The skill references the external path via a config constant (like `DATA_DIR`).
 
 ### Structural (degrades quality)
 
@@ -79,7 +79,7 @@ Observations about specific skills. Updated after refinements.
 ### career
 - ~216 lines, ~13.4K chars — WARN (approaching 15K truncation limit, monitor)
 - Renamed from `job-search` in v2.0.0 (2026-03-25). Absorbed the `note` skill as `/career note` mode.
-- User data externalized from `users/<handle>/` to `~/Documents/_me/references/career/<handle>/` (outside skill dir)
+- User data externalized from `users/<handle>/` to `DATA_DIR/<handle>/` (outside skill dir, path from config.local.yaml)
 - User template moved from `users/_example/` to `templates/user-template/`
 - Python package renamed from `job_search` to `career`; CLI commands from `js-*` to `career-*`
 - Extracted to: clean-mode.md, learning-loop.md, search-agents.md, update-phase.md, final-report.md, comments-processing.md, new-user-flow.md, update-user-flow.md

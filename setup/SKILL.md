@@ -33,7 +33,9 @@ For architecture details and drive paths, see `architecture.md` in this skill's 
 
 2. **Detect the Python command**: On Windows, Python is typically `python` (not `python3`). Try `python --version` first; fall back to `python3`. Use whichever works for all subsequent Python commands in this session. Assign it to a shell variable: `PY=$(command -v python3 || command -v python)`.
 
-3. **Read expected state**: Read `architecture.md` § "Expected State" to get the expected MCP servers, plugins, and checks. Do NOT hardcode these — always read from architecture.md.
+3. **Read config**: Read `~/.claude/skills/config.local.yaml` to get `admin_user` and `data_dir`. If missing, error: "Missing config — copy `config.local.yaml.example` to `config.local.yaml` and fill in your values."
+
+4. **Read expected state**: Read `architecture.md` § "Expected State" to get the expected MCP servers, plugins, and checks. Do NOT hardcode these — always read from architecture.md.
 
 ### Step 2: Run verification tests
 
@@ -64,13 +66,14 @@ ls ~/.claude/skills/
 ```
 
 #### Check: Career dir
+Use `data_dir` and `admin_user` from config.local.yaml to construct the path:
 ```bash
-ls ~/Documents/_me/references/career/dimit/*.md ~/Documents/_me/references/career/dimit/Topics/ 2>&1 || echo "ERROR: career dir missing or incomplete"
+ls DATA_DIR/ADMIN_USER/*.md DATA_DIR/ADMIN_USER/Topics/ 2>&1 || echo "ERROR: career dir missing or incomplete"
 ```
 
 #### Check: Career key files
 ```bash
-ls ~/Documents/_me/references/career/dimit/goals.md ~/Documents/_me/references/career/dimit/cv.md > /dev/null 2>&1 && echo "Career files: present" || echo "ERROR: career files missing"
+ls DATA_DIR/ADMIN_USER/goals.md DATA_DIR/ADMIN_USER/cv.md > /dev/null 2>&1 && echo "Career files: present" || echo "ERROR: career files missing"
 ```
 
 #### Check: Plugins enabled
@@ -219,16 +222,23 @@ ln -s "$DRIVE/claude/skills" ~/.claude/skills
 New-Item -ItemType Junction -Path "$env:USERPROFILE\.claude\skills" -Target "$DRIVE\claude\skills"
 ```
 
-### Step 6 — Set up career directory
+### Step 6 — Create local config
 ```bash
-mkdir -p ~/Documents/_me/references/career/dimit/Topics
+cp ~/.claude/skills/config.local.yaml.example ~/.claude/skills/config.local.yaml
+# Edit config.local.yaml with your handle and data directory path
+```
+
+### Step 7 — Set up career directory
+```bash
+mkdir -p DATA_DIR/ADMIN_USER/Topics
+# (Use the data_dir and admin_user values from config.local.yaml)
 # Copy career files from another machine or let Google Drive sync them
 ```
 
-### Step 7 — Enable plugins
+### Step 8 — Enable plugins
 Read `architecture.md` § "Expected Plugins" and install any listed plugins.
 
-### Step 8 — Configure MCP servers
+### Step 9 — Configure MCP servers
 MCP servers are **local** (not synced), so you must configure them per machine.
 Read `architecture.md` § "MCP add commands" and run each command, substituting your API keys.
 
@@ -242,7 +252,7 @@ Read `architecture.md` § "MCP add commands" and run each command, substituting 
 - **Windows `ln -s` for dirs**: Git Bash `ln -s` on a directory creates a copy, not a link. Always use PowerShell `New-Item -ItemType Junction`.
 - **Windows `/skills` panel**: Claude Code does not follow symlinks when scanning `skills/`. Use a Junction for the `skills/` directory.
 - **Windows SymbolicLink for files**: Requires Developer Mode enabled in Windows Settings, or running PowerShell as admin.
-- **Career dir not synced via Drive**: `~/Documents/_me/references/career/dimit/` is local and git-tracked. To migrate to a new machine, copy the directory.
+- **Career dir not synced via Drive**: The career data directory (see `config.local.yaml` → `data_dir`) is local. To migrate to a new machine, copy the directory.
 - **`claude mcp add` default scope is `local`**: Without `-s user`, servers are added to the project-local config and won't appear globally. Always use `-s user` for user-wide MCP servers.
 - **Windows Git Bash mangles `/c` arg**: `claude mcp add ... -- cmd /c npx ...` in Git Bash translates `/c` to `C:/`, breaking the command. After adding playwright on Windows, verify `~/.claude.json` and manually fix `"C:/"` to `"/c"` if needed.
 - **Fixing broken links**: If Drive folder is renamed/remounted, symlinks break. Delete the broken link and re-run the relevant setup step.
