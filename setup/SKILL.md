@@ -16,36 +16,68 @@ in this skill's directory.
 
 1. **Detect the Drive root**: resolve the symlink target of `~/.claude/CLAUDE.md` and extract the Drive root path from it (everything before `/claude/CLAUDE.md`).
 
-2. **Run all verification tests**:
+2. **Detect the Python command**: On Windows, Python is typically `python` (not `python3`). Try `python --version` first; fall back to `python3`. Use whichever works for all subsequent Python commands in this session. Assign it to a shell variable: `PY=$(command -v python3 || command -v python)`.
+
+3. **Run all verification tests**. Each check below MUST be a **separate, independent Bash call** so that one failure does not cancel the others. Run independent checks in parallel where possible.
+
+### Check: Symlinks
+```bash
+ls -la ~/.claude/CLAUDE.md ~/.claude/settings.json ~/.claude/skills
+```
+
+### Check: CLAUDE.md readable
+```bash
+head -1 ~/.claude/CLAUDE.md
+```
+
+### Check: settings.json valid JSON
+**Important (Windows):** `$HOME` in Git Bash expands to `/c/Users/...` which Python cannot read. Always use `os.environ.get('USERPROFILE', os.path.expanduser('~'))` inside Python to build paths, or pass the path as a `sys.argv` argument resolved by the shell with `"$(cygpath -w ~/.claude/settings.json)"` on Windows.
 
 ```bash
-# Symlinks
-ls -la ~/.claude/CLAUDE.md ~/.claude/settings.json ~/.claude/skills
+PY=$(command -v python3 2>/dev/null || command -v python 2>/dev/null)
+SETTINGS="$(cygpath -w ~/.claude/settings.json 2>/dev/null || echo ~/.claude/settings.json)"
+$PY -c "import json,sys; json.load(open(sys.argv[1])); print('settings.json: valid JSON')" "$SETTINGS"
+```
 
-# Content readable
-head -1 ~/.claude/CLAUDE.md
-python3 -c "import json,sys; json.load(open(sys.argv[1])); print('settings.json: valid JSON')" ~/.claude/settings.json
-
-# Skills populated
+### Check: Skills populated
+```bash
 ls ~/.claude/skills/
+```
 
-# local.md exists
-cat ~/.claude/local.md
+### Check: local.md exists
+```bash
+test -f ~/.claude/local.md && echo "local.md: present" || echo "local.md: MISSING"
+```
 
-# Career dir exists and has expected files
-ls ~/.claude/skills/job-search/users/dimit/*.md ~/.claude/skills/job-search/users/dimit/Topics/ || echo "ERROR: career dir missing or incomplete"
+### Check: Career dir
+```bash
+ls ~/.claude/skills/job-search/users/dimit/*.md ~/.claude/skills/job-search/users/dimit/Topics/ 2>&1 || echo "ERROR: career dir missing or incomplete"
+```
 
-# Career dir has expected files
+### Check: Career key files
+```bash
 ls ~/.claude/skills/job-search/users/dimit/Direction.md ~/.claude/skills/job-search/users/dimit/CV.md > /dev/null 2>&1 && echo "Career files: present" || echo "ERROR: career files missing"
+```
 
-# Plugin enabled
-python3 -c "import json; d=json.load(open('$HOME/.claude/settings.json')); print('superpowers plugin:', 'enabled' if d.get('enabledPlugins',{}).get('superpowers@claude-plugins-official') else 'MISSING')"
+### Check: Plugin enabled
+```bash
+PY=$(command -v python3 2>/dev/null || command -v python 2>/dev/null)
+SETTINGS="$(cygpath -w ~/.claude/settings.json 2>/dev/null || echo ~/.claude/settings.json)"
+$PY -c "
+import json, sys
+d = json.load(open(sys.argv[1]))
+print('superpowers plugin:', 'enabled' if d.get('enabledPlugins',{}).get('superpowers@claude-plugins-official') else 'MISSING')
+" "$SETTINGS"
+```
 
-# MCP servers configured
-python3 -c "
+### Check: MCP servers configured
+```bash
+PY=$(command -v python3 2>/dev/null || command -v python 2>/dev/null)
+CJSON="$(cygpath -w ~/.claude.json 2>/dev/null || echo ~/.claude.json)"
+$PY -c "
 import json, sys
 try:
-    d = json.load(open('$HOME/.claude.json'))
+    d = json.load(open(sys.argv[1]))
     servers = d.get('mcpServers', {})
     expected = {'tavily', 'playwright', 'context7'}
     found = set(servers.keys()) & expected
@@ -54,14 +86,14 @@ try:
     for s in sorted(missing): print(f'MCP {s}: MISSING')
 except Exception as e:
     print(f'ERROR reading .claude.json: {e}')
-"
+" "$CJSON"
 ```
 
-3. **Report results** clearly:
+5. **Report results** clearly:
    - List each check as PASS or FAIL with the actual value found
    - For any FAIL, explain what is wrong and what the expected value should be
 
-4. **Offer to fix** any failed checks:
+6. **Offer to fix** any failed checks:
    - Missing or broken symlink → recreate it (see `architecture.md` for drive paths by OS)
    - Missing `local.md` → create it with inferred paths
    - Missing career dir → flag for manual action (needs files from another machine)
@@ -70,7 +102,7 @@ except Exception as e:
    - Missing MCP server → add to `~/.claude.json` `mcpServers` block (see `architecture.md` for templates); prompt user for API keys
    - Ask user before making any changes
 
-5. After fixing, **re-run verification** and confirm all checks pass.
+7. After fixing, **re-run verification** and confirm all checks pass.
 
 ## Expected Passing State
 
@@ -164,6 +196,9 @@ See `architecture.md` for the full JSON templates. The key steps:
 
 ## Known Issues & Gotchas
 
+- **Windows: `python3` not found**: Windows installs Python as `python`, not `python3`. Always detect with `PY=$(command -v python3 2>/dev/null || command -v python 2>/dev/null)` and use `$PY` thereafter.
+- **Windows: `$HOME` MSYS path breaks Python**: In Git Bash, `$HOME` expands to `/c/Users/...` — Python cannot open these MSYS-translated paths. Use `cygpath -w` to convert to Windows paths before passing to Python, or pass paths via `sys.argv` resolved by the shell: `"$(cygpath -w ~/.claude/settings.json)"`.
+- **Parallel Bash calls**: When running multiple Bash tool calls in parallel, if one errors the others may be cancelled. Each verification check MUST be a separate, independent Bash call so failures are isolated.
 - **Windows `ln -s` for dirs**: Git Bash `ln -s` on a directory creates a copy, not a link. Always use PowerShell `New-Item -ItemType Junction`.
 - **Windows `/skills` panel**: Claude Code does not follow symlinks when scanning `skills/`. Use a Junction for the `skills/` directory.
 - **Windows SymbolicLink for files**: Requires Developer Mode enabled in Windows Settings, or running PowerShell as admin.
