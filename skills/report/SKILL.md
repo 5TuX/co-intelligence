@@ -1,7 +1,6 @@
 ---
 name: report
 description: Write quality technical reports from codebases — Quarto ODT/PDF output, BibTeX citations, strict style matching
-argument-hint: "[kickstart|outline|write <section>|extract-metrics|status|test]"
 ---
 
 # Technical Report Assistant

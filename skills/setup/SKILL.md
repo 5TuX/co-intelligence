@@ -1,9 +1,6 @@
 ---
 name: setup
-description: >
-  Use when the user says /setup or asks to verify, repair, or initialize
-  the Claude Code setup on the current machine.
-argument-hint: "[scan]"
+description: Use when the user says /setup or asks to verify, repair, or initialize the Claude Code setup on the current machine.
 ---
 
 # Claude Code Setup Verifier, Repair & Sync
