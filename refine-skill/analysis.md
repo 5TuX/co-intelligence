@@ -26,6 +26,7 @@ Token estimate: `chars / 4` (rough for English prose + code).
 8. **Step count**: count `##` action headers.
 8. **Mode organization**: if multi-mode, are modes self-contained?
 9. **argument-hint completeness**: if skill has `argument-hint` in frontmatter, verify all documented modes/args appear in the hint. This controls the UI hint text shown next to the slash command.
+10. **Data separation**: skill directories must contain only code, templates, reference docs, and shared config. Flag any `users/` directory, `profile.yaml`, or per-person subdirectories inside a skill as CRITICAL. User data belongs outside the skill tree (e.g., `~/Documents/_me/references/`).
 
 ### Quality Dimensions
 

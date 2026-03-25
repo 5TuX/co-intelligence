@@ -111,7 +111,7 @@ Compare `~/.claude/skills/README.md` against actual contents:
 Apply updates if needed. Show diff.
 
 ### 7c. Check .gitignore
-Verify coverage: `**/users/*/` (except `_example/`), `*.html` (generated), `.env`, `credentials.*`, `*.key`, `__pycache__/`, `*.pyc`, `uv.lock`. Propose additions if needed.
+Verify coverage: `*.html` (generated), `.env`, `credentials.*`, `*.key`, `__pycache__/`, `*.pyc`, `uv.lock`. Propose additions if needed.
 
 ### 7d. Show Changes
 ```bash
@@ -121,8 +121,8 @@ git -C ~/.claude/skills status
 Group by skill: modified files, new untracked, deleted.
 
 ### 7e. Safety Check
-Scan for sensitive content before staging:
-- Files in `users/` (except `_example/`) about to be committed
+Scan for sensitive content and data separation violations before staging:
+- Personal data files inside skill dirs (`profile.yaml`, `offers.json`, `cv.md`, per-user subdirectories)
 - `.env`, `.key`, `credentials.*` files
 - Files containing `API_KEY=`, `password=`, `token=`
 If warnings, stop and ask.
@@ -132,10 +132,6 @@ If warnings, stop and ask.
 2. Draft concise commit message (list changed skills, nature of changes).
 3. Show draft. Ask user to confirm or edit.
 4. Commit.
-
-### 7g. User Data Repos
-Check for nested user data repos: `find ~/.claude/skills -path "*/users/*/.git" -maxdepth 4`.
-For each, show status and offer to commit separately.
 
 ## All Mode (default)
 
@@ -158,4 +154,5 @@ Skip Steps 1-6. Run Step 7 directly.
 - Keep SKILL.md files under 15K chars (hard limit); prefer under 200 lines but don't sacrifice substance for brevity.
 - Ask before committing (user preference).
 - Never commit user data to the skills repo.
+- Enforce data separation: skill directories contain code and config only. User/personal data must live outside `~/.claude/skills/` (e.g., `~/Documents/_me/references/`). Flag violations during health check and tidy.
 - Always update README if skills were added or removed.

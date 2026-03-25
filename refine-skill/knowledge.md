@@ -26,6 +26,8 @@ Things that break skills or degrade quality. Check every skill against these.
 
 11. **Support files (README, ROADMAP) go stale** — When SKILL.md evolves, support files like README.md, ROADMAP.md, and architecture.md often aren't updated. Check these explicitly each refinement, not just SKILL.md.
 
+12. **User data inside skill directory** — storing personal data (profiles, CVs, job offers) inside `~/.claude/skills/<skill>/` couples code to data, bloats the repo, and requires complex .gitignore rules. User data should live outside the skill tree entirely (e.g., `~/Documents/_me/references/`). The skill references the external path via a config constant (like `DATA_DIR`).
+
 ### Structural (degrades quality)
 
 7. **Overloaded single SKILL.md** — Everything in one file = everything loaded every time. Extract reference material to separate files.
