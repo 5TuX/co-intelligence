@@ -16,7 +16,7 @@ Before cleaning, read `DATA_DIR/<handle>/comments.json` and apply the full comme
 
 For EACH target user:
 ```bash
-uv run career-clean DATA_DIR/<handle>/ --timeout 15
+career-clean DATA_DIR/<handle>/ --timeout 15
 ```
 
 Read the generated `DATA_DIR/<handle>/clean-report.json`.
@@ -46,7 +46,7 @@ For each offer in `flagged_offers` from the clean report:
 
 After review, if any additional offers were removed, update `offers.json` and re-render:
 ```bash
-uv run career-render DATA_DIR/<handle>/
+career-render DATA_DIR/<handle>/
 ```
 
 ## C2.5. Soft dead link scan (LLM content verification)

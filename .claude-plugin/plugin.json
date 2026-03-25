@@ -1,0 +1,13 @@
+{
+  "name": "co-intelligence",
+  "description": "Skills for human-AI collaborative work: career search, skill authoring, setup verification, technical reports, multi-agent chat",
+  "version": "1.0.0",
+  "author": {
+    "name": "Dimitris Klockenbring",
+    "email": "klockenbring@users.noreply.github.com"
+  },
+  "homepage": "https://github.com/5TuX/co-intelligence",
+  "repository": "https://github.com/5TuX/co-intelligence",
+  "license": "MIT",
+  "keywords": ["skills", "career", "job-search", "reports", "co-intelligence"]
+}

@@ -27,7 +27,17 @@ Parse $ARGUMENTS:
 - If `new <name>` → jump to §Create Mode
 - If `delete <name>` → jump to §Delete Mode
 - If empty → All Mode (refine all skills)
-- Otherwise → first word is the skill name; everything after is desired changes (if any). Verify `~/.claude/skills/<target>/SKILL.md` exists.
+- Otherwise → first word is the skill name; everything after is desired changes (if any). Verify `${CLAUDE_PLUGIN_ROOT}/skills/<target>/SKILL.md` exists.
+
+## Data Directory
+
+This skill stores mutable state in the plugin data directory. At the start of every invocation:
+1. Resolve `CLAUDE_PLUGIN_DATA` env var → `$PLUGIN_DATA`
+2. Create `$PLUGIN_DATA/skillsmith/` if it doesn't exist
+3. If `$PLUGIN_DATA/skillsmith/knowledge.md` doesn't exist, copy from `templates/knowledge.md` in this skill's directory
+4. If `$PLUGIN_DATA/skillsmith/history/` doesn't exist, create it
+
+All references to `knowledge.md` and `history/` below mean the copies in `$PLUGIN_DATA/skillsmith/`.
 
 ---
 
@@ -40,7 +50,7 @@ Ask the user:
 - Does it need modes/arguments?
 
 ### 2. Scaffold
-Create `~/.claude/skills/<name>/SKILL.md` with:
+Create `${CLAUDE_PLUGIN_ROOT}/skills/<name>/SKILL.md` with:
 - Frontmatter: `name`, `description` (start with "Use when...", trigger-focused, no workflow summary, under 500 chars, third person)
 - `argument-hint` if the skill takes arguments
 - Skeleton sections: overview, argument parsing (if needed), instructions, rules
@@ -58,7 +68,7 @@ Invoke `superpowers:writing-skills` for the TDD creation cycle — baseline test
 ## Delete Mode (`/skillsmith delete <name>`)
 
 ### 1. Verify skill exists
-Check `~/.claude/skills/<name>/SKILL.md` exists. If not, list available skills and stop.
+Check `${CLAUDE_PLUGIN_ROOT}/skills/<name>/SKILL.md` exists. If not, list available skills and stop.
 
 ### 2. Dependency check
 Scan ALL other skills for references to the target:
@@ -72,7 +82,7 @@ If dependencies found, show them and ask: "These skills reference `<name>`. Proc
 Show the skill's SKILL.md summary and ask: "Delete `<name>/` and all its files? This cannot be undone."
 
 ### 4. Delete and clean up
-- Remove `~/.claude/skills/<name>/` directory
+- Remove `${CLAUDE_PLUGIN_ROOT}/skills/<name>/` directory
 - Remove entry from `knowledge.md` per-skill notes
 - Archive `history/<name>.md` content to a "Deleted Skills" section in knowledge.md (preserve history)
 - Run §Tidy (README update, commit)
@@ -83,7 +93,7 @@ Show the skill's SKILL.md summary and ask: "Delete `<name>/` and all its files? 
 
 ### Step 1 — Understand the Skill
 
-1. Read `knowledge.md` in this skill's directory (pitfalls, strategies, per-skill notes).
+1. Read `$PLUGIN_DATA/skillsmith/knowledge.md` (pitfalls, strategies, per-skill notes).
 2. Read `history/<target>.md` if it exists (previous refinements).
 3. Read the target skill's `SKILL.md` entirely.
 4. List all files in the target skill's directory. Read key reference files to understand the full picture.
@@ -124,7 +134,7 @@ Ask: "Apply all, pick specific numbers, or skip?"
 
 1. Apply approved changes.
 2. Show before/after size comparison (brief — one line).
-3. Append entry to `history/<target>.md`.
+3. Append entry to `$PLUGIN_DATA/skillsmith/history/<target>.md`.
 4. If a new pitfall or strategy was discovered: "Add to knowledge base? (y/n)"
 
 ---
@@ -132,7 +142,7 @@ Ask: "Apply all, pick specific numbers, or skip?"
 ## Tidy Mode (`/skillsmith tidy-only`)
 
 Runs automatically after refinements. Also available standalone.
-Operates on `~/.claude/skills/`.
+Operates on `${CLAUDE_PLUGIN_ROOT}/skills/`.
 
 ### 7a. Audit Structure
 1. List all skill directories.
@@ -141,15 +151,15 @@ Operates on `~/.claude/skills/`.
 4. Report as table. Auto-fix safe issues. Ask before destructive fixes.
 
 ### 7b. Update README
-Compare `~/.claude/skills/README.md` against actual contents. Apply updates if needed.
+Compare `${CLAUDE_PLUGIN_ROOT}/README.md` against actual contents. Apply updates if needed.
 
 ### 7c. Check .gitignore
 Verify coverage: `config.local.yaml`, `*.html`, `.env`, `credentials.*`, `*.key`, `__pycache__/`, `*.pyc`, `uv.lock`.
 
 ### 7d. Show Changes
 ```bash
-git -C ~/.claude/skills diff --stat
-git -C ~/.claude/skills status
+git -C ${CLAUDE_PLUGIN_ROOT} diff --stat
+git -C ${CLAUDE_PLUGIN_ROOT} status
 ```
 
 ### 7e. Safety Check
@@ -178,5 +188,5 @@ When no argument is provided:
 - Keep SKILL.md files under 15K chars (hard limit); prefer under 200 lines but don't sacrifice substance for brevity.
 - Ask before committing (user preference).
 - Never commit user data to the skills repo.
-- Enforce data separation: skill directories contain code and config only. User/personal data must live outside `~/.claude/skills/` (path configured in `config.local.yaml`). Flag violations during health check and tidy.
+- Enforce data separation: skill directories contain code and config only. User/personal data must live outside `${CLAUDE_PLUGIN_ROOT}/` (path configured in `config.local.yaml`). Flag violations during health check and tidy.
 - Always update README if skills were added or removed.

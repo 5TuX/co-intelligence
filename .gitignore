@@ -1,4 +1,4 @@
-# User-specific local config (not synced)
+# User-specific local config (legacy, now in PLUGIN_DATA)
 config.local.yaml
 
 # Python
@@ -8,6 +8,7 @@ __pycache__/
 *.egg-info/
 dist/
 build/
+.venv/
 
 # uv
 uv.lock
@@ -15,10 +16,6 @@ uv.lock
 # Generated HTML (rebuilt from data)
 *.html
 !**/templates/*.html.j2
-
-# Data files with personal info
-*.json
-!**/data/*.json
 
 # OS
 .DS_Store

@@ -11,7 +11,7 @@ argument-hint: "[scan]"
 
 Check that all symlinks, config files, and paths are correctly configured.
 Fix anything broken. Scan the live setup to keep `architecture.md` in sync across machines.
-For architecture details and drive paths, see `architecture.md` in this skill's directory.
+For architecture details and drive paths, see `architecture.md` (in `$PLUGIN_DATA/setup/`).
 
 ## Argument Parsing
 
@@ -23,6 +23,16 @@ For architecture details and drive paths, see `architecture.md` in this skill's 
 - If argument is `scan` → jump to §Scan Mode
 - Otherwise → verification mode (default)
 
+## Data Directory
+
+At the start of every invocation:
+1. Resolve `CLAUDE_PLUGIN_DATA` env var → `$PLUGIN_DATA`
+2. Create `$PLUGIN_DATA/setup/` if it doesn't exist
+3. If `$PLUGIN_DATA/setup/architecture.md` doesn't exist, copy from `templates/architecture.md` in this skill's directory
+4. Read `$PLUGIN_DATA/config.local.yaml` for `admin_user` and `data_dir`. If missing, error: "Missing config — run: `cp ${CLAUDE_PLUGIN_ROOT}/templates/config.local.yaml.example ${CLAUDE_PLUGIN_DATA}/config.local.yaml` and edit it."
+
+All references to `architecture.md` and `config.local.yaml` below mean the copies in `$PLUGIN_DATA/`.
+
 ---
 
 ## Verification Mode (default)
@@ -33,9 +43,7 @@ For architecture details and drive paths, see `architecture.md` in this skill's 
 
 2. **Detect the Python command**: On Windows, Python is typically `python` (not `python3`). Try `python --version` first; fall back to `python3`. Use whichever works for all subsequent Python commands in this session. Assign it to a shell variable: `PY=$(command -v python3 || command -v python)`.
 
-3. **Read config**: Read `~/.claude/skills/config.local.yaml` to get `admin_user` and `data_dir`. If missing, error: "Missing config — copy `config.local.yaml.example` to `config.local.yaml` and fill in your values."
-
-4. **Read expected state**: Read `architecture.md` § "Expected State" to get the expected MCP servers, plugins, and checks. Do NOT hardcode these — always read from architecture.md.
+3. **Read expected state**: Read `architecture.md` § "Expected State" to get the expected MCP servers, plugins, and checks. Do NOT hardcode these — always read from architecture.md.
 
 ### Step 2: Run verification tests
 
@@ -62,7 +70,7 @@ $PY -c "import json,sys; json.load(open(sys.argv[1])); print('settings.json: val
 
 #### Check: Skills populated
 ```bash
-ls ~/.claude/skills/
+ls ${CLAUDE_PLUGIN_ROOT}/skills/
 ```
 
 #### Check: Career dir
@@ -146,7 +154,7 @@ for name, enabled in plugins.items():
 
 **Skills:**
 ```bash
-ls ~/.claude/skills/
+ls ${CLAUDE_PLUGIN_ROOT}/skills/
 ```
 
 ### Step 2: Compare against architecture.md
@@ -175,9 +183,7 @@ Unchanged: <count> MCP servers, <count> plugins, <count> skills
 
 If there are changes:
 1. Update `architecture.md`: Skills table, Expected MCP Servers table, Expected Plugins table, architecture diagram, and MCP add commands section (add install commands for new servers).
-2. Show the diff of `architecture.md`.
-3. Ask: "Commit these changes? Other machines will pick up the new expected state via Drive sync."
-4. If approved, commit: `git -C ~/.claude/skills add setup/architecture.md && git -C ~/.claude/skills commit -m "setup: scan — update expected state"`
+2. Show the updated architecture.md content. If the user wants to persist changes to the plugin repo, they must do so manually from the source checkout.
 
 If no changes: "Setup is in sync with architecture.md — nothing to update."
 
@@ -225,7 +231,7 @@ New-Item -ItemType Junction -Path "$env:USERPROFILE\.claude\skills" -Target "$DR
 
 ### Step 6 — Create local config
 ```bash
-cp ~/.claude/skills/config.local.yaml.example ~/.claude/skills/config.local.yaml
+cp ${CLAUDE_PLUGIN_ROOT}/templates/config.local.yaml.example $PLUGIN_DATA/config.local.yaml
 # Edit config.local.yaml with your handle and data directory path
 ```
 

@@ -1,0 +1,16 @@
+{
+  "name": "co-intelligence",
+  "description": "Skills for human-AI collaborative work",
+  "owner": {
+    "name": "Dimitris Klockenbring",
+    "email": "klockenbring@users.noreply.github.com"
+  },
+  "plugins": [
+    {
+      "name": "co-intelligence",
+      "description": "Career search, skill authoring, setup verification, reports, multi-agent chat",
+      "version": "1.0.0",
+      "source": "./"
+    }
+  ]
+}

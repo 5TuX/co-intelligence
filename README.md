@@ -1,77 +1,46 @@
-# Claude Code Skills Collection
+# co-intelligence
 
-A personal collection of [Claude Code](https://docs.anthropic.com/en/docs/claude-code) skills — slash commands that extend Claude's capabilities with domain-specific workflows.
+A Claude Code plugin for human-AI collaborative work. Inspired by [Ethan Mollick's co-intelligence concept](https://www.oneusefulthing.org/p/i-cyborg-using-co-intelligence).
 
 ## Skills
 
 | Skill | Command | What it does |
 |-------|---------|-------------|
-| **career** | `/career` | AI-powered job search with learning loop, ethical filtering, multi-user support, and note capture |
-| **skillsmith** | `/skillsmith` | Meta-skill that creates, refines, and deletes other skills (and itself) |
-| **report** | `/report` | Technical report writing with Pandoc ODT/PDF output and BibTeX citations |
-| **agent** | `/agent` | Multi-agent chat channel coordination |
-| **setup** | `/setup` | Verify, repair, or initialize Claude Code setup; `/setup scan` syncs config across machines |
+| **career** | `/co-intelligence:career` | AI-powered job search with learning loop, ethical filtering, multi-user support, and note capture |
+| **skillsmith** | `/co-intelligence:skillsmith` | Create, refine, and delete Claude Code skills |
+| **report** | `/co-intelligence:report` | Technical report writing with Quarto ODT/PDF output and BibTeX citations |
+| **setup** | `/co-intelligence:setup` | Verify, repair, and sync Claude Code setup across machines |
+| **agent** | `/co-intelligence:agent` | Multi-agent chat channel coordination |
 
 ## Installation
 
 ```bash
-# Clone into your Claude Code skills directory
-git clone https://github.com/YOUR_USERNAME/claude-skills.git ~/.claude/skills
+# Add the marketplace
+claude plugin marketplace add github:5TuX/co-intelligence
 
-# Install career Python dependencies
-cd ~/.claude/skills/career && uv sync
+# Install the plugin
+claude plugin install co-intelligence
 ```
 
-Skills are automatically available as slash commands in Claude Code.
+On first session, the plugin automatically installs Python dependencies for the career skill.
 
-## Directory Structure
+## First-Use Setup
 
+On first invocation of `career` or `setup`, you'll be prompted to create a config file:
+
+```bash
+cp ${CLAUDE_PLUGIN_ROOT}/templates/config.local.yaml.example ${CLAUDE_PLUGIN_DATA}/config.local.yaml
+# Edit with your handle and data directory path
 ```
-~/.claude/skills/
-├── README.md               # This file
-├── .gitignore              # Excludes generated HTML, secrets
-├── agent/                  # Multi-agent chat coordination
-│   └── SKILL.md
-├── career/                 # AI career management engine
-│   ├── SKILL.md            #   Orchestration (search, clean, note modes)
-│   ├── README.md           #   Detailed documentation
-│   ├── pyproject.toml      #   Python dependencies
-│   ├── career/             #   Python automation package
-│   │   ├── models.py       #     Pydantic schemas
-│   │   ├── clean.py        #     CLI: career-clean (link validator + offer cleaner)
-│   │   ├── render.py       #     CLI: career-render (JSON → HTML)
-│   │   ├── schedule.py     #     CLI: career-schedule (profile → learning path)
-│   │   ├── links.py        #     CLI: career-validate-links
-│   │   ├── sources.py      #     CLI: career-validate-sources
-│   │   └── templates/      #     Jinja2 HTML templates
-│   ├── sources-general.yaml
-│   ├── reference/          #   Extracted protocol files
-│   └── templates/
-│       └── user-template/  #     Blueprint for new users
-├── skillsmith/             # Meta-skill: create, refine, delete skills
-│   ├── SKILL.md
-│   ├── knowledge.md
-│   ├── analysis.md
-│   └── history/
-├── report/                 # Technical report writing
-│   └── SKILL.md
-└── setup/                  # Environment setup
-    ├── SKILL.md
-    └── architecture.md
-```
+
+## Requirements
+
+- [Claude Code](https://docs.anthropic.com/en/docs/claude-code)
+- Python 3.11+ with [uv](https://docs.astral.sh/uv/) (for career skill CLI tools)
 
 ## User Data
 
-Career user data (CVs, job offers, preferences) lives **outside** the skills directory at `DATA_DIR/<handle>/` (configured in `config.local.yaml`). This separates code from data and keeps the skills repo clean.
-
-## Creating New Skills
-
-1. Create a directory: `~/.claude/skills/your-skill/`
-2. Add a `SKILL.md` with YAML frontmatter (`name`, `description`, `argument-hint`)
-3. Restart your Claude Code session
-4. Invoke with `/your-skill`
-
-See [Anthropic's skill authoring guide](https://platform.claude.com/docs/en/agents-and-tools/agent-skills/best-practices) and use `/skillsmith your-skill` to improve it.
+Career user data (CVs, job offers, preferences) lives outside the plugin at `DATA_DIR/<handle>/` (configured in your `config.local.yaml`). The plugin never stores personal data.
 
 ## License
 

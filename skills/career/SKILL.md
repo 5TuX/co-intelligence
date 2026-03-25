@@ -19,13 +19,20 @@ Supports multiple users with independent profiles, preferences, and career files
 
 **Admin identity:** The admin/operator is always the user running the Claude Code session. Other users are "friends." Admin sees process notes in their summary; friends only get personalized tips.
 
-## Configuration
+## Data Directory
 
-Read `~/.claude/skills/config.local.yaml` to get:
-- `data_dir` → **DATA_DIR** (where user data lives, outside this skill directory)
-- `admin_user` → **ADMIN_USER** (default user for `/career note`)
+This skill runs as part of the `co-intelligence` plugin. At the start of every invocation:
+1. Resolve `CLAUDE_PLUGIN_DATA` environment variable → `$PLUGIN_DATA`
+2. Read `$PLUGIN_DATA/config.local.yaml` to get `data_dir` (→ **DATA_DIR**) and `admin_user` (→ **ADMIN_USER**)
+3. If config is missing, error: "Missing config — run: `cp ${CLAUDE_PLUGIN_ROOT}/templates/config.local.yaml.example ${CLAUDE_PLUGIN_DATA}/config.local.yaml` and edit it."
 
-If `config.local.yaml` is missing, error: "Missing config — copy `config.local.yaml.example` to `config.local.yaml` and fill in your values."
+## CLI Tools
+
+Before running any `career-*` CLI command, activate the plugin venv:
+```bash
+source $PLUGIN_DATA/career-venv/bin/activate 2>/dev/null || source $PLUGIN_DATA/career-venv/Scripts/activate
+```
+Then run commands normally (e.g., `career-render DATA_DIR/<handle>/`).
 
 ## Argument Parsing
 
@@ -163,7 +170,7 @@ The dashboard combines all views in a single tabbed HTML file: **Offers** (persi
 1. Write `DATA_DIR/<handle>/summary-data.json` — same `RenderContext` schema as offers.json, but add `tips` (per-user advice) and `admin_notes` (admin-only process notes). Mark hidden gems with `hidden_gem: true`.
 2. Render the unified dashboard:
 ```bash
-uv run career-render DATA_DIR/<handle>/
+career-render DATA_DIR/<handle>/
 ```
 This reads `offers.json`, `summary-data.json`, and `profile.yaml` (for schedule) and produces a single `Dashboard.html`.
 
