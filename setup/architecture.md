@@ -10,8 +10,8 @@ Google Drive ($DRIVE)              ~/.claude/ (local)
 $DRIVE/claude/                     CLAUDE.md      → symlink to Drive
   CLAUDE.md                        settings.json  → symlink to Drive
   settings.json                    skills/        → symlink/junction to Drive
-  skills/                          local.md       ← plain file, NOT synced
-    agent/SKILL.md                 keybindings.json ← plain file (optional)
+  skills/                          keybindings.json ← plain file (optional)
+    agent/SKILL.md
     job-search/SKILL.md            projects/      ← Claude cache, never touch
       users/dimit/
     myplay/SKILL.md              ~/.claude.json (local, NOT synced)
@@ -44,16 +44,9 @@ $DRIVE/claude/                     CLAUDE.md      → symlink to Drive
 
 | File | Purpose |
 |---|---|
-| `local.md` | Machine-specific paths |
 | `keybindings.json` | Custom key bindings (optional) |
 | `~/.claude.json` | Claude Code state + MCP server config (machine-local) |
 | `projects/` | Claude's local cache — do not touch |
-
-### local.md Format
-
-```markdown
-# Machine-Local Paths
-```
 
 ### Skills
 

@@ -44,11 +44,6 @@ $PY -c "import json,sys; json.load(open(sys.argv[1])); print('settings.json: val
 ls ~/.claude/skills/
 ```
 
-### Check: local.md exists
-```bash
-test -f ~/.claude/local.md && echo "local.md: present" || echo "local.md: MISSING"
-```
-
 ### Check: Career dir
 ```bash
 ls ~/.claude/skills/job-search/users/dimit/*.md ~/.claude/skills/job-search/users/dimit/Topics/ 2>&1 || echo "ERROR: career dir missing or incomplete"
@@ -95,7 +90,6 @@ except Exception as e:
 
 6. **Offer to fix** any failed checks:
    - Missing or broken symlink → recreate it (see `architecture.md` for drive paths by OS)
-   - Missing `local.md` → create it with inferred paths
    - Missing career dir → flag for manual action (needs files from another machine)
    - Missing git repo in career dir → `git init && git add -A && git commit -m "career: initial import"`
    - Missing plugin → add `enabledPlugins` key to `settings.json` (see `architecture.md`)
@@ -111,7 +105,6 @@ except Exception as e:
 | `~/.claude/CLAUDE.md` | Symlink → Drive path, readable |
 | `~/.claude/settings.json` | Symlink → Drive path, valid JSON |
 | `~/.claude/skills/` | Symlink/Junction → Drive skills dir, contains skill subdirs |
-| `~/.claude/local.md` | Plain file, machine-specific paths |
 | `~/.claude/skills/job-search/users/dimit/` | Directory with Direction.md, Journal.md, CV.md, Human-Expertise.md, Topics/, etc. |
 | `~/.claude/skills/job-search/users/dimit/` | Files synced via Google Drive (no git repo required) |
 | `settings.json` → `enabledPlugins` | `superpowers@claude-plugins-official: true` |
@@ -159,16 +152,13 @@ ln -s "$DRIVE/claude/skills" ~/.claude/skills
 New-Item -ItemType Junction -Path "$env:USERPROFILE\.claude\skills" -Target "$DRIVE\claude\skills"
 ```
 
-### Step 6 — Create local.md
-Create `~/.claude/local.md` with paths for this machine (see `architecture.md` for format).
-
-### Step 7 — Set up career directory
+### Step 6 — Set up career directory
 ```bash
 mkdir -p ~/.claude/skills/job-search/users/dimit/Topics
 # Copy career files from another machine or let Google Drive sync them
 ```
 
-### Step 8 — Enable the superpowers plugin
+### Step 7 — Enable the superpowers plugin
 
 The plugin is already declared in `settings.json` (synced via Drive). Verify it loaded:
 ```bash
@@ -179,7 +169,7 @@ If not listed, install it:
 /plugin install superpowers@claude-plugins-official
 ```
 
-### Step 9 — Configure MCP servers
+### Step 8 — Configure MCP servers
 
 MCP servers live in `~/.claude.json` under the `mcpServers` key. This file is **local** (not synced), so you must configure it per machine.
 
