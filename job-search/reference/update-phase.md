@@ -86,17 +86,28 @@ When removing stale offers from the dashboard, move them to the "Removed Offers"
 
 ### 4f. Update People to Follow / Contact
 
-During searches, collect interesting people: lab leads, hiring managers, researchers publishing at the intersection of AI and the user's preferred domains. Add them with affiliation, domain, why they're interesting, and how to reach them. Remove people who have moved on or are no longer relevant.
+During searches, collect interesting people: lab leads, hiring managers, researchers publishing at the intersection of AI and the user's preferred domains. Add them with affiliation, domain, why they're interesting, and how to reach them.
+
+**Link validation rules (apply to both `url` and `reach` fields):**
+- **Verify every URL before adding it.** Fetch the page and confirm it loads (not 404, not ECONNREFUSED, not a login wall). If broken, try alternatives (DBLP, Google Scholar, institutional pages) until you find one that works.
+- **`url` field:** Profile page (lab page, DBLP, Google Scholar, personal site) — name is clickable in the dashboard. If no working profile URL is found, the dashboard falls back to a Google Scholar search.
+- **`reach` field:** Must be a direct, actionable contact — an email address or a working URL. Emails are always **lowercase** and render as `mailto:` links. URLs render as clickable links. Never use generic portals (e.g. university job application systems, generic career pages) — these are useless as contact info.
+- **Emails must be lowercase** in all contexts (reach field, notes, tips). Use `firstname.lastname@domain` convention when inferring from institutional patterns.
+
+Remove people who have moved on or are no longer relevant.
 
 ### 4g. Update learning path
 
-If the user has a `learning_path` in their profile, review it against the current run's results:
-1. **Check skill relevance** — are the listed skills still the most demanded by active offers? Count tool/skill frequency across all offers and compare.
-2. **Suggest adjustments** — if a new skill emerges as high-demand (e.g., a wave of offers asking for Go or Rust), propose adding it or re-prioritizing.
-3. **Update resources** — if a resource link is dead or a better resource exists (newer course, official tutorial updated), replace it.
-4. **Track progress** — if the user mentions completing a resource or achieving proficiency in a skill, move it from `learning` to `strong` in the skills section and propose removing or deprioritizing it in the learning path.
+If the user has a `learning_path` in their profile, **update it every run** — do not skip this step even if no new offers were found. The learning path must stay aligned with the current catalog.
 
-Only modify the learning path with user approval. Present proposed changes as a diff in the final report.
+1. **Count skill demand** — tally tool/skill frequency across ALL active offers. Rank by how many offers mention each skill.
+2. **Re-prioritize** — adjust priority values so the most demanded skills with the biggest gaps rank highest. A skill that appears in 15/22 offers but is missing from the user's profile is priority 1.
+3. **Add emerging skills** — if a skill appears in 3+ offers but isn't in the learning path, add it with appropriate resources.
+4. **Remove obsolete entries** — if a skill is no longer demanded by any active offer, or the user has achieved proficiency (moved to `strong` in skills), remove it from the learning path.
+5. **Validate resources** — check that resource URLs are still alive. Replace dead links.
+6. **Track progress** — if the user mentions completing a resource or achieving proficiency, move it from `learning` to `strong` in the skills section.
+
+**This step is mandatory every run.** Write the updated learning path directly to `profile.yaml`. Summarize changes in the final report (e.g., "Learning path: re-prioritized Docker to P1, added CUDA, removed FastAPI").
 
 ### 4h. Update Direction.md
 

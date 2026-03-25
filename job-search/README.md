@@ -23,7 +23,7 @@ A Claude Code skill that turns your terminal into a conversational career partne
 
 1. Clone into your Claude Code skills directory:
    ```bash
-   git clone https://github.com/YOUR_USERNAME/job-search.git ~/.claude/skills/job-search
+   git clone https://github.com/5TuX/job-search-skill.git ~/.claude/skills/job-search
    ```
 
 2. Install Python dependencies:
@@ -87,15 +87,22 @@ Each run takes the full learning from all previous runs into account. The more y
 ```
 ~/.claude/skills/job-search/
 ├── SKILL.md                    # Skill orchestration (the brain, ~470 lines)
-├── deep-search-tactics.md      # Search tactics reference (loaded by deep search agent only)
-├── new-user-flow.md            # New user creation flow (loaded on demand)
-├── update-user-flow.md         # Profile update flow (loaded on demand)
 ├── README.md                   # This file
-├── ROADMAP.md                  # Development roadmap
 ├── LICENSE                     # MIT
+├── CONTRIBUTING.md             # How to contribute
+├── CHANGELOG.md                # Version history
 ├── pyproject.toml              # Python dependencies
 ├── sources-general.yaml        # Shared job boards (AI/ML focused)
-├── feedback_cv_honesty.md      # Shared feedback rules
+├── reference/                  # Reference docs (loaded on demand)
+│   ├── deep-search-tactics.md  #   Search tactics reference (loaded by deep search agent only)
+│   ├── new-user-flow.md        #   New user creation flow
+│   ├── update-user-flow.md     #   Profile update flow
+│   ├── feedback_cv_honesty.md  #   Shared feedback rules
+│   ├── search-agents.md        #   Search agent specifications
+│   ├── update-phase.md         #   Distribution & update protocol
+│   ├── final-report.md         #   Final report format
+│   ├── clean-mode.md           #   Clean mode protocol (C1-C4)
+│   └── learning-loop.md        #   Learning loop protocol
 ├── job_search/                 # Python automation package
 │   ├── models.py               #   Pydantic schemas (Offer, Source, CleanReport, etc.)
 │   ├── clean.py                #   CLI: js-clean (validate links + remove dead offers)
@@ -104,9 +111,11 @@ Each run takes the full learning from all previous runs into account. The more y
 │   ├── links.py                #   CLI: js-validate-links (async link checker)
 │   ├── sources.py              #   CLI: js-validate-sources (YAML validator)
 │   └── templates/              #   Jinja2 HTML templates
-│       ├── base.html.j2
-│       ├── offers.html.j2
-│       └── summary.html.j2
+│       ├── base.html.j2        #     Dark theme, sortable tables, score colors
+│       ├── dashboard.html.j2   #     Unified tabbed dashboard
+│       ├── offers.html.j2      #     Offers table (legacy)
+│       ├── summary.html.j2     #     Run summary (legacy)
+│       └── schedule.html.j2    #     Learning path
 └── users/
     ├── _example/               # Template — copy this to create your profile
     │   ├── profile.yaml

@@ -38,6 +38,30 @@ Field guidelines:
 
 **Graceful degradation:** If an agent fails or times out, log the failure and continue with results from other agents. Note the gap in the final report. Do not retry failed agents.
 
+---
+
+## Novelty-Zero Protocol
+
+**Before spawning search agents**, the orchestrator MUST read `metrics.yaml` and check the last 3 runs' `new_offers` count. If 2+ of the last 3 runs had `new_offers: 0` (or total new_offers across the last 3 runs < 3), activate **Novelty-Zero Mode** for this run.
+
+When Novelty-Zero Mode is active:
+
+1. **Query blacklist** — Read `search-log.yaml`, extract every query that returned `high_match: 0` for 2+ consecutive runs. These queries are **BANNED** for this run. The agent must not repeat them or trivial variations (adding/removing a year, shuffling OR terms counts as trivial).
+
+2. **60% novel queries** — At least 60% of queries this run must be **structurally different** from any query in search-log.yaml. "Structurally different" means: different `site:` domain, different keyword axis (company name vs skill, tool vs domain), or different search tactic (forum, social, funding, community, career-page-direct).
+
+3. **Mandatory deep tactics** — `reference/deep-search-tactics.md` sections G, H, I, and J are **no longer optional**. The deep search agent MUST execute at least 3 queries from section G (all G1-G6 in Novelty-Zero Mode), at least 2 from section H (all in Novelty-Zero Mode), and at least 2 each from sections I and J.
+
+4. **Forced refinement agents** — Gap Analysis and Non-Obvious agents are spawned **unconditionally**, regardless of initial result count.
+
+5. **Forced community/social + funding agents** — The Community & Social Search agent and Funding & Career Page Monitor agent (defined below) are spawned **unconditionally**.
+
+6. **Seniority audit** — Log how many candidate offers were rejected by the seniority gate this run. If >50% of total finds were rejected by seniority alone, flag in admin_notes: "Seniority ceiling may be too restrictive — N/M offers rejected. Consider raising max_required_years by 1."
+
+Log in admin_notes: `"Novelty-Zero Mode activated: N consecutive runs with 0 new offers. Blacklisted M queries."`
+
+---
+
 ## General agents (use sources-general.yaml, run once for all users)
 
 **Agent: General job board search**
@@ -57,12 +81,60 @@ For EACH target user, spawn:
 Search all sources in `users/<handle>/sources.yaml`. Follow the user's `search_notes` from their profile — these contain specific labs, companies, institutions, and domains to check. Include clickable URLs. Apply that user's ethical filtering.
 
 **Agent: Deep search — <handle>**
-Read `deep-search-tactics.md` for the full tactics reference. Adapt all strategies to this user's profile:
+Read `reference/deep-search-tactics.md` for the full tactics reference. Adapt all strategies to this user's profile:
 - Use the user's skills (from profile.yaml) to construct role keyword variants
 - Use the user's location_priority for geographic targeting
 - Use the user's ethical_filter.prioritize for domain-specific dork queries
 - Use the user's search_notes for company/lab-specific searches
 - Read the user's Direction.md to determine seniority level for negative keyword filtering
+
+**Agent: Community & social search — <handle>**
+Search non-traditional sources invisible to standard ATS dorking:
+
+1. **HN Who is Hiring** — Use hnhiring.com (filterable) or Algolia HN API (`hn.algolia.com/api/v1/search?tags=comment&query=<skill> AND (<location> OR remote)`) to search WITHIN comments of the current month's thread. Filter by user skills and location.
+
+2. **Reddit hiring threads** — Search for recent posts:
+   - `site:reddit.com/r/MachineLearning "[H]" OR "hiring" "<skill>" after:<30d>`
+   - `site:reddit.com/r/MLjobs "<skill>" "<location>" after:<30d>`
+   - `site:reddit.com/r/cscareerquestionsEU "<skill>" France OR remote after:<30d>`
+
+3. **Twitter/X hiring signals** — Search for recent posts:
+   - `"hiring" OR "we're hiring" "<skill>" "<location>" site:x.com after:<30d>`
+   - Search target companies: `"<company>" "hiring" site:x.com after:<30d>`
+
+4. **Community job channels** — Search these communities for postings:
+   - DataTalks.Club (datatalks.club) job board
+   - MLOps Community job channels
+   - HuggingFace Discord (#jobs)
+   - Learn AI Together Discord (66k members)
+   - Pattern: `site:discord.com OR site:datatalks.club "<skill>" "hiring" OR "job"`
+
+5. **Newsletter job boards** — Check directly: AI Engineer newsletter, The Batch (deeplearning.ai), TLDR AI newsletter
+
+6. **Niche boards** — Check these that are NOT in sources.yaml: Station F jobs (jobs.stationf.co), AAAI Career Center (aaai.org/careers), Bot-Jobs (bot-jobs.com), Jobtensor (jobtensor.com), Untapped.io, LesJeudis (lesjeudis.com)
+
+Note the source community in the `source` field.
+
+**Agent: Funding & career page monitor — <handle>**
+Proactively find companies hiring before they post on aggregators:
+
+1. **Recently funded companies** — Search for startups in user's preferred domains that raised funding in the last 6 months:
+   - `"series A" OR "series B" OR "raised" OR "funding" "<domain>" France OR Europe 2026`
+   - Check sifted.eu, techcrunch.com for recent funding rounds
+   - For each funded company found, visit their careers/jobs page directly
+
+2. **Direct career page visits** — For high-priority companies already in sources.yaml that haven't yielded offers recently, visit their careers page directly (not via aggregator). Companies post to their own site days before aggregators index them.
+
+3. **French tech ecosystem lists** — Check career pages of companies from:
+   - La French Tech Next40/FT120 company list
+   - TECH500 (tech500.co) — top 500 French startups
+   - France Digitale portfolio companies
+
+4. **Google Alerts simulation** — Highly specific recency queries:
+   - `"<exact-skill>" "recrutement" OR "CDI" OR "hiring" site:.fr after:<7d>`
+   - `"<company-from-sources>" "engineer" OR "ingénieur" after:<7d>`
+
+Flag source as "direct-career-page" or "funding-signal" in results.
 
 ## Shared maintenance agent
 
@@ -89,13 +161,24 @@ Manage BOTH `sources-general.yaml` AND each user's `sources.yaml`. For each run:
 
 ## Refinement agents (spawned by orchestrator AFTER initial search agents return)
 
-**Conditional:** Only spawn if initial search results yield fewer than 15 offers per user.
+**Trigger:** Spawn if ANY of the following are true:
+- Initial search agents found fewer than 15 **NEW** offers this run (not total catalog — genuinely new finds not already in offers.json)
+- Novelty-Zero Mode is active (see protocol above)
+- The user's total catalog has fewer than 20 offers
+
+In **Novelty-Zero Mode**, these agents are **MANDATORY** regardless of initial results.
 
 **Agent: Gap analysis — <handle>**
 Analyzes what initial results miss (gaps in geography, domain, seniority). Generates 3-5 alternative query reformulations targeting the gaps. Uses the user's profile for context. Returns only net-new results in the standard output format.
 
+When analyzing gaps, specifically check:
+- Companies in sources.yaml that have **NEVER** yielded an offer — visit their careers page directly
+- Role title variants not yet tried: `"ML engineer"` vs `"machine learning engineer"` vs `"AI developer"` vs `"ingénieur IA"` vs `"data scientist ML"` vs `"deep learning engineer"` vs `"computer vision engineer"` vs `"NLP engineer"` vs `"AI research engineer"`
+- Adjacent domains from the user's `also_look_for` list in profile.yaml
+- Location variants: city names in local language, department codes, region names (e.g., Strasbourg → `"Bas-Rhin"`, `"67000"`, `"Grand Est"`, `"Alsace"`)
+
 **Agent: Non-obvious strategies — <handle>**
-Uses tactics from `deep-search-tactics.md` sections G and H. Constructs composite queries combining ALL operators. Looks for informal hiring posts, recently-funded startups, conference back-channels. Tests non-English queries for bilingual regions. Searches for companies the user would love but hasn't heard of. Returns only net-new results in the standard output format.
+Uses tactics from `reference/deep-search-tactics.md` sections G, H, I, and J. Constructs composite queries combining ALL operators. Looks for informal hiring posts, recently-funded startups, conference back-channels. Tests non-English queries for bilingual regions. Searches for companies the user would love but hasn't heard of. Returns only net-new results in the standard output format.
 
 ## Post-search agent (runs AFTER all search and refinement agents return)
 

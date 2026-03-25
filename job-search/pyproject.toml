@@ -1,14 +1,33 @@
 [project]
 name = "job-search"
 version = "0.1.0"
-description = "Automation scripts for the job-search skill"
+description = "Claude Code skill for automated job-search: link validation, offer cleaning, dashboard rendering, and schedule planning."
+readme = "README.md"
+license = "MIT"
 requires-python = ">=3.11"
+authors = [
+    { name = "Dimitris Klockenbring", email = "klockenbring@users.noreply.github.com" },
+]
+keywords = ["claude-code", "job-search", "automation", "skill"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+]
 dependencies = [
     "jinja2>=3.1",
     "httpx>=0.27",
     "pyyaml>=6.0",
     "pydantic>=2.0",
 ]
+
+[project.urls]
+Homepage = "https://github.com/5TuX/job-search-skill"
+Repository = "https://github.com/5TuX/job-search-skill"
+Issues = "https://github.com/5TuX/job-search-skill/issues"
 
 [project.scripts]
 js-render = "job_search.render:main"

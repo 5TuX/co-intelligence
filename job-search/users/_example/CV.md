@@ -1,7 +1,7 @@
 # CV
 
 <!-- Your living CV — updated by the skill with suggestions based on market demand -->
-<!-- Only include skills you actively practice (see feedback_cv_honesty.md) -->
+<!-- Only include skills you actively practice (see reference/feedback_cv_honesty.md) -->
 
 ## Summary
 <!-- 2-3 sentences: who you are, what you do, what you're looking for -->

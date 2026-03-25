@@ -20,6 +20,12 @@ Before constructing searches, review what you learned from previous runs:
 
 4. **Synthesize** — form a brief internal search plan: "This run I'll emphasize X, de-emphasize Y, and probe Z." Do NOT output this to the user — it's internal context for the search agents.
 
+5. **Novelty-Zero escalation** — If `metrics.yaml` shows novelty at 0.0 for 2+ consecutive runs:
+   - **Query audit**: Extract ALL unique queries from the last 3 runs in search-log.yaml. Count how many are structurally identical (same `site:` domain + similar keywords). If >50% are structural repeats, flag "query saturation" and mandate search agents generate at least 60% novel query structures.
+   - **Source audit**: Count sources in sources.yaml that have `last_checked` within 7 days but have NEVER contributed an offer to offers.json. These are "dead weight" sources that consume search budget without results. Flag them in admin_notes.
+   - **Tactic audit**: Check search-log.yaml for queries using `reference/deep-search-tactics.md` sections G, H, I, J. If zero queries used these sections in the last 3 runs, flag "deep tactics underutilized" and mandate their use.
+   - **Expansion mandate**: The search plan MUST include at least 3 search vectors not used in the last 3 runs. New vectors include: community/social search, funding monitoring, direct career page visits, conference hiring boards, ecosystem lists, newsletter job boards.
+
 If no learning-loop files exist yet (first run with this feature), skip this step and proceed normally.
 
 ---

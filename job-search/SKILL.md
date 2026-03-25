@@ -44,7 +44,7 @@ users/<handle>/
 ├── profile.yaml            # Preferences, ethical filters, location, skills, learning path
 ├── sources.yaml            # User-specific job sources
 ├── Dashboard.html          # Unified HTML (offers + summary + schedule, tabbed)
-├── comments.json           # User comments on offers (URL → free-form text), edited via Dashboard
+├── comments.json           # User comments + scores on offers (URL → text, _scores → {URL → int}), edited via Dashboard
 ├── Job-Search-Reference.md # Removed offers history, skill gaps, tips
 ├── Direction.md            # Vision, goals, skills inventory, roadmap
 ├── CV.md                   # Living CV + portfolio readiness tracker
@@ -75,7 +75,7 @@ For each user, load any files listed in their `profile.yaml` `feedback_files` fi
   - Comma-separated handles → those users only
   - Single handle → that user only
 
-Read `clean-mode.md` for the full clean mode protocol (C1-C4).
+Read `reference/clean-mode.md` for the full clean mode protocol (C1-C4).
 
 ---
 
@@ -93,7 +93,7 @@ For EACH target user:
    - `users/<handle>/feedback.yaml` — raw Q&A history from past runs
    - `users/<handle>/search-log.yaml` — per-run query performance log
    - `users/<handle>/metrics.yaml` — run-over-run quality metrics
-8. Read `users/<handle>/comments.json` — user's free-form comments on offers (keyed by URL). Comments are a lightweight command channel. Parse each comment with intent detection (case-insensitive, fuzzy — match the spirit, not exact keywords):
+8. Read `users/<handle>/comments.json` — user's free-form comments and scores on offers. Top-level keys are URL → comment text. The reserved `_scores` key holds a `{ URL → integer }` map of the user's own match scores (0-10). Parse each comment with intent detection (case-insensitive, fuzzy — match the spirit, not exact keywords). **User scores:** When `_scores` is present, compare each user score against the system `match` score. If they diverge by ≥2 points, note the gap in admin_notes and adjust the system score toward the user's score (set system score = user score). This lets the user override AI scoring. Preserve `_scores` in `comments.json` across runs (do not remove on cleanup).
 
    **A. Direct actions on the offer:**
    - **Delete/remove:** `"delete this"`, `"remove"`, `"drop"` → Remove offer from catalog. Archive to Job-Search-Reference.md with the comment.
@@ -111,17 +111,21 @@ For EACH target user:
 
    **C. Skill/process changes** — comments that imply modifying the skill itself:
    - `"add [source] to sources"`, `"check [website]"` → Add to `sources.yaml` (user-level, no confirmation needed).
-   - `"change how [feature] works"`, `"the skill should [do X]"`, `"stop doing [Y]"` → **ASK THE USER TO CONFIRM** before modifying any skill file (SKILL.md, search-agents.md, update-phase.md, etc.). Present the proposed change and wait for approval.
+   - `"change how [feature] works"`, `"the skill should [do X]"`, `"stop doing [Y]"` → **ASK THE USER TO CONFIRM** before modifying any skill file (SKILL.md, reference/search-agents.md, reference/update-phase.md, etc.). Present the proposed change and wait for approval.
 
    **D. Neutral comments** — anything that doesn't match A/B/C is informational context. Preserve as-is.
 
-   **Cleanup:** After processing all comments, remove consumed action comments (A-type deletions, B-type preference updates) from `comments.json`. Keep neutral comments and tracking comments ("applied", "waiting", boost comments).
+   **Cleanup:** After processing all comments, remove consumed action comments (A-type deletions, B-type preference updates) from `comments.json`. Keep neutral comments, tracking comments ("applied", "waiting", boost comments), and the `_scores` object.
 
    **Always:** When removing an offer that has a comment, preserve the comment in Job-Search-Reference.md alongside the removal note. When re-rendering the dashboard, pass comments to the template so they appear pre-filled.
 
 ### Step 1.5: Adaptive strategy review (learning loop)
 
-Read `learning-loop.md` § "Pre-Search" for the full protocol. Internalize past preferences, query performance, and metrics trends to form a search plan. Skip if no learning-loop files exist yet.
+Read `reference/learning-loop.md` § "Pre-Search" for the full protocol. Internalize past preferences, query performance, and metrics trends to form a search plan. Skip if no learning-loop files exist yet.
+
+**Novelty-Zero Detection:** After reading `metrics.yaml`, check if 2+ of the last 3 runs had `new_offers: 0` OR if total new_offers across the last 3 runs < 3. If so, activate **Novelty-Zero Mode** for this run. This mode changes agent behavior as defined in `reference/search-agents.md` — read those instructions carefully. Log the activation in admin_notes: `"Novelty-Zero Mode activated: N consecutive runs with 0 new offers."`
+
+**Seniority ceiling review (Novelty-Zero Mode only):** When catalog is < 15 offers and novelty has been 0 for 2+ runs, check if the seniority ceiling (`max_required_years`) is causing excessive filtering. Log in admin_notes how many offers were rejected by the seniority gate in the last run. If >50% of total finds were rejected by seniority alone, note this as a potential bottleneck and suggest the user consider raising the ceiling by 1 year in the feedback questions.
 
 ### Step 1.7: Automatic clean (pre-search)
 
@@ -133,11 +137,16 @@ If `offers.json` does not exist for a user (first run), this step is a no-op.
 
 ### Step 2: Search phase — spawn parallel agents
 
-Read `search-agents.md` for agent specifications, output format, and field guidelines. Spawn all agents described there (general, per-user, maintenance, post-search).
+Read `reference/search-agents.md` for agent specifications, output format, and field guidelines. Spawn all agents described there (general, per-user, maintenance, post-search).
+
+**After initial search agents return, check results:**
+- Count genuinely NEW offers (not already in offers.json) found by initial agents
+- If new offers < 5 OR Novelty-Zero Mode is active: spawn ALL refinement agents (Gap Analysis + Non-Obvious) AND the Community & Social Search agent AND the Funding & Career Page Monitor agent
+- The refinement agent trigger in reference/search-agents.md uses "fewer than 15 offers" — this means fewer than 15 NEW offers found THIS RUN, not total catalog size. With a catalog of 11 and novelty at 0, refinement agents MUST fire.
 
 ### Steps 3-4: Distribution & update phase
 
-Read `update-phase.md` for the full protocol. Covers: ethical filtering, location/skills scoring, offers.json generation, link validation, HTML rendering, LLM verification, stale offer handling, people tracking, learning path updates, Direction.md updates, and CV suggestions.
+Read `reference/update-phase.md` for the full protocol. Covers: ethical filtering, location/skills scoring, offers.json generation, link validation, HTML rendering, LLM verification, stale offer handling, people tracking, learning path updates, Direction.md updates, and CV suggestions.
 
 **Gate rule: No offer enters offers.json without a verified link pointing to the actual job listing.** If a URL cannot be confirmed to show the specific position, drop the offer entirely. A working URL that doesn't show the offer is the same as a dead link.
 
@@ -156,7 +165,7 @@ This reads `offers.json`, `summary-data.json`, and `profile.yaml` (for schedule)
 
 **Summary contents:**
 - Urgent deadlines banner
-- Single table of ALL offers found this run with columns: `#`, `Role`, `Company`, `Location`, `Domain`, `Level / Salary`, `Mission`, `Tools`, `Published`, `Match`, `Comment`. Deadlines appear as inline badges next to the role name. Hidden gems marked in Notes. The Comment column is user-editable and persisted via `comments.json`.
+- Single table of ALL offers found this run with columns: `#`, `Role`, `Company`, `Location`, `Domain`, `Level / Salary`, `Mission`, `Tools`, `Published`, `Match`, `Your Score`, `Comment`. Deadlines appear as inline badges next to the role name. Hidden gems marked in Notes. The `Your Score` column lets the user enter their own 0-10 match score; the `Comment` column is user-editable. Both are persisted via `comments.json` (scores under the `_scores` key).
 - Per-user tips: personalized CV suggestions, skill gap advice, application tactics tailored to their profile. If the user has a `learning_path` in their profile, suggest adjustments based on what the current run's offers demand most
 - **Admin-only notes** (ONLY in the admin/operator's summary): process improvements, proposed source edits, tool/repo discoveries, SKILL.md change suggestions, what worked well vs. what could be better
 
@@ -173,13 +182,13 @@ If no `.git/` exists, skip — files are synced via Google Drive.
 
 ### Steps 6.5-7: Post-search learning loop
 
-Read `learning-loop.md` § "Post-Search" and § "Post-Report" for the full protocol. Covers: search-log.yaml updates, metrics.yaml updates, conversational feedback questions, preference recording, and learning-loop commits.
+Read `reference/learning-loop.md` § "Post-Search" and § "Post-Report" for the full protocol. Covers: search-log.yaml updates, metrics.yaml updates, conversational feedback questions, preference recording, and learning-loop commits.
 
-**Single-user runs only:** After presenting the final report, ask the user 3-5 targeted questions to refine the target user's profile for next time. See learning-loop.md § "Post-Report" for question selection strategy. Wait for answers before committing learning-loop files. **Skip this step when running for multiple users** — sharpening questions are only useful when focused on one person's search.
+**Single-user runs only:** After presenting the final report, ask the user 3-5 targeted questions to refine the target user's profile for next time. See reference/learning-loop.md § "Post-Report" for question selection strategy. Wait for answers before committing learning-loop files. **Skip this step when running for multiple users** — sharpening questions are only useful when focused on one person's search.
 
 ### Step 8: Final report
 
-Read `final-report.md` for the required report format. All sections are mandatory — never skip any.
+Read `reference/final-report.md` for the required report format. All sections are mandatory — never skip any.
 
 ---
 
@@ -187,14 +196,14 @@ Read `final-report.md` for the required report format. All sections are mandator
 
 | Topic | File |
 |-------|------|
-| Deep search tactics | `deep-search-tactics.md` |
-| Clean mode (C1-C4) | `clean-mode.md` |
-| Search agents & output format | `search-agents.md` |
-| Distribution & update (Steps 3-4) | `update-phase.md` |
-| Final report format (Step 8) | `final-report.md` |
-| Learning loop protocol | `learning-loop.md` |
-| New-user creation flow | `new-user-flow.md` |
-| Update-user flow | `update-user-flow.md` |
+| Deep search tactics | `reference/deep-search-tactics.md` |
+| Clean mode (C1-C4) | `reference/clean-mode.md` |
+| Search agents & output format | `reference/search-agents.md` |
+| Distribution & update (Steps 3-4) | `reference/update-phase.md` |
+| Final report format (Step 8) | `reference/final-report.md` |
+| Learning loop protocol | `reference/learning-loop.md` |
+| New-user creation flow | `reference/new-user-flow.md` |
+| Update-user flow | `reference/update-user-flow.md` |
 | HTML templates & models | `job_search/templates/`, `job_search/models.py` |
 | General sources | `sources-general.yaml` |
 | User-specific sources | `users/<handle>/sources.yaml` |

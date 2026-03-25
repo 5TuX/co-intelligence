@@ -53,4 +53,4 @@ search_notes:
 
 # Shared feedback files to load (paths relative to skill root)
 feedback_files:
-  - feedback_cv_honesty.md
+  - reference/feedback_cv_honesty.md
