@@ -4,7 +4,6 @@ description: >
   Use when the user says /career, /note, or asks for a full career refresh,
   job search, CV analysis, skill gap review, or wants to capture a learning note.
   Proactively offer note mode when something notable happens during a work session.
-disable-model-invocation: true
 context: fork
 argument-hint: "[user1,user2] | clean [user] | note [user] <content> | new-user | update-user <user>"
 ---

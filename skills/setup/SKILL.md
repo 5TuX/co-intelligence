@@ -3,7 +3,6 @@ name: setup
 description: >
   Use when the user says /setup or asks to verify, repair, or initialize
   the Claude Code setup on the current machine.
-disable-model-invocation: true
 argument-hint: "[scan]"
 ---
 
