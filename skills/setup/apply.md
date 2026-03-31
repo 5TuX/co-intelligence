@@ -11,51 +11,8 @@ Read `$PLUGIN_DATA/setup/architecture.md` to get the expected state tables. Run 
 ### Environment detection
 
 1. **Detect OS**: `uname -s` - use result to select Windows vs Linux commands throughout.
-2. **Detect Drive root**: Read `drive_root` from `$PLUGIN_DATA/config.local.yaml`. Assign to `$DRIVE`.
-3. **Detect Python**: `PY=$(command -v python3 2>/dev/null || command -v python 2>/dev/null)`
-
-### Check: GDrive sync
-
-Verify `$DRIVE/claude/` exists and has content:
-```bash
-ls "$DRIVE/claude/CLAUDE.md" "$DRIVE/claude/settings.json" "$DRIVE/claude/skills/"
-```
-
-### Check: Symlinks and junctions
-
-For each entry in `architecture.md` "Synced Files" table, verify the link exists in `~/.claude/` and points to the correct target:
-```bash
-ls -la ~/.claude/CLAUDE.md ~/.claude/settings.json ~/.claude/skills ~/.claude/scripts ~/.claude/rules ~/.claude/hooks ~/.claude/agents
-```
-
-### Check: CLAUDE.md readable
-
-```bash
-head -1 ~/.claude/CLAUDE.md
-```
-
-### Check: settings.json valid JSON
-
-**Windows note:** `$HOME` in Git Bash expands to `/c/Users/...` which Python cannot read. Use `cygpath -w` to convert paths.
-
-```bash
-PY=$(command -v python3 2>/dev/null || command -v python 2>/dev/null)
-SETTINGS="$(cygpath -w ~/.claude/settings.json 2>/dev/null || echo ~/.claude/settings.json)"
-$PY -c "import json,sys; json.load(open(sys.argv[1])); print('settings.json: valid JSON')" "$SETTINGS"
-```
-
-### Check: CLAUDE_PLUGIN_ROOT
-
-Verify the env var is set and points to a valid ECC version directory:
-```bash
-echo "CLAUDE_PLUGIN_ROOT=$CLAUDE_PLUGIN_ROOT"
-ls "$CLAUDE_PLUGIN_ROOT/skills/" 2>/dev/null && echo "PASS" || echo "FAIL: directory missing or empty"
-```
-
-Compare against latest available version:
-```bash
-ls ~/.claude/plugins/cache/everything-claude-code/everything-claude-code/ | sort -V | tail -1
-```
+2. **Detect Python**: `PY=$(command -v python3 2>/dev/null || command -v python 2>/dev/null)`
+3. **Read config**: Read `$PLUGIN_DATA/config.local.yaml` for `admin_user`, `data_dir`, and optionally `drive_root`.
 
 ### Check: Plugins enabled
 
@@ -81,38 +38,12 @@ echo "$MCP_OUT"
 ```
 Compare output against expected servers. Report each as PASS or MISSING.
 
-### Check: Skills populated
-
-```bash
-ls ${CLAUDE_PLUGIN_ROOT}/skills/
-```
-
 ### Check: Career dir
 
 Use `data_dir` and `admin_user` from `config.local.yaml`:
 ```bash
 ls DATA_DIR/ADMIN_USER/*.md DATA_DIR/ADMIN_USER/Topics/ 2>&1 || echo "FAIL: career dir missing"
 ```
-
-### Check: Scoop + jq + bc (Windows only)
-
-```bash
-command -v jq && echo "jq: PASS" || echo "jq: MISSING"
-command -v bc && echo "bc: PASS" || echo "bc: MISSING"
-```
-
-Check `~/.bashrc` for scoop shims PATH entry.
-
-### Check: statusLine
-
-Verify `settings.json` has a `statusLine` entry and the referenced script exists:
-```bash
-ls ~/.claude/scripts/statusline-command.sh 2>/dev/null && echo "PASS" || echo "FAIL"
-```
-
-### Check: ECC rules
-
-Compare rule directories in `$DRIVE/claude/rules/` against the "Expected Rule Sets" list in `architecture.md`.
 
 ---
 
@@ -123,25 +54,21 @@ Compare rule directories in `$DRIVE/claude/rules/` against the "Expected Rule Se
 ```
 Check                  Status    Detail
 -----                  ------    ------
-GDrive sync            PASS
-Symlink: CLAUDE.md     PASS      -> $DRIVE/claude/CLAUDE.md
-Symlink: skills/       FAIL      missing
-CLAUDE_PLUGIN_ROOT     WARN      v1.8.0 (latest: v1.9.0)
+config.local.yaml      PASS
+Career dir             PASS
 Plugin: superpowers    PASS
+Plugin: co-intelligence PASS
 MCP: tavily            MISSING
+MCP: playwright        PASS
 ...
 ```
 
 For each FAIL or MISSING, **offer to fix**:
 - Print the fix command with `!` prefix so user can paste directly
 - Ask before executing: "Fix this? (y/n)"
-- For missing symlinks/junctions:
-  - Windows: `mklink /J` for dirs, `New-Item -ItemType SymbolicLink` for files
-  - Linux: `ln -sf` for all
 - For missing plugins: print `! claude plugin install <name>`
 - For missing MCPs: print `claude mcp add` commands from `architecture.md`; prompt user for API keys (never auto-fill)
-- For stale CLAUDE_PLUGIN_ROOT: print the PowerShell/bash command to update
-- For missing scoop packages: `! scoop install jq bc`
+- For missing career dir: print mkdir command
 
 After fixing, **re-run failed checks** to confirm they pass.
 
@@ -172,11 +99,6 @@ for name, enabled in d.get('enabledPlugins', {}).items():
 claude mcp list 2>&1
 ```
 Filter out platform-managed servers (e.g. `claude.ai Gmail`, `claude.ai Google Calendar`).
-
-**Synced files on machine:**
-```bash
-ls -la ~/.claude/ | grep -E '^l|JUNCTION'
-```
 
 ### Compare and offer
 

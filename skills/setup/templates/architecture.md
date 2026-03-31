@@ -6,86 +6,16 @@ This is the **template**. On first run, it's copied to `$PLUGIN_DATA/setup/archi
 ## Architecture Overview
 
 ```
-Google Drive ($DRIVE)              ~/.claude/ (local)
--------------------------------    -----------------------------------
-$DRIVE/claude/                     CLAUDE.md      -> symlink to Drive
-  CLAUDE.md                        settings.json  -> symlink to Drive
-  settings.json                    skills/        -> symlink/junction
-  skills/                          scripts/       -> junction to Drive
-    agent/SKILL.md                 rules/         -> junction to Drive
-    career/SKILL.md                hooks/         -> junction to Drive
-    skillsmith/SKILL.md            agents/        -> junction to Drive
-    report/SKILL.md
-    setup/SKILL.md               ~/.claude.json (local, NOT synced)
-                                 -----------------------------------
-User data (external):            mcpServers:
-DATA_DIR/ (from config)            tavily      (http, needs API key)
-  <admin_user>/                    playwright  (stdio, no key)
-  <other users>/                   context7    (http, needs API key)
+~/.claude/ (local)                 User data (external)
+-----------------------------------  -----------------------------------
+plugins/                             DATA_DIR/ (from config.local.yaml)
+  cache/co-intelligence/...            <admin_user>/
+~/.claude.json (local)                   goals.md, cv.md, Topics/, etc.
+  mcpServers:
+    tavily, playwright, context7
 ```
 
-### Drive Path by OS
-
-| OS | Drive sync root (`$DRIVE`) |
-|---|---|
-| **Linux (rclone/gdrive)** | `~/Documents/gdrive-shared` |
-| **Mac (Google Drive app)** | `~/Google Drive/SharedDocuments/_me` |
-| **Windows** | `~/Documents/_me` (Documents is a junction to gdrive) |
-
-The exact path is set in `config.local.yaml` as `drive_root`.
-
----
-
-## Synced Files
-
-Files/dirs in `$DRIVE/claude/` linked into `~/.claude/`.
-
-| File/Dir | Link in `~/.claude/` | Type | Notes |
-|---|---|---|---|
-| `CLAUDE.md` | `CLAUDE.md` | symlink | Global user preferences |
-| `settings.json` | `settings.json` | symlink | Plugins, hooks, statusLine |
-| `skills/` | `skills` | symlink | Custom skills |
-| `scripts/` | `scripts` | junction | Hook runners + statusline script |
-| `rules/` | `rules` | junction | ECC language rules |
-| `hooks/` | `hooks` | junction | hooks.json |
-| `agents/` | `agents` | junction | Custom agents not in plugin |
-
-**Notes:**
-- Files (CLAUDE.md, settings.json) use symlinks. Directories use junctions (no admin on Windows).
-- `plugins/` is NOT synced - managed by the plugin system, too large.
-- On Linux, use `ln -sf` for everything (no junction distinction).
-
-### Link Creation Commands
-
-**Windows (PowerShell, no admin needed for junctions):**
-```powershell
-$src = "$env:USERPROFILE\Documents\_me\claude"   # adjust to your $DRIVE
-$dst = "$env:USERPROFILE\.claude"
-
-# Symlinks for files (requires Developer Mode or admin)
-New-Item -ItemType SymbolicLink -Path "$dst\CLAUDE.md"      -Target "$src\CLAUDE.md"      -Force
-New-Item -ItemType SymbolicLink -Path "$dst\settings.json"  -Target "$src\settings.json"  -Force
-New-Item -ItemType SymbolicLink -Path "$dst\skills"         -Target "$src\skills"         -Force
-
-# Junctions for directories (no admin needed)
-foreach ($dir in @('scripts', 'rules', 'hooks', 'agents')) {
-    cmd /c "mklink /J `"$dst\$dir`" `"$src\$dir`""
-}
-```
-
-**Linux:**
-```bash
-SRC=~/Documents/_me/claude   # adjust to your $DRIVE
-DST=~/.claude
-
-ln -sf "$SRC/CLAUDE.md"     "$DST/CLAUDE.md"
-ln -sf "$SRC/settings.json" "$DST/settings.json"
-ln -sf "$SRC/skills"        "$DST/skills"
-ln -sf "$SRC/scripts"       "$DST/scripts"
-ln -sf "$SRC/rules"         "$DST/rules"
-ln -sf "$SRC/hooks"         "$DST/hooks"
-ln -sf "$SRC/agents"        "$DST/agents"
-```
+The plugin installs into the standard Claude Code plugin cache. User data lives outside the plugin at a configurable path.
 
 ---
 
@@ -110,37 +40,12 @@ After upgrading ECC, re-run to update the path. Without this, all ECC hooks fail
 
 ---
 
-## statusLine
-
-Configured in `settings.json`:
-```json
-"statusLine": {
-  "type": "command",
-  "command": "bash ~/.claude/scripts/statusline-command.sh"
-}
-```
-
-The script is in the synced `scripts/` directory. Requires `jq` and `bc`.
-
-### Scoop Dependencies (Windows only)
-
-```powershell
-Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
-Invoke-RestMethod -Uri https://get.scoop.sh | Invoke-Expression
-scoop install jq bc
-```
-
-Add Scoop to Git Bash's PATH: add `export PATH="$PATH:/c/Users/$USER/scoop/shims"` to `~/.bashrc`.
-
 ---
 
 ## Expected Plugins
 
-Registered via `extraKnownMarketplaces` in `settings.json` (synced via GDrive).
-
 ### Marketplace Registration
 
-If registering manually (e.g. fresh machine before GDrive sync):
 ```bash
 claude plugin marketplace add affaan-m/everything-claude-code
 claude plugin marketplace add 5TuX/co-intelligence
@@ -161,30 +66,6 @@ claude plugin install co-intelligence@co-intelligence
 | `superpowers@claude-plugins-official` | claude-plugins-official | (check locally) |
 | `everything-claude-code@everything-claude-code` | everything-claude-code | (check locally) |
 | `co-intelligence@co-intelligence` | co-intelligence | (check locally) |
-
----
-
-## ECC Rules
-
-Rules come from the ECC plugin cache at `~/.claude/plugins/cache/everything-claude-code/everything-claude-code/<version>/rules/`. They are synced via GDrive in the `rules/` directory.
-
-On a new machine after GDrive sync, the junction just needs to be recreated - no manual copy needed.
-
-To refresh rules from ECC after a plugin update:
-```powershell
-$eccDir = (Get-ChildItem "$env:USERPROFILE\.claude\plugins\cache\everything-claude-code\everything-claude-code" | Sort-Object Name -Descending | Select-Object -First 1).FullName
-$rulesDir = "$env:USERPROFILE\Documents\_me\claude\rules"   # adjust to your $DRIVE
-
-foreach ($lang in @("common","cpp","csharp","golang","java","kotlin","perl","php","python","rust","swift","typescript","zh")) {
-    Copy-Item -Recurse -Force "$eccDir\rules\$lang" "$rulesDir\$lang"
-}
-```
-
-### Expected Rule Sets
-
-`common`, `cpp`, `csharp`, `golang`, `java`, `kotlin`, `perl`, `php`, `python`, `rust`, `swift`, `typescript`, `zh`
-
-> **WARNING:** Do NOT run `npx ecc-install` without cleanup flags. It installs 60+ commands, 30 agents, and ~50 skill dirs directly into `~/.claude/`, duplicating what the plugin already serves.
 
 ---
 
@@ -220,28 +101,6 @@ A full catalog of 25+ available MCPs (github, supabase, firecrawl, railway, exa,
 
 ---
 
-## Google Drive Sync
-
-**Windows:** Google Drive desktop app syncs `Documents\_me\` automatically.
-
-**Linux (rclone):**
-```bash
-# One-time setup
-rclone config   # add a remote called "gdrive"
-
-# Sync down (restore to new machine)
-rclone sync gdrive:_me/claude ~/Documents/_me/claude
-
-# Sync up (push local changes)
-rclone sync ~/Documents/_me/claude gdrive:_me/claude
-```
-
-Drive path is `_me/claude` relative to Drive root (`My Drive/_me/claude`).
-
-**Cleanup:** Google Drive may create conflict duplicates like `settings (1).json`. Periodically check for and delete them.
-
----
-
 ## Skills
 
 | Skill | Command | What it does |
@@ -260,16 +119,64 @@ The apply mode checks the machine against this table.
 
 | Check | Expected |
 |---|---|
-| `~/.claude/CLAUDE.md` | Symlink -> `$DRIVE/claude/CLAUDE.md`, readable |
-| `~/.claude/settings.json` | Symlink -> `$DRIVE/claude/settings.json`, valid JSON |
-| `~/.claude/skills/` | Symlink/Junction -> `$DRIVE/claude/skills/`, contains skill subdirs |
-| `~/.claude/scripts/` | Junction -> `$DRIVE/claude/scripts/` |
-| `~/.claude/rules/` | Junction -> `$DRIVE/claude/rules/` |
-| `~/.claude/hooks/` | Junction -> `$DRIVE/claude/hooks/` |
-| `~/.claude/agents/` | Junction -> `$DRIVE/claude/agents/` |
-| `CLAUDE_PLUGIN_ROOT` | Set, points to latest ECC version dir |
 | `DATA_DIR/ADMIN_USER/` | Directory with goals.md, cv.md, Topics/, etc. |
 | Plugins | All entries in Expected Plugins table enabled |
 | MCP servers | All entries in Expected MCP Servers table configured |
-| ECC rules | All expected rule sets present in `$DRIVE/claude/rules/` |
-| statusLine | Script exists, jq + bc available |
+| `config.local.yaml` | Exists in `$PLUGIN_DATA/`, has admin_user and data_dir |
+
+---
+
+## Advanced: Multi-Machine Sync
+
+The sections below are for users who sync Claude Code configuration across multiple machines via Google Drive (or similar). **This is entirely optional** - the plugin works without it.
+
+### Drive Path by OS
+
+| OS | Drive sync root (`$DRIVE`) |
+|---|---|
+| **Linux (rclone/gdrive)** | `~/Documents/gdrive-shared` |
+| **Mac (Google Drive app)** | `~/Google Drive/SharedDocuments/_me` |
+| **Windows** | `~/Documents/_me` (Documents is a junction to gdrive) |
+
+The exact path is set in `config.local.yaml` as `drive_root`.
+
+### Synced Files
+
+Files/dirs in `$DRIVE/claude/` linked into `~/.claude/`.
+
+| File/Dir | Link in `~/.claude/` | Type | Notes |
+|---|---|---|---|
+| `CLAUDE.md` | `CLAUDE.md` | symlink | Global user preferences |
+| `settings.json` | `settings.json` | symlink | Plugins, hooks, statusLine |
+| `skills/` | `skills` | symlink | Custom skills |
+| `scripts/` | `scripts` | junction | Hook runners + statusline script |
+| `rules/` | `rules` | junction | ECC language rules |
+| `hooks/` | `hooks` | junction | hooks.json |
+| `agents/` | `agents` | junction | Custom agents not in plugin |
+
+### ECC Rules
+
+Rules come from the ECC plugin cache at `~/.claude/plugins/cache/everything-claude-code/everything-claude-code/<version>/rules/`.
+
+To refresh rules from ECC after a plugin update:
+```powershell
+$eccDir = (Get-ChildItem "$env:USERPROFILE\.claude\plugins\cache\everything-claude-code\everything-claude-code" | Sort-Object Name -Descending | Select-Object -First 1).FullName
+$rulesDir = "$env:USERPROFILE\Documents\_me\claude\rules"   # adjust to your $DRIVE
+
+foreach ($lang in @("common","cpp","csharp","golang","java","kotlin","perl","php","python","rust","swift","typescript","zh")) {
+    Copy-Item -Recurse -Force "$eccDir\rules\$lang" "$rulesDir\$lang"
+}
+```
+
+Expected rule sets: `common`, `cpp`, `csharp`, `golang`, `java`, `kotlin`, `perl`, `php`, `python`, `rust`, `swift`, `typescript`, `zh`
+
+### Google Drive Sync Commands
+
+**Linux (rclone):**
+```bash
+rclone config   # add a remote called "gdrive"
+rclone sync gdrive:_me/claude ~/Documents/_me/claude   # sync down
+rclone sync ~/Documents/_me/claude gdrive:_me/claude   # sync up
+```
+
+**Cleanup:** Google Drive may create conflict duplicates like `settings (1).json`. Periodically delete them.
