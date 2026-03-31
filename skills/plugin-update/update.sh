@@ -86,6 +86,14 @@ if [ "${2:-}" = "apply-update" ]; then
         echo "RENAMED=$OLD_DIR -> $NEW_DIR"
     fi
 
+    # Clean up any orphaned version directories
+    for dir in "$CACHE_BASE"/*/; do
+        [ -d "$dir" ] || continue
+        [ "$dir" = "$NEW_DIR/" ] && continue
+        rm -rf "$dir"
+        echo "CLEANED=${dir%/}"
+    done
+
     # Patch installed_plugins.json
     jq --arg key "$KEY" \
        --arg ver "$LATEST" \

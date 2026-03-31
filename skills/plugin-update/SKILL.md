@@ -75,12 +75,13 @@ folder from the old version to the new version, and patches
 
 ### 4. Post-install
 
-After a successful apply, reload plugins so changes take effect in the current session:
-```
-/reload-plugins
-```
+After a successful apply, tell the user:
+"Updated to v<latest>. Please run `/reload-plugins` to activate in this session."
 
-Then confirm: "Updated to v<latest> and reloaded."
+Wait for the user to confirm they ran it, then confirm: "Reloaded. You're on v<latest>."
+
+Note: `/reload-plugins` is a built-in CLI command that only the user can run
+from the prompt. The model cannot execute it programmatically.
 
 ## Rules
 
