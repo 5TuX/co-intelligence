@@ -1,6 +1,6 @@
 {
   "name": "co-intelligence",
-  "description": "Skills for human-AI collaborative work: career search, skill authoring, setup verification, technical reports, multi-agent chat",
+  "description": "Skills for human-AI collaborative work: career search, skill authoring, technical reports, multi-agent chat",
   "version": "1.2.0",
   "author": {
     "name": "Dimitris Klockenbring",

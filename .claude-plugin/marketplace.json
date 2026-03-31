@@ -1,6 +1,6 @@
 {
   "name": "co-intelligence",
-  "description": "Skills for human-AI collaborative work: career search, skill authoring, setup, reports, multi-agent chat",
+  "description": "Skills for human-AI collaborative work: career search, skill authoring, reports, multi-agent chat",
   "owner": {
     "name": "Dimitris Klockenbring",
     "email": "klockenbring@users.noreply.github.com"
