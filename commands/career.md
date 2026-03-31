@@ -2,4 +2,6 @@
 description: Use when the user asks for a career refresh, job search, CV analysis, skill gap review, or wants to capture a learning note
 ---
 
-This command is provided by the co-intelligence plugin. Invoke the `co-intelligence:career` skill using the Skill tool, passing through any arguments the user provided.
+Read and follow the skill at `~/.claude/plugins/cache/co-intelligence/co-intelligence/*/skills/career/SKILL.md`. Pass through any arguments the user provided.
+
+ARGUMENTS: $ARGUMENTS
