@@ -1,14 +1,8 @@
 # User-specific configuration - copy to config.local.yaml and fill in your values.
 # config.local.yaml is gitignored and never committed.
 
-# Your user handle (directory name under data_dir)
-admin_user: your-handle
+# Your user handle (directory name under career_data_dir)
+career_user: your-handle
 
 # Where career user data lives (outside the skills directory)
-data_dir: ~/Documents/_me/references/career
-
-# Google Drive sync root (where _me/claude/ lives)
-# Windows: ~/Documents/_me
-# Linux (rclone): ~/Documents/gdrive-shared
-# Mac: ~/Google Drive/SharedDocuments/_me
-drive_root: ~/Documents/_me
+career_data_dir: ~/Documents/_me/references/career

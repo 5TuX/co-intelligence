@@ -30,7 +30,7 @@ career — <mode>
 
 This skill runs as part of the `co-intelligence` plugin. At the start of every invocation:
 1. Resolve `CLAUDE_PLUGIN_DATA` environment variable → `$PLUGIN_DATA`
-2. Read `$PLUGIN_DATA/config.local.yaml` to get `data_dir` (→ **DATA_DIR**) and `admin_user` (→ **ADMIN_USER**)
+2. Read `$PLUGIN_DATA/config.local.yaml` to get `career_data_dir` (→ **DATA_DIR**) and `career_user` (→ **ADMIN_USER**)
 3. If config is missing, error: "Missing config — run: `cp ${CLAUDE_PLUGIN_ROOT}/templates/config.local.yaml.example ${CLAUDE_PLUGIN_DATA}/config.local.yaml` and edit it."
 
 ## CLI Tools
@@ -49,7 +49,7 @@ Then run commands normally (e.g., `career-render DATA_DIR/<handle>/`).
 /career <user1>,<user2>          → search for listed users
 /career clean                    → clean mode for ALL users (validate links, remove dead offers)
 /career clean <user>             → clean mode for one user
-/career note <content>           → note mode for ADMIN_USER
+/career note <content>           → note mode for CAREER_USER
 /career note <user> <content>    → note mode for specified user
 /career new-user                 → interactive user creation (see §New-User Creation)
 /career update-user <user>       → interactive profile update (see §Update-User)
@@ -109,7 +109,7 @@ Read `reference/clean-mode.md` for the full clean mode protocol (C1-C4).
 
 When the argument starts with `note`:
 
-1. **Parse user vs content:** Take the text after `note`. If the first word matches an existing user directory in `DATA_DIR`, use that as the target user and treat the rest as content. Otherwise, default to `ADMIN_USER` and treat all text as content.
+1. **Parse user vs content:** Take the text after `note`. If the first word matches an existing user directory in `DATA_DIR`, use that as the target user and treat the rest as content. Otherwise, default to `CAREER_USER` and treat all text as content.
 2. **Classify and route** the content to the right file and section:
    - Technical concept, gotcha, or tool tip → `DATA_DIR/<handle>/journal.md` (under today's date heading, appending to the current session entry if one exists)
    - Skill level update (e.g. "now comfortable with async Python") → `DATA_DIR/<handle>/cv.md` (skills inventory section)
