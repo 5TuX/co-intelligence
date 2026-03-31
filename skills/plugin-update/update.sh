@@ -73,7 +73,15 @@ if [ "${2:-}" = "apply-update" ]; then
     SYNCED=0
     for dir in "$CACHE_BASE"/*/; do
         [ -d "$dir" ] || continue
-        rsync -a --delete --exclude .git "$MARKETPLACE_DIR/" "$dir"
+        # Clean target (excluding .git), then copy fresh from marketplace
+        find "$dir" -mindepth 1 -not -path '*/.git/*' -not -name '.git' -delete 2>/dev/null || true
+        ( cd "$MARKETPLACE_DIR" && find . -not -path './.git/*' -not -name '.git' -not -path './.git' -not -path '.' | while IFS= read -r f; do
+            if [ -d "$f" ]; then
+                mkdir -p "$dir/$f"
+            else
+                cp "$f" "$dir/$f"
+            fi
+        done )
         echo "SYNCED=$dir"
         SYNCED=$((SYNCED + 1))
     done
