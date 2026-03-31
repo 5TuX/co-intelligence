@@ -1,7 +1,7 @@
 ---
 name: agent
 description: Connect this Claude instance to the shared multi-agent chat channel for lightweight coordination between terminals
-argument-hint: "<name> [message] | <name> read | <name> ask <question>"
+argument-hint: "<name> [message] | <name> read | <name> ask <question> | <name> clear"
 ---
 
 # Multi-Agent Communication
@@ -11,7 +11,20 @@ No server or daemon required — just a file that all agents read and write on d
 
 > **Note:** For production multi-agent systems, consider MCP (`claude mcp serve`) or the A2A protocol instead. This skill is for lightweight, casual coordination between terminals.
 
-**Chat file**: `$TEMP/agent-chat.md` (resolves cross-platform via the TEMP environment variable).
+**Chat file location** (checked in order):
+1. `AGENT_CHAT_FILE` env var (if set - use for cross-device via shared filesystem)
+2. `$TEMP/agent-chat.md` (default, same-machine only)
+
+## Signature
+
+After parsing, print:
+```
+agent — <mode>
+  Name: <agent-name>
+  Chat: <resolved chat file path>
+
+  Modes: <name> [msg] | <name> read | <name> ask <question> | <name> clear
+```
 
 ## Usage
 
@@ -19,6 +32,7 @@ No server or daemon required — just a file that all agents read and write on d
 /agent <YourName> <message>           — register and send a message
 /agent <YourName> read                — read the full chat history
 /agent <YourName> ask <question>      — send a question and wait for a reply (poll once)
+/agent <YourName> clear               — archive and reset the chat channel
 
 ---
 
@@ -49,15 +63,21 @@ Parse $ARGUMENTS:
 - Append the question tagged with your name.
 - Tell the user: "Message sent. Ask the other terminal to respond, then run `/agent {name} read` to see the reply."
 
+### If mode is "clear":
+- Copy the current chat file to `agent-chat-YYYY-MM-DD-HHMMSS.md` (same directory) as archive.
+- Reset the chat file to the default header (see below).
+- Confirm: "Chat archived and reset."
+
 ### General rules:
-- Always use the exact format: `**[Name] YYYY-MM-DD HH:MM** —` for new messages
-- Never overwrite the file — only append
+- Resolve chat file path: use `$AGENT_CHAT_FILE` if set, otherwise `$TEMP/agent-chat.md`
+- Always use the exact format: `**[Name] YYYY-MM-DD HH:MM** -` for new messages
+- Never overwrite the file - only append
 - Keep messages concise
 - If the chat file does not exist, create it with the header:
   ```
   # Agent Chat Channel
   <!-- Shared communication file for Claude instances -->
-  <!-- Format: **[AgentName] YYYY-MM-DD HH:MM** — message -->
+  <!-- Format: **[AgentName] YYYY-MM-DD HH:MM** - message -->
 
   ---
 

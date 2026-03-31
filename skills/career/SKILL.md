@@ -15,6 +15,17 @@ Supports multiple users with independent profiles, preferences, and career files
 
 **Admin identity:** The admin/operator is always the user running the Claude Code session. Other users are "friends." Admin sees process notes in their summary; friends only get personalized tips.
 
+## Signature
+
+After parsing arguments, print:
+```
+career — <mode>
+  Users: <target user(s) or "all">
+  Data:  DATA_DIR/
+
+  Modes: [users] | clean [user] | note [user] <content> | new-user | update-user <user>
+```
+
 ## Data Directory
 
 This skill runs as part of the `co-intelligence` plugin. At the start of every invocation:

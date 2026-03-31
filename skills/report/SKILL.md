@@ -13,6 +13,16 @@ Zotero-compatible citations, native cross-references, and strict writing style m
 hoverable citations, callout blocks, and multi-format output from one source. Your `.bib` files
 and `reference.odt` work unchanged — Quarto passes them through to Pandoc under the hood.
 
+## Signature
+
+After parsing, print:
+```
+report — <mode>
+  Project: <cwd>
+
+  Modes: kickstart | outline | write <section> | extract-metrics | status | test | (auto)
+```
+
 ## Usage
 
 ```
