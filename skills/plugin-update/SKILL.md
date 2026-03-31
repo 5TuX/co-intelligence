@@ -71,7 +71,12 @@ claude plugin install <plugin@marketplace>
 
 ### 4. Post-install
 
-Tell the user: "Updated to v<latest>. Run `/reload-plugins` to activate in this session."
+After a successful install, reload plugins so changes take effect in the current session:
+```
+/reload-plugins
+```
+
+Then confirm: "Updated to v<latest> and reloaded."
 
 ## Rules
 
