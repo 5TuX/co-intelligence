@@ -54,21 +54,33 @@ if [ -z "$LATEST" ]; then
     exit 1
 fi
 
+PLUGIN_NAME="${KEY%%@*}"
+CACHE_BASE="$HOME/.claude/plugins/cache/$MARKETPLACE_NAME/$PLUGIN_NAME"
+
+# Check actual file state in cache — may be ahead of registry
+CACHE_FILE_VER=""
+for dir in "$CACHE_BASE"/*/; do
+    [ -d "$dir" ] || continue
+    v=$(jq -r '.plugins[0].version // empty' "$dir/.claude-plugin/marketplace.json" 2>/dev/null || echo "")
+    [ -n "$v" ] && CACHE_FILE_VER="$v" && break
+done
+
 echo ""
 echo "INSTALLED=$INSTALLED"
 echo "LATEST=$LATEST"
 
 if [ "$INSTALLED" = "$LATEST" ]; then
     echo "STATUS=up-to-date"
+elif [ -n "$CACHE_FILE_VER" ] && [ "$CACHE_FILE_VER" = "$LATEST" ]; then
+    # Files already match upstream but registry lags
+    echo "CACHE_VERSION=$CACHE_FILE_VER"
+    echo "STATUS=files-current"
 else
     echo "STATUS=update-available"
 fi
 
 # Subcommand: apply-update — sync marketplace files into all cache directories
 if [ "${2:-}" = "apply-update" ]; then
-    PLUGIN_NAME="${KEY%%@*}"
-    CACHE_BASE="$HOME/.claude/plugins/cache/$MARKETPLACE_NAME/$PLUGIN_NAME"
-
     # Sync into every version directory (Claude Code may recreate them)
     SYNCED=0
     for dir in "$CACHE_BASE"/*/; do
@@ -92,4 +104,10 @@ if [ "${2:-}" = "apply-update" ]; then
     fi
 
     echo "DONE=synced $SYNCED cache dir(s)"
+
+    # Update registry to reflect new version
+    UPDATED_JSON=$(jq --arg key "$KEY" --arg ver "$LATEST" \
+        '.plugins[$key][0].version = $ver' "$PLUGINS_FILE")
+    echo "$UPDATED_JSON" > "$PLUGINS_FILE.tmp" && mv "$PLUGINS_FILE.tmp" "$PLUGINS_FILE"
+    echo "REGISTRY_UPDATED=$LATEST"
 fi
