@@ -69,9 +69,9 @@ If user approves:
 bash <script-path>/update.sh <plugin@marketplace> apply-update
 ```
 
-This syncs files from the marketplace into the cache, renames the cache
-folder from the old version to the new version, and patches
-`installed_plugins.json` with the new version, path, timestamp, and git SHA.
+This syncs files from the marketplace into all cache version directories.
+Claude Code owns the directory names and registry; we just update the
+files inside.
 
 ### 4. Post-install
 
