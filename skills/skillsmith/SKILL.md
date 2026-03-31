@@ -139,6 +139,11 @@ Look for: **What are experts doing today that this skill doesn't do yet?**
 
 ### Step 3 — Health Check (quick)
 
+**Gate check:** Before running the health check, verify that web search results
+from Step 2 are present in this conversation. If you cannot point to specific
+search findings from this session, STOP and run Step 2 now. Do not proceed
+past this point without completed research.
+
 Read `analysis.md` for the rubric. Report a compact table of size, frontmatter validity, brackets, description quality, and any CRITICAL issues.
 
 ### Step 4 — Ask 2-3 Questions
