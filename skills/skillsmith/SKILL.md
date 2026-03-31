@@ -1,6 +1,6 @@
 ---
 name: skillsmith
-description: Use when the user asks to create, modify, edit, update, refine, fix, improve, delete, or audit a Claude Code skill or SKILL.md file. Also use when the user says "make a skill", "change this skill", "add a mode to skill X", or mentions skill quality. MUST be used for all skill modifications - never edit SKILL.md files directly without this skill. Operates on ~/.claude/skills/ by default (local skills only, not plugin skills). With no argument, refines all local skills.
+description: Use when the user asks to create, modify, edit, update, refine, fix, improve, delete, or audit any Claude Code skill or SKILL.md file - including plugin skills. Also use when the user says "make a skill", "change this skill", "add a mode to skill X", "modify plugin-update to do Y", "edit the co-intelligence skill", or mentions skill quality. MUST be used for all skill modifications - never edit SKILL.md files directly without this skill. With no argument, refines local skills only (~/.claude/skills/). When a specific skill name is given, works for both local and plugin skills.
 argument-hint: "<name> [<changes>] | new <name> | delete <name> | tidy-only | (empty = all)"
 ---
 

@@ -43,9 +43,21 @@ if [ -z "$INSTALLED" ]; then
     exit 1
 fi
 
+# State file to persist BEFORE_HASH across check/apply invocations
+STATE_FILE="/tmp/plugin-update-${MARKETPLACE_NAME}.hash"
+
 # Pull latest from remote
 echo "Pulling $MARKETPLACE_NAME marketplace..."
+BEFORE_HASH=$(git -C "$MARKETPLACE_DIR" rev-parse HEAD)
 git -C "$MARKETPLACE_DIR" pull origin main 2>&1
+AFTER_HASH=$(git -C "$MARKETPLACE_DIR" rev-parse HEAD)
+
+# Count new commits pulled
+COMMITS_PULLED=0
+if [ "$BEFORE_HASH" != "$AFTER_HASH" ]; then
+    COMMITS_PULLED=$(git -C "$MARKETPLACE_DIR" rev-list --count "${BEFORE_HASH}..${AFTER_HASH}")
+    echo "$BEFORE_HASH" > "$STATE_FILE"
+fi
 
 # Read latest version from marketplace
 LATEST=$(jq -r '.plugins[0].version' "$MARKETPLACE_DIR/.claude-plugin/marketplace.json")
@@ -57,7 +69,7 @@ fi
 PLUGIN_NAME="${KEY%%@*}"
 CACHE_BASE="$HOME/.claude/plugins/cache/$MARKETPLACE_NAME/$PLUGIN_NAME"
 
-# Check actual file state in cache — may be ahead of registry
+# Check actual file state in cache - may be ahead of registry
 CACHE_FILE_VER=""
 for dir in "$CACHE_BASE"/*/; do
     [ -d "$dir" ] || continue
@@ -70,7 +82,12 @@ echo "INSTALLED=$INSTALLED"
 echo "LATEST=$LATEST"
 
 if [ "$INSTALLED" = "$LATEST" ]; then
-    echo "STATUS=up-to-date"
+    if [ "$COMMITS_PULLED" -gt 0 ]; then
+        echo "COMMITS_PULLED=$COMMITS_PULLED"
+        echo "STATUS=files-changed"
+    else
+        echo "STATUS=up-to-date"
+    fi
 elif [ -n "$CACHE_FILE_VER" ] && [ "$CACHE_FILE_VER" = "$LATEST" ]; then
     # Files already match upstream but registry lags
     echo "CACHE_VERSION=$CACHE_FILE_VER"
@@ -79,8 +96,15 @@ else
     echo "STATUS=update-available"
 fi
 
-# Subcommand: apply-update — sync marketplace files into all cache directories
+# Subcommand: apply-update - sync marketplace files into all cache directories
 if [ "${2:-}" = "apply-update" ]; then
+    # Restore before hash for change summary (saved during check phase)
+    SUMMARY_FROM=""
+    if [ -f "$STATE_FILE" ]; then
+        SUMMARY_FROM=$(cat "$STATE_FILE")
+        rm -f "$STATE_FILE"
+    fi
+
     # Sync into every version directory (Claude Code may recreate them)
     SYNCED=0
     for dir in "$CACHE_BASE"/*/; do
@@ -110,4 +134,14 @@ if [ "${2:-}" = "apply-update" ]; then
         '.plugins[$key][0].version = $ver' "$PLUGINS_FILE")
     echo "$UPDATED_JSON" > "$PLUGINS_FILE.tmp" && mv "$PLUGINS_FILE.tmp" "$PLUGINS_FILE"
     echo "REGISTRY_UPDATED=$LATEST"
+
+    # Print change summary
+    SUMMARY_TO=$(git -C "$MARKETPLACE_DIR" rev-parse HEAD)
+    if [ -n "$SUMMARY_FROM" ] && [ "$SUMMARY_FROM" != "$SUMMARY_TO" ]; then
+        echo ""
+        echo "=== Changes ==="
+        git -C "$MARKETPLACE_DIR" log --oneline "${SUMMARY_FROM}..${SUMMARY_TO}"
+        echo ""
+        git -C "$MARKETPLACE_DIR" diff --stat "$SUMMARY_FROM" "$SUMMARY_TO"
+    fi
 fi

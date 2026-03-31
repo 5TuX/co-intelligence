@@ -59,6 +59,7 @@ Parse the output for `INSTALLED=`, `LATEST=`, and `STATUS=` lines.
 ### 2. Present decision
 
 - **STATUS=up-to-date**: "Already at v<version>. No action needed."
+- **STATUS=files-changed**: "Version unchanged at v<version> but <N> new commits were pulled. Sync cache anyway? (y/n)"
 - **STATUS=files-current**: "Files already match v<latest> but registry still shows v<installed>. Fixing registry..." then immediately run `apply-update` to sync the registry (no confirmation needed since no files are changing).
 - **STATUS=update-available**: "Update available: v<installed> -> v<latest>. Install? (y/n)"
 - **STATUS=not-installed**: "Plugin not found in installed plugins. Use `claude plugin install <key>` first."
