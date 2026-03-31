@@ -1,6 +1,6 @@
 ---
 name: skillsmith
-description: Use when the user asks to create, refine, delete, or audit Claude Code skills. Operates on ~/.claude/skills/ by default (local skills only, not plugin skills). With no argument, refines all local skills.
+description: Use when the user asks to create, modify, edit, update, refine, fix, improve, delete, or audit a Claude Code skill or SKILL.md file. Also use when the user says "make a skill", "change this skill", "add a mode to skill X", or mentions skill quality. MUST be used for all skill modifications - never edit SKILL.md files directly without this skill. Operates on ~/.claude/skills/ by default (local skills only, not plugin skills). With no argument, refines all local skills.
 argument-hint: "<name> [<changes>] | new <name> | delete <name> | tidy-only | (empty = all)"
 ---
 
@@ -165,8 +165,12 @@ Ask: "Apply all, pick specific numbers, or skip?"
 
 1. Apply approved changes.
 2. Show before/after size comparison (brief — one line).
-3. Append entry to `$PLUGIN_DATA/skillsmith/history/<target>.md`.
-4. If a new pitfall or strategy was discovered: "Add to knowledge base? (y/n)"
+3. For FUNCTIONAL changes that alter skill behavior (new modes, changed
+   workflows, new rules), invoke `superpowers:writing-skills` to run a pressure
+   scenario verifying the change works. Skip for STRUCTURAL/QUALITY/TOKEN-SAVE
+   changes (formatting, signatures, description rewrites).
+4. Append entry to `$PLUGIN_DATA/skillsmith/history/<target>.md`.
+5. If a new pitfall or strategy was discovered: "Add to knowledge base? (y/n)"
 
 ---
 
