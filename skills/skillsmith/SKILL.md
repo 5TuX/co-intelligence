@@ -1,6 +1,6 @@
 ---
 name: skillsmith
-description: Use when the user asks to create, refine, delete, or audit Claude Code skills. With no argument, refines all skills.
+description: Use when the user asks to create, refine, delete, or audit Claude Code skills. Operates on ~/.claude/skills/ by default (local skills only, not plugin skills). With no argument, refines all local skills.
 argument-hint: "<name> [<changes>] | new <name> | delete <name> | tidy-only | (empty = all)"
 ---
 
@@ -25,7 +25,7 @@ Parse $ARGUMENTS:
 - If `new <name>` → jump to §Create Mode
 - If `delete <name>` → jump to §Delete Mode
 - If empty → All Mode (refine all skills)
-- Otherwise → first word is the skill name; everything after is desired changes (if any). Verify `${CLAUDE_PLUGIN_ROOT}/skills/<target>/SKILL.md` exists.
+- Otherwise → first word is the skill name; everything after is desired changes (if any). First look in `~/.claude/skills/<target>/SKILL.md`. If not found there, check plugin caches (`~/.claude/plugins/cache/*/*/latest/skills/<target>/SKILL.md`). If found only in a plugin cache, warn: "This is a plugin skill. Modifications will be local until published. Proceed?" and wait for confirmation.
 
 ## Signature
 
@@ -70,7 +70,7 @@ Ask the user:
 - Does it need modes/arguments?
 
 ### 2. Scaffold
-Create `${CLAUDE_PLUGIN_ROOT}/skills/<name>/SKILL.md` with:
+Create `~/.claude/skills/<name>/SKILL.md` with:
 - Frontmatter: `name`, `description` (start with "Use when...", trigger-focused, no workflow summary, under 500 chars, third person)
 - `argument-hint` if the skill takes arguments
 - Skeleton sections: overview, argument parsing (if needed), instructions, rules
@@ -88,7 +88,7 @@ Invoke `superpowers:writing-skills` for the TDD creation cycle — baseline test
 ## Delete Mode (`/skillsmith delete <name>`)
 
 ### 1. Verify skill exists
-Check `${CLAUDE_PLUGIN_ROOT}/skills/<name>/SKILL.md` exists. If not, list available skills and stop.
+Check `~/.claude/skills/<name>/SKILL.md` exists. If not, list available skills and stop.
 
 ### 2. Dependency check
 Scan ALL other skills for references to the target:
@@ -102,7 +102,7 @@ If dependencies found, show them and ask: "These skills reference `<name>`. Proc
 Show the skill's SKILL.md summary and ask: "Delete `<name>/` and all its files? This cannot be undone."
 
 ### 4. Delete and clean up
-- Remove `${CLAUDE_PLUGIN_ROOT}/skills/<name>/` directory
+- Remove `~/.claude/skills/<name>/` directory
 - Remove entry from `knowledge.md` per-skill notes
 - Archive `history/<name>.md` content to a "Deleted Skills" section in knowledge.md (preserve history)
 - Run §Tidy (README update, commit)
@@ -168,7 +168,7 @@ Ask: "Apply all, pick specific numbers, or skip?"
 ## Tidy Mode (`/skillsmith tidy-only`)
 
 Runs automatically after refinements. Also available standalone.
-Operates on `${CLAUDE_PLUGIN_ROOT}/skills/`.
+Operates on `~/.claude/skills/`.
 
 ### 7a. Audit Structure
 1. List all skill directories.
@@ -177,16 +177,14 @@ Operates on `${CLAUDE_PLUGIN_ROOT}/skills/`.
 4. Report as table. Auto-fix safe issues. Ask before destructive fixes.
 
 ### 7b. Update README
-Compare `${CLAUDE_PLUGIN_ROOT}/README.md` against actual contents. Apply updates if needed.
+Compare `~/.claude/skills/README.md` against actual contents. Apply updates if needed (create if missing).
 
 ### 7c. Check .gitignore
 Verify coverage: `config.local.yaml`, `*.html`, `.env`, `credentials.*`, `*.key`, `__pycache__/`, `*.pyc`, `uv.lock`.
 
 ### 7d. Show Changes
-```bash
-git -C ${CLAUDE_PLUGIN_ROOT} diff --stat
-git -C ${CLAUDE_PLUGIN_ROOT} status
-```
+Show files modified during this session. If `~/.claude/skills/` is a git repo,
+use `git diff --stat`. Otherwise list recently modified files.
 
 ### 7e. Safety Check
 Scan for sensitive content and data separation violations before staging:
@@ -194,8 +192,9 @@ Scan for sensitive content and data separation violations before staging:
 - `.env`, `.key`, `credentials.*` files
 - Files containing `API_KEY=`, `password=`, `token=`
 
-### 7f. Commit
-Stage, draft commit message, show draft, ask user to confirm, commit.
+### 7f. Summary
+Show a summary of all changes made during this session. If `~/.claude/skills/`
+is a git repo, offer to stage and commit. Otherwise just list what changed.
 
 ## All Mode (default)
 
@@ -212,9 +211,10 @@ When no argument is provided:
 - Always show diffs before applying.
 - Understand before optimizing — read the skill, research the domain, then propose.
 - Keep SKILL.md files under 15K chars (hard limit); prefer under 200 lines but don't sacrifice substance for brevity.
-- Ask before committing (user preference).
-- Never commit user data to the skills repo.
-- Enforce data separation: skill directories contain code and config only. User/personal data must live outside `${CLAUDE_PLUGIN_ROOT}/` (path configured in `config.local.yaml`). Flag violations during health check and tidy.
+- If `~/.claude/skills/` is a git repo, ask before committing. If not, skip git operations.
+- Never assume how skills are synced between machines.
+- Default scope is `~/.claude/skills/` (local skills). Plugin skills in `~/.claude/plugins/cache/` can be modified when explicitly targeted, but always warn first that changes are local until published.
+- Enforce data separation: skill directories contain code and config only. User/personal data must live outside `~/.claude/skills/` (path configured in `config.local.yaml`). Flag violations during health check and tidy.
 - Always update README if skills were added or removed.
 - Every skill must have a signature block that prints on invocation. During refine and tidy, flag skills missing a signature as STRUCTURAL and offer to add one.
 - Web research (Step 2) is mandatory during refinement. Never skip it.
