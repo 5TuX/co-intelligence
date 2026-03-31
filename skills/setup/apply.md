@@ -56,10 +56,10 @@ Check                  Status    Detail
 -----                  ------    ------
 config.local.yaml      PASS
 Career dir             PASS
-Plugin: superpowers    PASS
-Plugin: co-intelligence PASS
-MCP: tavily            MISSING
-MCP: playwright        PASS
+Plugin: <name>         PASS
+Plugin: <name>         MISSING
+MCP: <name>            PASS
+MCP: <name>            MISSING
 ...
 ```
 
