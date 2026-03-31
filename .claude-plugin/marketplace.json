@@ -1,15 +1,43 @@
 {
+  "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
   "name": "co-intelligence",
   "description": "Skills for human-AI collaborative work: career search, skill authoring, reports, multi-agent chat",
   "owner": {
     "name": "Dimitris Klockenbring",
     "email": "klockenbring@users.noreply.github.com"
   },
+  "metadata": {
+    "description": "Skills for human-AI collaborative work"
+  },
   "plugins": [
     {
       "name": "co-intelligence",
-      "version": "1.3.6",
-      "source": "./"
+      "source": "./",
+      "description": "Skills for human-AI collaborative work: career search, skill authoring, technical reports, multi-agent chat",
+      "version": "1.4.0",
+      "author": {
+        "name": "Dimitris Klockenbring",
+        "email": "klockenbring@users.noreply.github.com"
+      },
+      "homepage": "https://github.com/5TuX/co-intelligence",
+      "repository": "https://github.com/5TuX/co-intelligence",
+      "license": "MIT",
+      "keywords": [
+        "skills",
+        "career",
+        "job-search",
+        "reports",
+        "co-intelligence"
+      ],
+      "category": "workflow",
+      "tags": [
+        "skills",
+        "career",
+        "job-search",
+        "reports",
+        "co-intelligence"
+      ],
+      "strict": false
     }
   ]
 }
