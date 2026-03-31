@@ -27,6 +27,28 @@ Parse $ARGUMENTS:
 - If empty → All Mode (refine all skills)
 - Otherwise → first word is the skill name; everything after is desired changes (if any). Verify `${CLAUDE_PLUGIN_ROOT}/skills/<target>/SKILL.md` exists.
 
+## Signature
+
+After parsing arguments, ALWAYS print a signature block before doing anything
+else. This makes the resolved mode and target visible to the user:
+
+```
+skillsmith — <mode>
+  Target: <name or "all">
+  Changes: "<user-provided changes or none>"
+
+  Modes: <name> [changes] | new <name> | delete <name> | tidy-only | (no args = all)
+```
+
+Example:
+```
+skillsmith — refine
+  Target: claude-setup
+  Changes: "add bashrc auto-resolve for CLAUDE_PLUGIN_ROOT"
+
+  Modes: <name> [changes] | new <name> | delete <name> | tidy-only | (no args = all)
+```
+
 ## Data Directory
 
 This skill stores mutable state in the plugin data directory. At the start of every invocation:
@@ -98,15 +120,21 @@ Show the skill's SKILL.md summary and ask: "Delete `<name>/` and all its files? 
 5. **Summarize in your own words:** What does this skill do? What is its core workflow? What problem does it solve for the user?
 6. If target is `skillsmith`: also review `knowledge.md` for stale/redundant entries, and check if SKILL.md instructions match what actually happens during refinements.
 
-### Step 2 — Research Best Practices
+### Step 2 — Research Best Practices (MANDATORY)
+
+**This step is NOT optional.** Always run at least one web search before
+proposing changes. Without current context, you risk proposing outdated
+patterns or missing better approaches that already exist.
 
 Search the web for current best practices related to what the skill does:
 
 - If it's a career/job search skill → search for modern job search automation, ATS strategies
 - If it's a report writing skill → search for technical writing tools, pandoc workflows
 - If it's a meta-skill → search for prompt engineering best practices, Claude Code skill design
+- If it's a setup/config skill → search for dotfile management, cross-platform setup automation
 - For any skill → search for competing tools, recent blog posts, community patterns
 
+Run 1-2 searches. Summarize findings in 3-5 bullets before proceeding.
 Look for: **What are experts doing today that this skill doesn't do yet?**
 
 ### Step 3 — Health Check (quick)
@@ -145,7 +173,7 @@ Operates on `${CLAUDE_PLUGIN_ROOT}/skills/`.
 ### 7a. Audit Structure
 1. List all skill directories.
 2. For each, verify `SKILL.md` exists and has valid YAML frontmatter (name, description).
-3. Flag: missing `SKILL.md`, brackets `[]{}` in YAML description, nested `.git` dirs, data separation violations, orphan directories.
+3. Flag: missing `SKILL.md`, brackets `[]{}` in YAML description, nested `.git` dirs, data separation violations, orphan directories, missing signature block.
 4. Report as table. Auto-fix safe issues. Ask before destructive fixes.
 
 ### 7b. Update README
@@ -188,3 +216,5 @@ When no argument is provided:
 - Never commit user data to the skills repo.
 - Enforce data separation: skill directories contain code and config only. User/personal data must live outside `${CLAUDE_PLUGIN_ROOT}/` (path configured in `config.local.yaml`). Flag violations during health check and tidy.
 - Always update README if skills were added or removed.
+- Every skill must have a signature block that prints on invocation. During refine and tidy, flag skills missing a signature as STRUCTURAL and offer to add one.
+- Web research (Step 2) is mandatory during refinement. Never skip it.
