@@ -9,28 +9,35 @@ A Claude Code plugin for human-AI collaborative work. Inspired by [Ethan Mollick
 | **career** | `/co-intelligence:career` | AI-powered job search with learning loop, ethical filtering, multi-user support, and note capture |
 | **skillsmith** | `/co-intelligence:skillsmith` | Create, refine, and delete Claude Code skills |
 | **report** | `/co-intelligence:report` | Technical report writing with Quarto ODT/PDF output and BibTeX citations |
-| **setup** | `/co-intelligence:setup` | Verify, repair, and sync Claude Code setup across machines |
+| **setup** | `/co-intelligence:setup` | Apply, verify, and evolve Claude Code setup across machines |
 | **agent** | `/co-intelligence:agent` | Multi-agent chat channel coordination |
 
-## Installation
+## Getting Started
+
+### Quick install
 
 ```bash
-# Add the marketplace
-claude plugin marketplace add github:5TuX/co-intelligence
-
-# Install the plugin
-claude plugin install co-intelligence
+claude plugin marketplace add 5TuX/co-intelligence
+claude plugin install co-intelligence@co-intelligence
 ```
 
-On first session, the plugin automatically installs Python dependencies for the career skill.
+### First-time machine setup
 
-## First-Use Setup
+If you're setting up Claude Code from scratch (new machine, fresh install), see the full bootstrap guide:
 
-On first invocation of `career` or `setup`, you'll be prompted to create a config file:
+**[`skills/setup/bootstrap.md`](skills/setup/bootstrap.md)**
+
+It covers Google Drive sync, symlinks/junctions, plugin installation, MCP server configuration, and environment variables - everything needed to go from a bare machine to a working setup.
+
+After bootstrapping, run `/co-intelligence:setup` to verify everything is configured correctly.
+
+### First-use config
+
+On first invocation of `career` or `setup`, you'll be prompted to create a local config:
 
 ```bash
 cp ${CLAUDE_PLUGIN_ROOT}/templates/config.local.yaml.example ${CLAUDE_PLUGIN_DATA}/config.local.yaml
-# Edit with your handle and data directory path
+# Edit with your handle, data directory, and Drive root path
 ```
 
 ## Requirements
