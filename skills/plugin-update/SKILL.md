@@ -2,6 +2,7 @@
 name: plugin-update
 description: Use when the user wants to update an installed Claude Code plugin to the latest version from its marketplace. Works around the known stale marketplace cache bug (issues #33253, #16866, #38271) where `claude plugin update` fails to detect new versions. Works for any marketplace plugin, not just co-intelligence.
 argument-hint: "[plugin@marketplace] (default: co-intelligence)"
+effort: low
 ---
 
 # Plugin Update
