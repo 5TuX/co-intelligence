@@ -63,3 +63,42 @@ if [ "$INSTALLED" = "$LATEST" ]; then
 else
     echo "STATUS=update-available"
 fi
+
+# Subcommand: apply-update — rename cache folder and patch installed_plugins.json
+if [ "${2:-}" = "apply-update" ]; then
+    PLUGIN_NAME="${KEY%%@*}"
+    CACHE_BASE="$HOME/.claude/plugins/cache/$MARKETPLACE_NAME/$PLUGIN_NAME"
+    OLD_DIR="$CACHE_BASE/$INSTALLED"
+    NEW_DIR="$CACHE_BASE/$LATEST"
+    NEW_SHA=$(git -C "$MARKETPLACE_DIR" rev-parse HEAD)
+
+    if [ ! -d "$OLD_DIR" ]; then
+        echo "ERROR: cache dir $OLD_DIR not found"
+        exit 1
+    fi
+
+    # Sync marketplace files into cache
+    rsync -a --delete --exclude .git "$MARKETPLACE_DIR/" "$OLD_DIR/"
+
+    # Rename cache folder
+    if [ "$OLD_DIR" != "$NEW_DIR" ]; then
+        mv "$OLD_DIR" "$NEW_DIR"
+        echo "RENAMED=$OLD_DIR -> $NEW_DIR"
+    fi
+
+    # Patch installed_plugins.json
+    jq --arg key "$KEY" \
+       --arg ver "$LATEST" \
+       --arg path "$NEW_DIR" \
+       --arg sha "$NEW_SHA" \
+       --arg now "$(date -u +%Y-%m-%dT%H:%M:%S.000Z)" \
+       '.plugins[$key][0].version = $ver
+        | .plugins[$key][0].installPath = $path
+        | .plugins[$key][0].lastUpdated = $now
+        | .plugins[$key][0].gitCommitSha = $sha' \
+       "$PLUGINS_FILE" > "$PLUGINS_FILE.tmp" && mv "$PLUGINS_FILE.tmp" "$PLUGINS_FILE"
+
+    echo "PATCHED=installed_plugins.json"
+    echo "VERSION=$LATEST"
+    echo "SHA=$NEW_SHA"
+fi

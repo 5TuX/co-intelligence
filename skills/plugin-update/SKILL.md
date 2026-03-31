@@ -62,16 +62,20 @@ Parse the output for `INSTALLED=`, `LATEST=`, and `STATUS=` lines.
 - **STATUS=update-available**: "Update available: v<installed> -> v<latest>. Install? (y/n)"
 - **STATUS=not-installed**: "Plugin not found in installed plugins. Use `claude plugin install <key>` first."
 
-### 3. Install
+### 3. Apply update
 
 If user approves:
 ```bash
-claude plugin install <plugin@marketplace>
+bash <script-path>/update.sh <plugin@marketplace> apply-update
 ```
+
+This syncs files from the marketplace into the cache, renames the cache
+folder from the old version to the new version, and patches
+`installed_plugins.json` with the new version, path, timestamp, and git SHA.
 
 ### 4. Post-install
 
-After a successful install, reload plugins so changes take effect in the current session:
+After a successful apply, reload plugins so changes take effect in the current session:
 ```
 /reload-plugins
 ```
