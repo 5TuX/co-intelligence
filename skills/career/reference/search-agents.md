@@ -1,6 +1,8 @@
 # Search Phase — Agent Specifications (Step 2)
 
-**Use parallel agents aggressively.** After reading user data (step 1), spawn multiple agents to work concurrently.
+**Task specifications for background search agents.** Each task group runs
+sequentially within its assigned background agent. See `search-dispatch.md`
+for the dispatch protocol and agent grouping.
 
 **Pass to all agents:** today's date (for `after:` queries), learning context from Step 1.5, and the required output format below.
 

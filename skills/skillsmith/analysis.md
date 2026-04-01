@@ -35,6 +35,7 @@ Token estimate: `chars / 4` (rough for English prose + code).
     - Should be third person
     - Should contain concrete triggers, symptoms, and situations — not abstract terms
     - Name should use only letters, numbers, and hyphens
+13. **Subagent optimization**: if the skill has I/O-heavy phases (web search, script execution, file validation) that block the user for more than ~30 seconds, flag as a candidate for background subagent dispatch (`run_in_background: true`). Check if phases can be grouped into independent background agents for parallel fan-out.
 
 ### Quality Dimensions
 

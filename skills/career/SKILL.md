@@ -1,14 +1,13 @@
 ---
 name: career
 description: Use when the user asks for a career refresh, job search, CV analysis, skill gap review, or wants to capture a learning note. Proactively offer note mode when something notable happens during a work session.
-context: fork
 argument-hint: "[user1,user2] | clean [user] | note [user] <content> | new-user | update-user <user>"
 ---
 
 # Career — Search, Discovery & Notes (Multi-User)
 
 Full career refresh — job **discovery**, CV refinement, skill gap analysis, and **note capture**.
-Runs in a forked context to avoid polluting the main conversation.
+Search mode dispatches background agents and returns control to the user.
 Supports multiple users with independent profiles, preferences, and career files.
 
 **Scope: search and discovery only.** This skill finds, validates, and organizes job offers. It does NOT help with applications, resume tailoring, cover letters, or ATS keyword optimization. The output is a curated, verified catalog of opportunities — what the user does with them is up to them.
@@ -141,9 +140,9 @@ For EACH target user:
 
 Read `reference/learning-loop.md` § "Pre-Search" for the full protocol. Internalize past preferences, query performance, and metrics trends to form a search plan. Skip if no learning-loop files exist yet.
 
-**Novelty-Zero Detection:** After reading `metrics.yaml`, check if 2+ of the last 3 runs had `new_offers: 0` OR if total new_offers across the last 3 runs < 3. If so, activate **Novelty-Zero Mode** for this run. This mode changes agent behavior as defined in `reference/search-agents.md` — read those instructions carefully. Log the activation in admin_notes: `"Novelty-Zero Mode activated: N consecutive runs with 0 new offers."`
+**Novelty-Zero Detection:** Check `metrics.yaml` - if 2+ of the last 3 runs had `new_offers: 0` (or total < 3), activate **Novelty-Zero Mode**. See `reference/search-agents.md` § Novelty-Zero Protocol for full behavior changes. Log activation in admin_notes.
 
-**Seniority ceiling review (Novelty-Zero Mode only):** When catalog is < 15 offers and novelty has been 0 for 2+ runs, check if the seniority ceiling (`max_required_years`) is causing excessive filtering. Log in admin_notes how many offers were rejected by the seniority gate in the last run. If >50% of total finds were rejected by seniority alone, note this as a potential bottleneck and suggest the user consider raising the ceiling by 1 year in the feedback questions.
+**Seniority ceiling review (Novelty-Zero only):** With catalog < 15 and novelty at 0 for 2+ runs, check if `max_required_years` rejects >50% of finds. Flag in admin_notes if so.
 
 ### Step 1.7: Automatic clean (pre-search)
 
@@ -153,14 +152,29 @@ Skip C4 (commit) — changes will be committed in Step 6 along with everything e
 
 If `offers.json` does not exist for a user (first run), this step is a no-op.
 
-### Step 2: Search phase — spawn parallel agents
+### Step 2: Dispatch background search agents (fire-and-forget)
 
-Read `reference/search-agents.md` for agent specifications, output format, and field guidelines. Spawn all agents described there (general, per-user, maintenance, post-search).
+Read `reference/search-dispatch.md` for the full dispatch protocol and `reference/search-agents.md` for task specifications and output format.
 
-**After initial search agents return, check results:**
-- Count genuinely NEW offers (not already in offers.json) found by initial agents
-- If new offers < 5 OR Novelty-Zero Mode is active: spawn ALL refinement agents (Gap Analysis + Non-Obvious) AND the Community & Social Search agent AND the Funding & Career Page Monitor agent
-- The refinement agent trigger in reference/search-agents.md uses "fewer than 15 offers" — this means fewer than 15 NEW offers found THIS RUN, not total catalog size. With a catalog of 11 and novelty at 0, refinement agents MUST fire.
+Dispatch background agents with `run_in_background: true`:
+1. **General search agent** - job boards, agentic intel, market trends (shared)
+2. **Per-user search agent** (one per target user) - user sources, deep search, community/social, funding/career pages
+3. **Source maintenance agent** - validate and update source files (shared)
+
+Each agent writes results to `$PLUGIN_DATA/career-results/`.
+
+Tell the user: "Career search dispatched for <users> (N agents). Continue working - I'll assemble results when all complete."
+
+**Return control to the user here.** Do not proceed until all background agents have completed.
+
+### Step 2.5: Assembly (when all agents complete)
+
+When all background agents have returned:
+1. Read all result files from `$PLUGIN_DATA/career-results/`
+2. Merge into unified pool, deduplicate by URL
+3. Count genuinely NEW offers per user (not in existing `offers.json`)
+4. **Refinement trigger:** if new offers < 5 for any user OR Novelty-Zero Mode is active, dispatch refinement agents (Gap Analysis + Non-Obvious per user) as background agents. Wait for completion, merge additional results.
+5. Proceed to Step 3.
 
 ### Steps 3-4: Distribution & update phase
 
@@ -217,6 +231,7 @@ Read `reference/final-report.md` for the required report format. All sections ar
 | Deep search tactics | `reference/deep-search-tactics.md` |
 | Clean mode (C1-C4) | `reference/clean-mode.md` |
 | Search agents & output format | `reference/search-agents.md` |
+| Search dispatch protocol | `reference/search-dispatch.md` |
 | Distribution & update (Steps 3-4) | `reference/update-phase.md` |
 | Final report format (Step 8) | `reference/final-report.md` |
 | Comments processing | `reference/comments-processing.md` |
