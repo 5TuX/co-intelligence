@@ -34,11 +34,32 @@ This skill runs as part of the `co-intelligence` plugin. At the start of every i
 
 ## CLI Tools
 
-Before running any `career-*` CLI command, activate the plugin venv:
+Activate the plugin venv before running any `career-*` command:
 ```bash
 source $PLUGIN_DATA/career-venv/bin/activate 2>/dev/null || source $PLUGIN_DATA/career-venv/Scripts/activate
 ```
-Then run commands normally (e.g., `career-render DATA_DIR/<handle>/`).
+
+After activating, verify tools are installed:
+```bash
+which career-render 2>/dev/null || echo "MISSING"
+```
+
+**If tools are missing, bootstrap:**
+```bash
+# Create venv if absent
+[ -d $PLUGIN_DATA/career-venv ] || uv venv $PLUGIN_DATA/career-venv
+
+# Locate skill source in plugin cache
+SKILL_SRC=$(ls -d ~/.claude/plugins/cache/co-intelligence/co-intelligence/*/skills/career 2>/dev/null | sort -V | tail -1)
+
+# README.md required by hatchling - create if missing
+[ -f "$SKILL_SRC/README.md" ] || touch "$SKILL_SRC/README.md"
+
+# Install
+uv pip install --python $PLUGIN_DATA/career-venv/bin/python -e "$SKILL_SRC"
+```
+
+Activate again and verify before proceeding.
 
 ## Argument Parsing
 
