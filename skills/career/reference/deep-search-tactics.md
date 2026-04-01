@@ -175,3 +175,101 @@ Search for recent papers by companies in user's domain, then check if those team
 site:scholar.google.com "<company>" "<domain>" 2025 OR 2026
 ```
 Teams that publish are usually growing.
+
+---
+
+### K) Direct Job Board Browsing via Playwright (HIGHEST PRIORITY)
+
+**This tactic is 15x more efficient than Google dorking.** Use it FIRST, before any web search queries.
+
+Google dorking (`site:welcometothejungle.com ...`) returns ~5-10 results per query, often duplicates or aggregator pages. Browsing job boards directly with Playwright yields 30+ specific listings per page with built-in filters.
+
+**K1) WTTJ Playwright browsing (primary tactic):**
+
+WTTJ has 300+ "machine learning" CDI results in France alone. Browse multiple search queries:
+
+```
+# Navigate to WTTJ search with CDI + France filters
+https://www.welcometothejungle.com/fr/jobs?query=<QUERY>&page=<N>&aroundQuery=France&refinementList%5Bcontract_type%5D%5B%5D=full_time&refinementList%5Boffice.country_code%5D%5B%5D=FR
+```
+
+Queries to run (each has 20-50+ pages of results):
+1. `machine+learning` (343 results)
+2. `data+scientist` (500+ results)
+3. `ingénieur+IA` (200+ results)
+4. `deep+learning` (100+ results)
+5. `NLP+LLM` (50+ results)
+6. `computer+vision` (50+ results)
+7. `PyTorch` (30+ results)
+8. `MLOps` (30+ results)
+
+Extract all job listing links using JS:
+```javascript
+// Run via Playwright browser_evaluate
+() => {
+  const links = document.querySelectorAll('a[href*="/companies/"][href*="/jobs/"]');
+  const results = [];
+  const seen = new Set();
+  for (const link of links) {
+    const href = link.getAttribute('href');
+    const text = link.textContent.trim();
+    if (href && href.includes('/jobs/') && text.length > 5 && !seen.has(href)) {
+      seen.add(href);
+      results.push({ text: text.substring(0, 120), href });
+    }
+  }
+  return results;
+}
+```
+
+Filter known companies in-browser by maintaining a skip set of company slugs:
+```javascript
+const skip = new Set(['company-slug-1', 'company-slug-2', ...]);
+// Extract company slug: href.match(/\/companies\/([^/]+)\//)[1]
+```
+
+Also filter out seniority keywords in-browser:
+```javascript
+const lower = text.toLowerCase();
+if (lower.includes('senior') || lower.includes('lead') || lower.includes('staff') ||
+    lower.includes('head') || lower.includes('manager') || lower.includes('director') ||
+    lower.includes('principal') || lower.includes('consultant') || lower.includes('stage') ||
+    lower.includes('intern') || lower.includes('alternance')) continue;
+```
+
+**K2) Efficiency data from empirical testing (run 17, 2026-04-01):**
+
+| Method | Queries/pages | Valid offers found | Efficiency |
+|--------|-------------|-------------------|------------|
+| Google dorking (WebSearch) | 150+ queries | 51 offers | 0.34/query |
+| Tavily search | 3 queries | 0 new | 0/query |
+| Exa neural search | 1 query | 0 new | 0/query |
+| **Playwright WTTJ browsing** | **7 page loads** | **20 offers** | **2.9/page** |
+
+**Playwright is the primary search method. Use Google dorking only for non-WTTJ sources (Indeed, ATS platforms, government portals).**
+
+**K3) Consulting firm skip list (France):**
+
+These are ESN/SSII/consulting firms that appear frequently in WTTJ ML searches. ALWAYS skip:
+```
+margo, atos, nexton-consulting, step-consulting, theodo, sicara, cgi, saegus,
+octo-technology, artefact, capgemini, capgemini-invent, bureaudestalents,
+klint-consulting, kanbios, exalt, mews-partners, deloitte, ey, meritis, sii,
+open, square-management, polynom, webnet, converteo, keyrus, hubvisory,
+boston-consulting-group, the-adecco-group, okuden, sopra-steria, alten,
+altran, devoteam, tata-consultancy-services, accenture, bearing-point
+```
+
+**K4) Indeed France URLs are unreliable:**
+
+Indeed `fr.indeed.com/viewjob?jk=...` URLs return 403 on automated validation. Do NOT rely on Indeed as a primary source. Use only as supplementary and note links are unvalidated.
+
+**K5) Best non-WTTJ sources (by yield):**
+
+1. **INRIA** (jobs.inria.fr) - 5+ research engineer CDI roles, specific URLs
+2. **Government portals** (choisirleservicepublic.gouv.fr) - Public sector AI roles
+3. **Ashby** (jobs.ashbyhq.com) - Startups, specific UUID URLs
+4. **Institut Pasteur** (research.pasteur.fr) - Healthcare research CDI
+5. **Station F** (jobs.stationf.co) - French startup ecosystem
+6. **Lever** (jobs.lever.co) - Mostly senior, low junior yield
+7. **Greenhouse** (boards.greenhouse.io) - Mostly senior, low junior yield

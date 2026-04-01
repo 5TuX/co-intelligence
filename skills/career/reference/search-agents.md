@@ -1,8 +1,6 @@
 # Search Phase — Agent Specifications (Step 2)
 
-**Task specifications for background search agents.** Each task group runs
-sequentially within its assigned background agent. See `search-dispatch.md`
-for the dispatch protocol and agent grouping.
+**Use parallel agents aggressively.** After reading user data (step 1), spawn multiple agents to work concurrently.
 
 **Pass to all agents:** today's date (for `after:` queries), learning context from Step 1.5, and the required output format below.
 
@@ -61,6 +59,21 @@ When Novelty-Zero Mode is active:
 6. **Seniority audit** — Log how many candidate offers were rejected by the seniority gate this run. If >50% of total finds were rejected by seniority alone, flag in admin_notes: "Seniority ceiling may be too restrictive — N/M offers rejected. Consider raising max_required_years by 1."
 
 Log in admin_notes: `"Novelty-Zero Mode activated: N consecutive runs with 0 new offers. Blacklisted M queries."`
+
+---
+
+## Search Method Priority (empirical, run 17)
+
+**Use Playwright direct browsing FIRST, Google dorking SECOND.**
+
+| Priority | Method | Yield | When to use |
+|----------|--------|-------|-------------|
+| 1 | **Playwright WTTJ browsing** (Section K in deep-search-tactics.md) | 2.9 offers/page | Always - primary method for WTTJ |
+| 2 | Google dorking (WebSearch) with `site:` | 0.34 offers/query | Non-WTTJ sources (INRIA, government, Ashby) |
+| 3 | Haiku subagents with WebSearch | 0.34 offers/query | When Playwright unavailable |
+| 4 | Tavily/Exa neural search | ~0 offers/query | Not recommended for job listings |
+
+**WTTJ has 300-500+ CDI results per keyword in France.** Browsing pages 1-4 of each keyword (machine learning, data scientist, ingenieur IA, deep learning, NLP LLM, computer vision, PyTorch, MLOps) covers the full French market.
 
 ---
 
