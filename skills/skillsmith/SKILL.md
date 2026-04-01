@@ -25,7 +25,10 @@ Parse $ARGUMENTS:
 - If `new <name>` → jump to §Create Mode
 - If `delete <name>` → jump to §Delete Mode
 - If empty → All Mode (refine all skills)
-- Otherwise → first word is the skill name; everything after is desired changes (if any). First look in `~/.claude/skills/<target>/SKILL.md`. If not found there, check plugin caches (`~/.claude/plugins/cache/*/*/latest/skills/<target>/SKILL.md`). If found only in a plugin cache, warn: "This is a plugin skill. Modifications will be local until published. Proceed?" and wait for confirmation.
+- Otherwise → first word is the skill name; everything after is desired changes (if any). Resolve the skill path in order:
+  1. Local: `~/.claude/skills/<target>/SKILL.md`
+  2. Marketplace: `~/.claude/plugins/marketplaces/*/skills/<target>/SKILL.md` — you are the plugin author. Edit here. Warn: "Editing marketplace source for <plugin>. Run `plugin-refresh-cache.sh <plugin>` after to test locally."
+  3. Cache (fallback): `~/.claude/plugins/cache/*/*/*/skills/<target>/SKILL.md` — no local marketplace. Warn: "No marketplace repo found. Editing cache copy - changes are local only."
 
 ## Signature
 
@@ -222,7 +225,7 @@ When no argument is provided:
 - Keep SKILL.md files under 15K chars (hard limit); prefer under 200 lines but don't sacrifice substance for brevity.
 - If `~/.claude/skills/` is a git repo, ask before committing. If not, skip git operations.
 - Never assume how skills are synced between machines.
-- Default scope is `~/.claude/skills/` (local skills). Plugin skills in `~/.claude/plugins/cache/` can be modified when explicitly targeted, but always warn first that changes are local until published.
+- Default scope is `~/.claude/skills/` (local skills). Plugin skills resolve marketplace-first (`~/.claude/plugins/marketplaces/`), cache as fallback. Marketplace edits are the source of truth for authors; cache edits are local-only.
 - Enforce data separation: skill directories contain code and config only. User/personal data must live outside `~/.claude/skills/` (path configured in `config.local.yaml`). Flag violations during health check and tidy.
 - Always update README if skills were added or removed.
 - Every skill must have a signature block that prints on invocation. During refine and tidy, flag skills missing a signature as STRUCTURAL and offer to add one.
