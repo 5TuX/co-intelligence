@@ -34,46 +34,34 @@ plugin-update
 
 ## Workflow
 
-### 0. Preflight
+### 1. Dispatch check subagent
 
-Verify jq is available:
-```bash
-command -v jq >/dev/null || echo "MISSING: jq (install via scoop/apt/brew)"
-```
-If missing, tell the user and stop.
+Read `check.md` from this skill's directory. Dispatch a subagent with those
+instructions, passing `<plugin@marketplace>` as the target.
 
-Locate the update script bundled with this skill:
-```bash
-SCRIPT_DIR="$(dirname "$(readlink -f ~/.claude/plugins/cache/co-intelligence/co-intelligence/*/skills/plugin-update/update.sh 2>/dev/null | head -1)")"
-```
-If the script is not found, it may also be at `~/.claude/scripts/plugin-update.sh`.
-
-### 1. Run update check
-
-```bash
-bash <script-path>/update.sh <plugin@marketplace>
-```
-
-Parse the output for `INSTALLED=`, `LATEST=`, and `STATUS=` lines.
+Wait for the subagent's structured report before continuing.
 
 ### 2. Present decision
 
-- **STATUS=up-to-date**: "Already at v<version>. No action needed."
-- **STATUS=files-changed**: "Version unchanged at v<version> but <N> new commits were pulled. Sync cache anyway? (y/n)"
-- **STATUS=files-current**: "Files already match v<latest> but registry still shows v<installed>. Fixing registry..." then immediately run `apply-update` to sync the registry (no confirmation needed since no files are changing).
+Using the subagent's report:
+
+- **STATUS=preflight-failed**: Show the error and stop. Do not attempt apply.
+- **STATUS=not-installed**: "Plugin not found. Use `claude plugin install <key>` first." Stop.
+- **STATUS=up-to-date**: "Already at v<version>. No action needed." Done.
+- **STATUS=files-changed**: "Version unchanged at v<version> but <N> new commits were pulled. Sync cache? (y/n)"
+- **STATUS=files-current**: "Files already match v<latest> but registry still shows v<installed>. Sync registry? (y/n)"
 - **STATUS=update-available**: "Update available: v<installed> -> v<latest>. Install? (y/n)"
-- **STATUS=not-installed**: "Plugin not found in installed plugins. Use `claude plugin install <key>` first."
+
+Always wait for user confirmation before applying.
 
 ### 3. Apply update
 
 If user approves:
 ```bash
-bash <script-path>/update.sh <plugin@marketplace> apply-update
+bash <SCRIPT_DIR>/update.sh <plugin@marketplace> apply-update
 ```
 
-This syncs files from the marketplace into all cache version directories.
-Claude Code owns the directory names and registry; we just update the
-files inside.
+`<SCRIPT_DIR>` comes from the subagent's report.
 
 ### 4. Post-install
 
@@ -90,4 +78,5 @@ from the prompt. The model cannot execute it programmatically.
 - Always show the version comparison before installing
 - Never force-install without user approval
 - If git pull fails (network, auth), show the error and stop
+- If preflight fails, do not offer force or skip options — the user must fix the underlying issue before retrying
 - This skill can update ANY marketplace plugin, including co-intelligence itself

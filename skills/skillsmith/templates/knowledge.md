@@ -28,6 +28,8 @@ Things that break skills or degrade quality. Check every skill against these.
 
 12. **User data inside skill directory** — storing personal data (profiles, CVs, job offers) inside `~/.claude/skills/<skill>/` couples code to data, bloats the repo, and requires complex .gitignore rules. User data should live outside the skill tree entirely (path configured in `config.local.yaml`). The skill references the external path via a config constant (like `DATA_DIR`).
 
+13. **Personal notes committed to published template** — `templates/knowledge.md` ships to every user who installs the plugin. Never add Per-Skill Notes or Refinement Log entries to the template. Those sections must stay blank (placeholder only). Only Pitfalls, Strategies, and References belong in the template — they are general knowledge. Per-skill observations and session history accumulate in the user's data copy (`$PLUGIN_DATA/skillsmith/knowledge.md`) and are never committed back to the plugin source.
+
 ### Structural (degrades quality)
 
 7. **Overloaded single SKILL.md** — Everything in one file = everything loaded every time. Extract reference material to separate files.
@@ -58,6 +60,7 @@ What works well when building and refining skills.
 9. **Argument parsing first** — Resolve mode/target before loading anything mode-specific.
 10. **Ask before committing** — Matches user preference, avoids unwanted side effects.
 11. **CSO (Claude Search Optimization)** — Description fields are how Claude decides which skills to load. Use concrete triggers and symptoms, not abstract terms. Include error messages, tool names, and synonyms the user might say. When refining, check if the description contains terms someone would use when they need the skill.
+12. **Subagent dispatch for I/O-heavy phases** — When a skill has bash-heavy setup (preflight checks, script location, running scripts) followed by user-interactive decisions, split into: (a) subagent for all I/O, returns a structured report; (b) main agent reads report and drives all user confirmation. Benefits: main context stays clean, user-confirmation gates are explicit, preflight failures stop cleanly before any interactive prompt. Extract subagent instructions to a reference file (e.g. check.md) and define a fixed return format the main agent can parse.
 
 ## References
 
@@ -77,76 +80,10 @@ Curated resources on skill design and prompt optimization. Refined over successi
 
 Observations about specific skills. Updated after refinements.
 
-### career
-- ~216 lines, ~13.4K chars — WARN (approaching 15K truncation limit, monitor)
-- Renamed from `job-search` in v2.0.0 (2026-03-25). Absorbed the `note` skill as `/career note` mode.
-- User data externalized from `users/<handle>/` to `DATA_DIR/<handle>/` (outside skill dir, path from config.local.yaml)
-- User template moved from `users/_example/` to `templates/user-template/`
-- Python package renamed from `job_search` to `career`; CLI commands from `js-*` to `career-*`
-- Extracted to: clean-mode.md, learning-loop.md, search-agents.md, update-phase.md, final-report.md, comments-processing.md, new-user-flow.md, update-user-flow.md
-- Has Python package for deterministic ops (good pattern)
-- Uses `context: fork` — writes in fork may not persist (pitfall #5)
-- Complex multi-user system with learning loops (young, few runs)
-- Support files (README.md) tend to go stale when SKILL.md evolves — check each refinement
-- **SCOPE: search and discovery only.** User explicitly does not want application help (resume tailoring, ATS optimization, cover letters). Do NOT propose application-related features when refining this skill.
-
-### report
-- 195 lines, ~8.1K chars — healthy size
-- Good patterns: modes, anti-AI rules, verification steps
-- Extracted reference material to context/ directory
-
-### agent
-- 62 lines, ~2.2K chars — healthy size
-- Multi-mode with clear format specifications
-
-### setup
-- 248 lines, ~10.5K chars — WARN (size, but well under 15K)
-- Good: extracted architecture to separate file
-- Has verification with PASS/FAIL output
-- Has `/setup scan` mode to capture live state (MCP servers, plugins, skills) → updates architecture.md for cross-machine sync
-- Expected state (MCP servers, plugins) lives in architecture.md, not hardcoded in SKILL.md — single source of truth
-
-### skillsmith
-- Renamed from `refine-skill` in 2026-03-25. Now covers create, refine, delete, and tidy.
-- Create mode delegates TDD cycle to `superpowers:writing-skills`, then handles repo integration
-- Delete mode checks for cross-skill dependencies before removing
-- Uses knowledge.md + analysis.md reference files
-- Tidy Mode (`tidy-only`) replaces the former standalone `tidy-skills-repo` skill (deleted 2026-03-25)
-- All Mode now uses plan-then-apply: proposes changes for all skills first, then applies after approval
+_(none yet — notes accumulate here as you refine skills)_
 
 ## Refinement Log
 
 Chronological record of all refinement sessions.
 
-### 2026-03-16 — Full audit (all 8 skills)
-- **job-search**: CRITICAL fix — extracted 4 sections to reference files (31K → 12.5K chars)
-- **note**: fixed broken file references (Summary.md → removed, Learning path.md → Direction.md)
-- **setup**: fixed stale file reference (Summary.md → Direction.md)
-- **report**: removed self-contradicting em dash in ban rule, added pandoc install check
-- **agent**: simplified cross-platform path, added write verification, renumbered steps
-- **myplay**, **tidy-skills-repo**, **refine-skill**: no changes needed
-- Pattern observed: `Summary.md` was referenced in 3 skills but never existed — likely a renamed/removed file
-
-### 2026-03-18 — Full audit (8 skills, context7-mcp deleted)
-- **context7-mcp**: deleted — redundant with MCP server tool descriptions
-- **job-search**: trimmed SKILL.md (236→178 lines, 13.5K→9.6K chars). Removed shared resources tree, extracted final report to `final-report.md`, consolidated bottom pointer sections into reference table. Replaced deprecated "Top 10" report format with "Run delta" (new/removed/totals).
-- **agent**: removed Unix-only fallback path from chat file description
-- **myplay**, **note**, **report**, **setup**, **sync-skills**, **refine-skill**: no changes needed
-- Pattern observed: fixed-count report formats ("Top 10") become awkward when catalogs are small (<15 offers). Use delta-based reporting instead.
-
-### 2026-03-18 — Full audit (8 skills)
-- **job-search**: deleted orphaned `career-reference.md`, fixed nested subagent pattern in `deep-search-tactics.md` (moved to flat fan-out in `search-agents.md`), aligned output format schema, updated stale `Dashboard.html` references in README.md and ROADMAP.md
-- **setup**: updated stale `architecture.md` — added 3 missing skills to table, removed dead `career/` reference, updated directory tree
-- **agent**, **myplay**, **note**, **report**, **sync-skills**, **refine-skill**: no changes needed
-- Pattern observed: support files (README, ROADMAP, architecture.md) go stale when SKILL.md evolves — check these explicitly each refinement, not just SKILL.md itself
-- New pitfall candidate: reference files with their own output format schemas can drift from the canonical schema in the main spec file. Always have a single source of truth and point to it.
-
-### 2026-03-25 — Full audit (8→7 skills)
-- **refine-skill**: simplified argument parsing (removed `self` and `push`, merged `<name>` and `<name> apply`), embedded self-refinement logic into Step 1, changed tidy argument to `tidy-only`, All Mode now uses plan-then-apply workflow
-- **tidy-skills-repo**: DELETED — fully redundant with `/refine-skill tidy-only`
-- **job-search**: extracted comments.json processing (~2.5K chars) to `reference/comments-processing.md` (14,984→~12,500 chars, was dangerously near 15K truncation)
-- **report**: added Quarto 1.8+ features to tips (brand support, PDF accessibility, Typst, lualatex)
-- **setup**: deduplicated identical Windows/Linux MCP templates into single block
-- **agent**, **note**: no changes needed
-- Research: Quarto 1.8+ (brand, PDF/A, Typst), Claude Code skill char budget = 2% of context window, hooks for guaranteed execution, A2A/ACP protocols (not relevant for lightweight agent skill)
-- Pattern observed: user prefers unified plan-then-apply over per-skill apply in All Mode
+_(none yet — entries accumulate here after each session)_
