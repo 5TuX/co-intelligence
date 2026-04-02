@@ -26,6 +26,24 @@ Thumbs.db
 *.swo
 *~
 
+# Autoresearch experiment run artifacts (if any end up here)
+results.tsv
+run.log
+
+# Data files
+*.csv
+*.tsv
+*.npy
+*.npz
+*.pkl
+*.pickle
+*.h5
+*.hdf5
+*.pt
+*.pth
+*.bin
+*.parquet
+
 # Secrets
 .env
 *.key

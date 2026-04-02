@@ -6,6 +6,7 @@ A Claude Code plugin for human-AI collaborative work. Inspired by [Ethan Mollick
 
 | Skill | Command | What it does |
 |-------|---------|-------------|
+| **autoresearch** | `/co-intelligence:autoresearch` | Autonomous iterative research loop adapted from Karpathy's autoresearch - design experiments, run a never-stop loop, log everything |
 | **career** | `/co-intelligence:career` | AI-powered job search with learning loop, ethical filtering, multi-user support, and note capture |
 | **skillsmith** | `/co-intelligence:skillsmith` | Create, refine, and delete Claude Code skills |
 | **report** | `/co-intelligence:report` | Technical report writing with Quarto ODT/PDF output and BibTeX citations |
