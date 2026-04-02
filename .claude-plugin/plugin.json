@@ -10,5 +10,6 @@
   "repository": "https://github.com/5TuX/co-intelligence",
   "license": "MIT",
   "keywords": ["skills", "autoresearch", "career", "job-search", "reports", "co-intelligence"],
-  "skills": ["./skills/"]
+  "skills": ["./skills/"],
+  "commands": ["./commands/"]
 }
