@@ -26,8 +26,49 @@ For each extracted concept, identify:
   detection", "SSD", "Faster R-CNN", "real-time detection"
 - **Domain-specific jargon**: e.g., "MSD" = "mean squared displacement",
   "run-and-tumble" for bacterial motility
-- **Broader categories**: e.g., user's specific problem maps to "label-free
-  biosensing", "digital microscopy", "point-of-care diagnostics"
+
+### Step 2b: Alternative Approaches (CRITICAL)
+
+For each method the user mentions, identify COMPETING or ALTERNATIVE methods
+they may not know about. This prevents missing entire sub-fields.
+
+Examples:
+- User tracks individual bacteria -> also search for "differential dynamic
+  microscopy" (DDM), which extracts motility statistics WITHOUT tracking
+- User uses bright-field microscopy -> also search for "digital holographic
+  microscopy" (DHM), "quantitative phase imaging" (QPI), "lensless microscopy"
+- User uses YOLO for detection -> also search for other single-shot detectors,
+  but also tracking-free approaches like DDM or speckle imaging
+- User classifies from scalar features -> also search for "set classification",
+  "permutation-invariant networks", "multiple instance learning"
+
+Ask: "What other methods solve the SAME problem differently?"
+
+### Step 2c: Foundational Methods
+
+For each technique in the user's pipeline, identify the seminal paper(s)
+that introduced it, even if they're from a different domain:
+
+- User uses Kalman filter tracking -> Berg & Brown 1972 (bacterial tracking),
+  SORT/DeepSORT/ByteTrack (MOT community)
+- User uses MIL for sample-level classification -> Deep Sets (Zaheer 2017),
+  Attention MIL (Ilse 2018), Set Transformer (Lee 2018)
+- User uses trajectory features -> AnDi Challenge papers, anomalous diffusion
+
+These foundational papers ground the bibliography and help domain experts
+navigate it. Include them even if they don't mention the user's specific
+application domain.
+
+### Step 2d: Research Family Tracing
+
+If the user mentions specific labs, institutions, or researcher names
+(e.g., "my advisor is Prof. X at Y University", "I follow work from the
+Z lab at W institute"), plan to systematically fetch all their recent
+publications during Wave 1.5 (Author Hub Mining).
+
+Also: if the user's raw description references specific papers or
+project names, search for those exact titles to seed the anchor search
+and identify the research community around them.
 
 ## Step 3: Inclusion/Exclusion Criteria
 
@@ -52,19 +93,14 @@ Break the search into 6-12 specific sub-topics. Each should be:
 - Broad enough to find 5-15 papers
 
 **Pattern for sub-topics:**
-> [Specific method/approach] for [specific aspect of the problem] in [domain context]
+> [Specific method/approach] for [specific aspect of the problem] in [domain]
 
-Example decomposition for a bacteria microscopy project:
-1. Trajectory-based bacteria vs inert particle discrimination
-2. Deep learning object detection in low-resolution label-free microscopy
-3. Sample-level classification from trajectory sets (MIL, set encoders)
-4. Lightweight real-time detection and tracking on edge devices
-5. Time-series classification of particle trajectories
-6. MSD-based diffusion analysis for active vs passive discrimination
-7. Digital holographic microscopy for bacteria detection
-8. Portable/miniaturized microscopes with deep learning
-9. Run-and-tumble motility feature engineering
-10. Anomaly detection on microscopy videos
+Include at least one sub-topic for:
+- The user's EXACT problem (most specific query possible)
+- Each alternative method discovered in Step 2b
+- Foundational methods from Step 2c
+- Edge/deployment constraints if applicable
+- The broader application domain (clinical, industrial, etc.)
 
 ## Step 5: Draft the Structured Search Goal
 
@@ -73,11 +109,10 @@ Write a single coherent paragraph that:
 2. Describes the sensing/measurement approach
 3. Lists the current pipeline components
 4. States the end goal clearly
-5. Enumerates specific sub-topics to search with "Please find papers on: ..."
+5. Enumerates specific sub-topics with "Please find papers on: ..."
 6. States what to include and exclude
 
-**Tone**: Precise, technical, written for a domain expert. No typos. Use
-standard terminology. This paragraph will guide all subsequent search queries.
+**Tone**: Precise, technical, domain-expert level.
 
 ## Step 6: User Review
 
@@ -85,5 +120,6 @@ Present the structured search goal to the user. Ask:
 - Does this capture your research accurately?
 - Any sub-topics to add or remove?
 - Any exclusion criteria to adjust?
+- Are there specific authors or labs whose work you follow?
 
-Iterate until the user approves. Then save to artifacts.
+Iterate until approved. Save to session directory.

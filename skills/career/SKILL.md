@@ -29,14 +29,16 @@ career — <mode>
 
 This skill runs as part of the `co-intelligence` plugin. At the start of every invocation:
 1. Resolve `CLAUDE_PLUGIN_DATA` environment variable → `$PLUGIN_DATA`
-2. Read `$PLUGIN_DATA/config.local.yaml` to get `career_data_dir` (→ **DATA_DIR**) and `career_user` (→ **ADMIN_USER**)
-3. If config is missing, error: "Missing config — run: `cp ${CLAUDE_PLUGIN_ROOT}/templates/config.local.yaml.example ${CLAUDE_PLUGIN_DATA}/config.local.yaml` and edit it."
+2. **DATA_DIR** = `$PLUGIN_DATA/career/` (convention, no config file needed)
+3. **ADMIN_USER** = `$USER` (system username). Override: pass handle explicitly.
+4. If `$PLUGIN_DATA/career/` doesn't exist, error: "Career data dir missing. Expected: `$PLUGIN_DATA/career/`"
 
 ## CLI Tools
 
-Activate the plugin venv before running any `career-*` command:
+Activate the career venv before running any `career-*` command:
 ```bash
-source $PLUGIN_DATA/career-venv/bin/activate 2>/dev/null || source $PLUGIN_DATA/career-venv/Scripts/activate
+VENV=~/.cache/co-intelligence/career-venv
+source $VENV/bin/activate 2>/dev/null || source $VENV/Scripts/activate
 ```
 
 After activating, verify tools are installed:
@@ -46,8 +48,10 @@ which career-render 2>/dev/null || echo "MISSING"
 
 **If tools are missing, bootstrap:**
 ```bash
+VENV=~/.cache/co-intelligence/career-venv
+
 # Create venv if absent
-[ -d $PLUGIN_DATA/career-venv ] || uv venv $PLUGIN_DATA/career-venv
+[ -d $VENV ] || uv venv $VENV
 
 # Locate skill source in plugin cache
 SKILL_SRC=$(ls -d ~/.claude/plugins/cache/co-intelligence/co-intelligence/*/skills/career 2>/dev/null | sort -V | tail -1)
@@ -56,7 +60,7 @@ SKILL_SRC=$(ls -d ~/.claude/plugins/cache/co-intelligence/co-intelligence/*/skil
 [ -f "$SKILL_SRC/README.md" ] || touch "$SKILL_SRC/README.md"
 
 # Install
-uv pip install --python $PLUGIN_DATA/career-venv/bin/python -e "$SKILL_SRC"
+uv pip install --python $VENV/bin/python -e "$SKILL_SRC"
 ```
 
 Activate again and verify before proceeding.
@@ -81,7 +85,7 @@ If a requested user has no directory, error with: "User 'X' not found. Available
 
 ## User System
 
-All user data lives in `DATA_DIR/<handle>/` (path from `config.local.yaml`).
+All user data lives in `DATA_DIR/<handle>/` (i.e., `$PLUGIN_DATA/career/<handle>/`).
 
 Each user has:
 ```

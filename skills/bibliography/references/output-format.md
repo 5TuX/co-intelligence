@@ -19,10 +19,10 @@
 ```markdown
 ## Topic Breakdown
 
-**<Main topic title>: <One-sentence description of the overall search theme>**
+**<One-sentence description of the overall search theme>**
 
-- *<Sub-topic 1 name>*
-- *<Sub-topic 2 name>*
+- *<Sub-topic 1 name>* (N papers)
+- *<Sub-topic 2 name>* (N papers)
 - ...
 ```
 
@@ -31,28 +31,35 @@
 ```markdown
 ## Paper Catalog (<N> papers)
 
+### <Topic 1 Name>
+
 |  | Year | Cit/yr | Title | Authors | Journal |
 |---:|:--:|:--:|:---|:---|:---|
-| 1 | 2025 |  | Title text ([link](https://doi.org/...)) | First Author et al. | Journal Name |
-| 2 | 2022 | 4.1 | Title text ([link](https://doi.org/...)) | First Author et al. | Journal Name |
+| 1 | 2025 |  | Title ([link](https://doi.org/...)) | First Author et al. | Journal |
+| 2 | 2022 | 4.1 | Title ([link](https://doi.org/...)) | First Author et al. | Journal |
+
+### <Topic 2 Name>
+
+|  | Year | Cit/yr | Title | Authors | Journal |
+|---:|:--:|:--:|:---|:---|:---|
+| 3 | 2024 | 2.0 | ...
 ```
 
 **Column rules:**
-- `#`: Sequential number, right-aligned
+- `#`: Sequential number across all topics, right-aligned
 - `Year`: Publication year
-- `Cit/yr`: Citations per year (citationCount / years since publication).
-  Leave empty if paper is from current year or has 0 citations.
-  Round to 1 decimal place.
-- `Title`: Full title with DOI link. If no DOI, use Semantic Scholar URL.
-- `Authors`: "First Author et al." for 3+ authors. Full names for 1-2 authors.
-- `Journal`: Journal or conference short name. Leave empty if unknown.
+- `Cit/yr`: citationCount / (currentYear - year + 1). Empty if 0 or
+  current year. Round to 1 decimal.
+- `Title`: Full title with DOI link. Fallback: Semantic Scholar URL.
+- `Authors`: "First Author et al." for 3+ authors. Full names for 1-2.
+- `Journal`: Journal or conference short name. Empty if unknown.
 
-**Ordering**: Papers are numbered sequentially. Within each topic group,
-order by relevance score (descending), then by citations/year (descending).
+**Ordering**: Within each topic, sort by relevance score (desc), then
+citations/year (desc). Topic headers separate groups in the table.
 
 ### Paper Details
 
-After the catalog table, provide detailed entries for each paper:
+After the catalog, provide detailed entries:
 
 ```markdown
 ### Paper Details
@@ -62,7 +69,7 @@ After the catalog table, provide detailed entries for each paper:
 First Author, Second Author, ... and Last Author\
 *Journal Name* - Month Day, Year - N citations
 
-> Abstract text here. Full abstract from Semantic Scholar or the paper.
+> Abstract text here.
 
 ------------------------------------------------------------------------
 
@@ -79,10 +86,10 @@ First Author, Second Author, ... and Last Author\
 **Detail entry rules:**
 - Number matches the catalog table
 - Year and cit/yr on the first line
-- Full title as bold text with DOI link
-- All authors listed (not "et al.")
+- Full title as bold with DOI link
+- ALL authors listed (not "et al.")
 - Journal in italics, publication date, total citation count
-- Abstract as a block quote
+- Abstract as block quote
 - Horizontal rule separator between entries
 
 ---
@@ -91,40 +98,50 @@ First Author, Second Author, ... and Last Author\
 
 ### Citation Key Format
 
-`<FirstAuthorSurname3><Year2><Disambiguator>`
+`<Surname3><Year2><Disambiguator>`
 
-- First 3 characters of the first author's surname (capitalized first letter)
-- Last 2 digits of the year
-- Optional lowercase letter (a, b, c...) if keys collide
+Construction:
+1. Take the first author's surname
+2. Use the first 3 characters, capitalize the first letter
+3. Append last 2 digits of the year
+4. If key collides with another entry, append lowercase letter (a, b, c...)
 
-Examples: `Per25`, `Zha22c`, `Yu18`, `Bra24b`
+Examples:
+- Ronneberger 2015 -> `Ron15`
+- Zhang 2022 (first) -> `Zha22`
+- Zhang 2022 (second) -> `Zha22b`
+- Ho 2019 -> `Ho19` (2-char surname, use all of it)
+- Yu 2018 -> `Yu18`
+- van der Walt 2014 -> `Van14` (use "Van" from "van der Walt")
+- De Valen 2016 -> `DeV16`
 
 ### Entry Format
 
 ```bibtex
-@article{Per25,
-  author = {Perronno, Paul and Claudinon, J. and Senin, Carmen and ...},
-  title = {Full Title With Proper Capitalization},
-  journal = {Journal Name},
-  volume = {15},
-  pages = {1234-1245},
-  year = {2025},
-  month = {may},
-  doi = {10.1038/...}
+@article{Ron15,
+  author = {Ronneberger, Olaf and Fischer, Philipp and Brox, Thomas},
+  title = {{U-Net}: Convolutional Networks for Biomedical Image Segmentation},
+  journal = {Medical Image Computing and Computer-Assisted Intervention},
+  year = {2015},
+  pages = {234--241},
+  doi = {10.1007/978-3-319-24574-4_28}
 }
 ```
 
 **Entry type rules:**
 - `@article` for journal papers
-- `@inproceedings` for conference papers (use `booktitle` instead of `journal`)
+- `@inproceedings` for conference papers (use `booktitle` not `journal`)
 - `@misc` for preprints (include `eprint` and `archivePrefix` for arXiv)
 
+**Author format**: `Surname, Given` joined with ` and `. List ALL authors.
+For 10+ authors, list first 5 then `and others`.
+
 **Field rules:**
-- `author`: Full names in "Surname, Given" format, joined with " and "
 - `title`: Wrap acronyms and proper nouns in `{Braces}` to preserve case
 - Include `doi` when available
-- Include `volume`, `pages` when available
-- Omit fields that are unknown (don't fabricate data)
+- Include `volume`, `number`, `pages` when available
+- Omit fields that are unknown (NEVER fabricate)
+- For arXiv preprints: `eprint = {XXXX.XXXXX}`, `archivePrefix = {arXiv}`
 
 ---
 
@@ -132,10 +149,15 @@ Examples: `Per25`, `Zha22c`, `Yu18`, `Bra24b`
 
 Before including any paper in the final output:
 
-1. **Title accuracy**: Must match the source exactly
-2. **Author names**: Cross-reference with Semantic Scholar or the paper itself
-3. **Year**: Use the published version year, not the preprint date
-4. **DOI**: Verify the DOI resolves (spot-check a sample)
-5. **Citation count**: Use Semantic Scholar's count (may differ from Google Scholar)
+1. **Title**: Must match source exactly. No paraphrasing.
+2. **Authors**: Cross-reference with Semantic Scholar or the paper.
+   Never use journal name or "Various authors" as author field.
+3. **Year**: Published version year, not preprint date.
+4. **DOI**: Verify format is valid (starts with 10.).
+5. **Citation count**: Use Semantic Scholar's count.
+6. **Venue**: Use the actual journal/conference name, not "PMC" or
+   "PubMed Central" (those are repositories, not venues).
 
-If any field is uncertain, include it but add a note. Never fabricate metadata.
+If ANY field is uncertain, include what you have but never fabricate.
+A paper with title + year + DOI is better than one with fabricated
+volume/pages.
