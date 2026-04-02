@@ -126,6 +126,11 @@ Show the skill's SKILL.md summary and ask: "Delete `<name>/` and all its files? 
 
 ## Refine Mode (default)
 
+**HARD GATE: Steps 1-2-2b must ALL complete before ANY edits.** If you find
+yourself opening a file to edit without having web search results in this
+conversation, STOP. You are violating the workflow. Go back to Step 2.
+This applies even when the change seems obvious from session context.
+
 ### Step 1 — Understand the Skill
 
 1. Read `$PLUGIN_DATA/skillsmith/knowledge.md` (pitfalls, strategies, per-skill notes).
@@ -177,6 +182,8 @@ search findings from this session, STOP and run Step 2 now. Do not proceed
 past this point without completed research.
 
 Read `analysis.md` for the rubric. Report a compact table of size, frontmatter validity, brackets, description quality, and any CRITICAL issues.
+
+**Scriptify check:** Scan the skill for embedded bash/python snippets or instructions that tell the LLM to run 3+ independent deterministic checks. If found, flag as EFFICIENCY and propose creating a companion `.sh` script. Reference the scriptify principle in Rules.
 
 ### Step 4 — Ask 2-3 Questions
 
@@ -258,7 +265,8 @@ When no argument is provided:
 - Enforce data separation: skill directories contain code and config only. User/personal data must live outside `~/.claude/skills/` (path configured in `config.local.yaml`). Flag violations during health check and tidy.
 - Always update README if skills were added or removed.
 - Every skill must have a signature block that prints on invocation. During refine and tidy, flag skills missing a signature as STRUCTURAL and offer to add one.
-- Web research (Step 2) is mandatory during refinement. Never skip it.
+- **Web research (Step 2) is MANDATORY during refinement. NEVER skip it.** This includes self-refinement of skillsmith itself. "I already know from this session" is not a valid reason to skip - external research catches blind spots in session-derived assumptions. If you reach Step 5 (Propose Changes) without web search results in the conversation, your changes MUST be rejected and you must go back.
+- **Scriptify principle:** When a skill has the LLM executing 3+ independent deterministic operations (file checks, config parsing, version comparisons), propose extracting them into a cross-platform shell script (.sh). Rationale: agents cost 3-5x more than scripts for deterministic tasks, and LLM tool-call accuracy is ~80% per call (a 5-step chain has only 33% chance of all steps succeeding, while a script is 100% deterministic). Scripts must: (a) use `#!/usr/bin/env bash`; (b) detect OS via `uname -s` and branch for Windows Git Bash, Linux, Mac; (c) use `cygpath` on Windows for path conversion; (d) detect `python3` vs `python`; (e) output structured text the LLM can parse (markdown tables, KEY:VALUE lines); (f) prefer POSIX-compatible constructs where possible for portability. The LLM keeps only interactive decisions, ambiguous interpretation, and user-facing communication.
 
 ## Self-Refinement
 
