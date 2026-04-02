@@ -1,7 +1,7 @@
 ---
 name: skillsmith
 description: Use when the user asks to create, modify, edit, update, refine, fix, improve, delete, or audit any Claude Code skill or SKILL.md file - including plugin skills. Also use when the user says "make a skill", "change this skill", "add a mode to skill X", "modify plugin-update to do Y", "edit the co-intelligence skill", or mentions skill quality. MUST be used for all skill modifications - never edit SKILL.md files directly without this skill. With no argument, refines local skills only (~/.claude/skills/). When a specific skill name is given, works for both local and plugin skills.
-argument-hint: "<name> [<changes>] | new <name> | delete <name> | pluginify <plugin-name> <skills> | tidy-only | (empty = all)"
+argument-hint: "<name> [<changes>] | new <name> | delete <name> | tidy-only | (empty = all)"
 ---
 
 # Skillsmith
@@ -18,14 +18,12 @@ Accumulates knowledge over time in `knowledge.md` — gets better with each use.
 /skillsmith new <name>              → create a new skill
 /skillsmith delete <name>           → delete a skill (with dependency check)
 /skillsmith tidy-only               → only audit structure, update docs, commit
-/skillsmith pluginify <name> <skills> → package local skills into a plugin
 ```
 
 Parse $ARGUMENTS:
 - If `tidy-only` → jump to §Tidy Mode
 - If `new <name>` → jump to §Create Mode
 - If `delete <name>` → jump to §Delete Mode
-- If `pluginify <name> <skills>` → jump to §Pluginify Mode
 - If empty → All Mode (refine all skills)
 - Otherwise → first word is the skill name; everything after is desired changes (if any). Resolve the skill path in order:
   1. Local: `~/.claude/skills/<target>/SKILL.md`
@@ -42,7 +40,7 @@ skillsmith — <mode>
   Target: <name or "all">
   Changes: "<user-provided changes or none>"
 
-  Modes: <name> [changes] | new <name> | delete <name> | pluginify <name> <skills> | tidy-only | (no args = all)
+  Modes: <name> [changes] | new <name> | delete <name> | tidy-only | (no args = all)
 ```
 
 Example:
@@ -51,7 +49,7 @@ skillsmith — refine
   Target: claude-setup
   Changes: "add bashrc auto-resolve for CLAUDE_PLUGIN_ROOT"
 
-  Modes: <name> [changes] | new <name> | delete <name> | pluginify <name> <skills> | tidy-only | (no args = all)
+  Modes: <name> [changes] | new <name> | delete <name> | tidy-only | (no args = all)
 ```
 
 ## Data Directory
@@ -208,77 +206,6 @@ Ask: "Apply all, pick specific numbers, or skip?"
 
 ---
 
-## Pluginify Mode (`/skillsmith pluginify <plugin-name> <skill1,skill2,...>`)
-
-Package local skills into a Claude Code plugin with dual-registration autocomplete.
-
-### 1. Validate inputs
-- Parse `<plugin-name>` (first arg after `pluginify`) and `<skills>` (comma-separated list or space-separated remaining args).
-- For each skill, verify `~/.claude/skills/<skill>/SKILL.md` exists. List missing ones and stop if any are missing.
-- Check target directory `~/.claude/plugins/marketplaces/<plugin-name>/` does not already exist. If it does, warn and ask: "Plugin directory exists. Add skills to existing plugin, or abort?"
-
-### 2. Scaffold plugin structure
-Create the following structure:
-
-```
-~/.claude/plugins/marketplaces/<plugin-name>/
-  .claude-plugin/
-    plugin.json
-  skills/
-    <skill1>/          (copied from ~/.claude/skills/<skill1>/)
-    <skill2>/          (copied from ~/.claude/skills/<skill2>/)
-    ...
-  commands/
-    <skill1>.md        (auto-generated shim)
-    <skill2>.md        (auto-generated shim)
-    ...
-```
-
-### 3. Generate plugin.json
-```json
-{
-  "name": "<plugin-name>",
-  "description": "<ask user for a one-line description>",
-  "version": "0.1.0",
-  "author": { "name": "<from git config>" },
-  "license": "MIT",
-  "skills": ["./skills/"],
-  "commands": ["./commands/"]
-}
-```
-
-### 4. Copy skills
-For each skill, copy `~/.claude/skills/<skill>/` to `<plugin>/skills/<skill>/`.
-Verify each SKILL.md has valid frontmatter (`name`, `description`).
-
-### 5. Generate command shims (dual registration)
-For each skill, read its SKILL.md frontmatter and create `commands/<skill>.md`:
-```
----
-description: <shortened version of skill description, under 200 chars>
-argument-hint: <copied from SKILL.md if present>
----
-
-Invoke the `<plugin-name>:<skill>` skill with $ARGUMENTS.
-```
-
-**Key rule:** command shims must NOT have a `name` field. This is what gives them the plugin namespace prefix in autocomplete (see knowledge.md pitfall #14-15).
-
-### 6. Confirm and finalize
-Show the generated structure as a tree. Ask: "Plugin scaffolded. Next steps?"
-
-Offer:
-- **Install locally**: copy to cache directory for immediate testing
-- **Init git repo**: `git init` in the plugin directory
-- **Remove originals**: delete the local skills from `~/.claude/skills/` (ask first)
-- **Skip**: just leave the structure as-is
-
-### 7. Record
-- Append entry to `$PLUGIN_DATA/skillsmith/history/pluginify.md`
-- Update knowledge.md per-skill notes if relevant
-
----
-
 ## Tidy Mode (`/skillsmith tidy-only`)
 
 Runs automatically after refinements. Also available standalone.
@@ -332,3 +259,11 @@ When no argument is provided:
 - Always update README if skills were added or removed.
 - Every skill must have a signature block that prints on invocation. During refine and tidy, flag skills missing a signature as STRUCTURAL and offer to add one.
 - Web research (Step 2) is mandatory during refinement. Never skip it.
+
+## Self-Refinement
+
+This skill participates in the co-intelligence feedback loop. After completing
+a task, if friction was observed (user corrections, workarounds, missing modes,
+suboptimal output), suggest: "Want me to `/skillsmith skillsmith` to refine this?"
+and log the observation to `$PLUGIN_DATA/friction.md`. See
+`references/self-refinement.md` for the full protocol.

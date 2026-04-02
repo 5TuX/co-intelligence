@@ -202,3 +202,11 @@ Print summary: `Result: N PASS / M FAIL`. Do NOT auto-fix.
 
 Better BibTeX → "Automatic export" → "Keep updated" on references.bib export.
 Any reference added to Zotero is immediately available via `[@citekey]`.
+
+## Self-Refinement
+
+This skill participates in the co-intelligence feedback loop. After completing
+a task, if friction was observed (user corrections, workarounds, missing modes,
+suboptimal output), suggest: "Want me to `/skillsmith report` to refine this?"
+and log the observation to `$PLUGIN_DATA/friction.md`. See
+`references/self-refinement.md` for the full protocol.

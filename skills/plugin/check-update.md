@@ -1,9 +1,9 @@
-# Check Phase
+# Check Phase - Update
 
-Subagent instructions for `plugin-update`. Run both steps and return the
+Subagent instructions for `plugin update`. Run both steps and return the
 structured report. Do not interact with the user.
 
-## Step 0 — Preflight
+## Step 0 - Preflight
 
 Verify jq is available:
 ```bash
@@ -19,34 +19,30 @@ STATUS: preflight-failed
 ERROR: jq not found. Install via scoop/apt/brew.
 ```
 
-Locate the update script:
-```bash
-SCRIPT=$(readlink -f ~/.claude/plugins/cache/co-intelligence/co-intelligence/*/skills/plugin-update/update.sh 2>/dev/null | head -1)
-echo "${SCRIPT:-MISSING}"
-```
+Locate the update script. Try these paths in order:
+1. Marketplace: `~/.claude/plugins/marketplaces/co-intelligence/skills/plugin/update.sh`
+2. Cache: `~/.claude/plugins/cache/co-intelligence/co-intelligence/*/skills/plugin/update.sh`
+3. Legacy cache: `~/.claude/plugins/cache/co-intelligence/co-intelligence/*/skills/plugin-update/update.sh`
+4. Fallback: `~/.claude/scripts/plugin-update.sh`
 
-Fall back to `~/.claude/scripts/plugin-update.sh` if the glob finds nothing.
-
-If neither path exists, return:
+If none found, return:
 ```
 SCRIPT_DIR: n/a
 INSTALLED: n/a
 LATEST: n/a
 STATUS: preflight-failed
-ERROR: update.sh not found in plugin cache or ~/.claude/scripts/
+ERROR: update.sh not found
 ```
 
-## Step 1 — Run update check
+## Step 1 - Run update check
 
 ```bash
-bash <SCRIPT_DIR>/update.sh <plugin@marketplace>
+bash <SCRIPT_PATH> <plugin@marketplace>
 ```
 
 Parse output for `INSTALLED=`, `LATEST=`, `STATUS=`, and `COMMITS=` lines.
 
 ## Return Format
-
-Return exactly this block:
 
 ```
 SCRIPT_DIR: <resolved dirname of update.sh>

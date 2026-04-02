@@ -205,3 +205,11 @@ bibliography/<slug>/
 - If total papers <30 after all waves: report honestly, suggest the user
   refine the search goal or add sub-topics
 - Always tell the user how many papers were found per wave
+
+## Self-Refinement
+
+This skill participates in the co-intelligence feedback loop. After completing
+a task, if friction was observed (user corrections, workarounds, missing modes,
+suboptimal output), suggest: "Want me to `/skillsmith bibliography` to refine this?"
+and log the observation to `$PLUGIN_DATA/friction.md`. See
+`references/self-refinement.md` for the full protocol.

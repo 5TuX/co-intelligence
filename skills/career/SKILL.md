@@ -262,3 +262,11 @@ Read `reference/final-report.md` for the required report format. All sections ar
 | HTML templates & models | `career/templates/`, `career/models.py` |
 | General sources | `sources-general.yaml` |
 | User-specific sources | `DATA_DIR/<handle>/sources.yaml` |
+
+## Self-Refinement
+
+This skill participates in the co-intelligence feedback loop. After completing
+a task, if friction was observed (user corrections, workarounds, missing modes,
+suboptimal output), suggest: "Want me to `/skillsmith career` to refine this?"
+and log the observation to `$PLUGIN_DATA/friction.md`. See
+`references/self-refinement.md` for the full protocol.

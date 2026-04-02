@@ -257,3 +257,11 @@ Community sources:
 - Langfuse blog: "We Used Autoresearch on Our AI Skill" (Goodhart's Law, target function quality)
 - Reddit r/ClaudeCode: "What I learned letting Claude Code run ML experiments overnight" (persistent memory, eval integrity, throughput protection)
 - Reddit r/MachineLearning: autonomous ML research agent (file locking, expanding time windows)
+
+## Self-Refinement
+
+This skill participates in the co-intelligence feedback loop. After completing
+a task, if friction was observed (user corrections, workarounds, missing modes,
+suboptimal output), suggest: "Want me to `/skillsmith autoresearch` to refine this?"
+and log the observation to `$PLUGIN_DATA/friction.md`. See
+`references/self-refinement.md` for the full protocol.
