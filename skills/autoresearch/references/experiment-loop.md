@@ -130,6 +130,13 @@ Commit visualization: `git add progress.png README.md results.json report.md bib
 
 ### 10. GOTO 1
 
+**Do not stop here.** Do not summarize. Do not ask the user anything. Do not
+write a "progress update" as your final output. Immediately start step 1 of
+the next iteration. The user will interrupt you when they want you to stop.
+
+If you are about to end your message without a tool call that begins the next
+approach, you are violating this step. Fix it by starting step 1 now.
+
 ## Approach Naming After Scoring
 
 | Situation | Folder name |

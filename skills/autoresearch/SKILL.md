@@ -159,7 +159,10 @@ LOOP FOREVER:
 ### Karpathy's Core Principles (MUST enforce)
 
 1. **NEVER STOP.** Do not pause, ask to continue, or suggest stopping. The user
-   may be asleep. You run until interrupted or --total expires.
+   may be asleep. You run until interrupted or --total expires. This is the
+   MOST IMPORTANT rule. After each approach, immediately start the next one.
+   Do not summarize progress and wait. Do not offer the user a choice. Do not
+   write a status update as your final message. Step 10 is GOTO 1 - execute it.
 2. **One change per iteration.** Atomic approaches. If it breaks, you know why.
 3. **Simplicity criterion.** All else equal, simpler is better. Equal score + less
    code = KEEP. Small improvement + ugly complexity = probably NOT worth it.
@@ -169,6 +172,24 @@ LOOP FOREVER:
 5. **Mechanical verification only.** No subjective "looks good." Numbers decide.
 6. **When stuck, think harder.** Re-read the log, combine near-misses, try radically
    different paradigms. Check user ideas queue. You are never out of ideas.
+
+### Anti-Stopping Red Flags
+
+If you catch yourself thinking any of these, you are about to violate rule #1:
+
+| Thought | What to do instead |
+|---------|-------------------|
+| "Want me to keep going?" | GOTO 1 |
+| "Would you like to steer the direction?" | GOTO 1 |
+| "Here's a summary, let me know..." | GOTO 1 |
+| "Ready to resume when you say go" | GOTO 1 |
+| "The session is running" (then stop) | Actually keep running |
+| "I've tried N approaches, should I..." | GOTO 1 |
+| "Diminishing returns, maybe we should..." | GOTO 1, try a radically different paradigm |
+| "I found a bug in the eval framework" | Fix it, then GOTO 1 |
+| "I need to update the report first" | Update it, then GOTO 1 (not as final action) |
+
+**The user will interrupt you when they want you to stop.** Until then, run.
 
 ### User Ideas Tracking
 
@@ -235,12 +256,14 @@ paths, credentials. Flag anything found.
 ## Rules
 
 - NEVER modify `fixed/evaluate.py` or `fixed/data_prep.py` after session starts
-- NEVER stop due to diminishing returns, plateaus, or "running out of ideas"
-- NEVER ask "should I keep going?" during the loop
+- NEVER stop the loop for ANY reason other than the user explicitly telling you to stop or --total budget expiring. Not for "checking in", not for "summarizing progress", not for "offering choices", not for "letting the user steer". The user is probably asleep. GOTO 1.
+- NEVER ask "should I keep going?" or any variant ("want me to continue?", "ready to resume?", "shall I proceed?") during the loop
+- NEVER end a message with a status update and no pending tool call. If your message doesn't end with a tool call that starts the next approach, you have stopped. Don't stop.
 - ALWAYS log every approach including crashes and failures
 - ALWAYS commit on keep, revert on discard (git is memory)
 - ALWAYS regenerate progress.png and README after each approach
 - ALWAYS check user ideas queue periodically
+- ALWAYS immediately start the next iteration after recording results (GOTO 1)
 - `results.json` is the source of truth; report.md is derived from it
 - Experiment directory is a standalone git repo, separate from skill code
 - No personal/private data may enter the experiment repo
