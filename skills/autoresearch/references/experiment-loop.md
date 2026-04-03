@@ -6,7 +6,7 @@ Full 10-step protocol for the autonomous experiment loop.
 
 LOOP FOREVER (or until --total budget expires):
 
-### 1. REVIEW
+### 1. REVIEW (thinking only, no tool call needed)
 Read results.json. Identify:
 - What has been tried (all statuses, including crashes)
 - What has NOT been tried (paradigm gaps)
@@ -14,7 +14,7 @@ Read results.json. Identify:
 - Patterns: what seems to help? what seems to hurt?
 - User ideas queue: any unexplored suggestions?
 
-### 2. HYPOTHESIZE
+### 2. HYPOTHESIZE (thinking only, no tool call needed)
 Form a specific hypothesis:
 > "I believe <approach> will improve <metric> because <reason>.
 > This has not been tried because <gap>."
@@ -25,123 +25,93 @@ Strategy:
 - When stuck: combine near-misses, try opposites, revisit user ideas,
   try radically different paradigms, look at bibliography for inspiration
 
-### 3. NAME
-Create approach folder: `approaches/<NNN>_<hypothesis>/`
-- NNN: zero-padded, incrementing from 001
-- hypothesis: snake_case, max 40 chars, describes the core idea
-- Example: `007_attention_pooling_instead_of_mean`
-
-### 4. CODE
+### 3-4. NAME + CODE (tool call 1: Write)
 Write `approaches/<NNN>_<hypothesis>/approach.py`:
 - Implement `run(data)` cleanly
 - Self-contained, no hardcoded paths
-- Add a brief docstring explaining the idea
+- Put your hypothesis and analysis in the **docstring**, not in message text
 - If based on a paper/resource, create `references.md` in the same dir
 
-### 5. RUN
-Execute the evaluation:
+### 5-9. RUN + RECORD + GIT + LOG + VISUALIZE (tool call 2: Bash)
+
+**CRITICAL: Steps 5 through 9 MUST execute as a SINGLE Bash tool call.**
+This is what prevents the loop from stopping. If you break these into
+separate tool calls, you create exit points where your message can end
+in text. One Bash call. One tool use. Non-negotiable.
+
+The compound command evaluates, records, git commits/reverts, and prints
+a one-line result. Adapt this template for your experiment:
+
 ```bash
-cd "$PLUGIN_DATA/autoresearch/<tag>"
-python -c "
-import sys, importlib.util, json, time
-sys.path.insert(0, '.')
-spec = importlib.util.spec_from_file_location('approach', 'approaches/<name>/approach.py')
+cd "$SESSION_DIR" && python3 << 'EVALSCRIPT'
+import sys, importlib.util, json, time, subprocess, os
+
+APPROACH_DIR = "approaches/<NNN>_<name>"
+APPROACH_FILE = f"{APPROACH_DIR}/approach.py"
+PRIMARY_METRIC = "<metric_name>"
+
+# --- EVALUATE ---
+spec = importlib.util.spec_from_file_location("approach", APPROACH_FILE)
 mod = importlib.util.module_from_spec(spec)
 start = time.time()
-spec.loader.exec_module(mod)
-from fixed.evaluate import run_approach
-scores = run_approach(mod)
-scores['_runtime_seconds'] = round(time.time() - start, 1)
-print(json.dumps(scores))
-" > approaches/<name>/run.log 2>&1
+try:
+    spec.loader.exec_module(mod)
+    sys.path.insert(0, ".")
+    from fixed.evaluate import evaluate
+    result = evaluate(mod.run)
+    score = result[PRIMARY_METRIC]
+    elapsed = round(time.time() - start, 1)
+    crashed = False
+except Exception as e:
+    score = 0
+    elapsed = round(time.time() - start, 1)
+    crashed = True
+    print(f"CRASH: {e}")
+
+# --- KEEP/DISCARD ---
+best_file = "best_score.txt"
+best = float(open(best_file).read().strip()) if os.path.exists(best_file) else 0
+kept = not crashed and score > best
+
+# --- SCORES FILE ---
+with open(f"{APPROACH_DIR}/scores.json", "w") as f:
+    json.dump({"scores": {PRIMARY_METRIC: score}, "status": "keep" if kept else ("crash" if crashed else "discard"), "runtime_seconds": elapsed}, f)
+
+# --- GIT ---
+label = "keep" if kept else ("crash" if crashed else "discard")
+subprocess.run(["git", "add", APPROACH_DIR], check=True, capture_output=True)
+subprocess.run(["git", "commit", "-m", f"{label}: {APPROACH_DIR} ({PRIMARY_METRIC}={score:.3f})"], check=True, capture_output=True)
+if not kept:
+    subprocess.run(["git", "revert", "HEAD", "--no-edit"], check=True, capture_output=True)
+else:
+    open(best_file, "w").write(str(score))
+
+# --- ONE LINE OUTPUT ---
+print(f"{'++' if kept else '--'} {APPROACH_DIR}: {score:.3f} ({label}, {elapsed}s)")
+EVALSCRIPT
 ```
 
-Respect --budget: if time-limited, enforce via timeout or budget check in evaluate.py.
-For `none` budget, run to completion.
-
-**Timeout**: If a run exceeds 2x the budget, kill it and treat as crash.
-
-### 6. RECORD SCORES
-Read run.log:
-- **Crashed**: scores = null, status = "crash"
-  - Quick-fix if obvious (typo, import), rerun once
-  - If fundamental: log crash and move on
-- **Success**: parse JSON from last line of stdout in run.log
-  - Compare primary metric vs current best
-  - status = "keep" if improves (or ties with simpler code)
-  - status = "discard" if worse or equal with more complexity
-
-Write `approaches/<name>/scores.json`:
-```json
-{
-  "scores": {"metric1": 0.89},
-  "status": "keep",
-  "vs_best": {"metric1": 0.03},
-  "runtime_seconds": 287
-}
-```
-
-### 7. GIT (Karpathy's core mechanic)
-- **keep**: `git add approaches/<name>/ && git commit -m "keep: <NNN> <hypothesis> (<primary_metric>=<score>)"`
-- **discard**: `git add approaches/<name>/ && git commit -m "discard: <NNN> <hypothesis> (<primary_metric>=<score>)"` then `git revert HEAD --no-edit` (preserves the attempt in history)
-- **crash**: `git add approaches/<name>/ && git commit -m "crash: <NNN> <hypothesis>"` then `git revert HEAD --no-edit`
-
-This means `git log` shows the full experiment history, but only successful
-approaches remain in the working tree.
-
-### 8. LOG
-Append to results.json:
-```json
-{
-  "id": 7,
-  "name": "007_attention_pooling_0.891",
-  "hypothesis": "Attention pooling instead of mean pooling",
-  "status": "keep",
-  "scores": {"metric1": 0.891},
-  "vs_best": {"metric1": 0.03},
-  "timestamp": "2026-04-02T14:30:00Z",
-  "notes": "Significant improvement, attention weights focus on key tokens",
-  "references": ["https://arxiv.org/abs/xxxx"],
-  "user_idea": false,
-  "parent_approach": null
-}
-```
-
-Fields:
-- `references`: list of URLs/DOIs if approach is based on literature
-- `user_idea`: true if this was from the user ideas queue
-- `parent_approach`: ID of parent if this is a tweak/variant (enables nesting)
-
-Update bibliography.md if references present.
-
-### 9. VISUALIZE
-Regenerate progress.png using matplotlib:
-```python
-import matplotlib.pyplot as plt
-# Load results.json
-# X: approach id, Y: score per objective
-# Multi-objective: plot each + mean, with legend
-# Markers: green circle (keep), red x (discard), gray triangle (crash)
-# Save as progress.png
-```
-
-Update README.md with current stats and embedded graph.
-Commit visualization: `git add progress.png README.md results.json report.md bibliography.md && git commit -m "update: progress after approach <NNN>"`
+**If the experiment has a custom evaluation flow** (e.g., the evaluator is
+called differently), adapt the script but keep the structure: one Bash call
+that evaluates + records + git commits and prints one line. The LLM MUST NOT
+parse results, decide keep/discard, or run git as separate tool calls.
 
 ### 10. GOTO 1
 
-Your message MUST end with a tool call that begins step 1 of the next iteration.
+Read the one-line output from step 5-9. Then IMMEDIATELY write the next
+approach file (step 3-4). Do not write analysis. Do not summarize.
 
-**Structural rule:** After recording results (step 8) and committing (step 7),
-write AT MOST one line identifying the next approach, then immediately emit the
-tool call (Write or Bash) that creates or runs it. Do not write analysis. Do
-not write summaries. Do not recap the score trajectory. Put analysis in
-report.md (a file), not in your message output.
+**The iteration is exactly 2 tool calls:**
+1. **Write** the approach file (step 3-4)
+2. **Bash** the compound eval+record+git command (steps 5-9)
 
-**Self-check before sending:** Look at the last content block in your message.
-Is it text or a tool call?
-- Tool call: correct, send the message.
-- Text: you are about to stop. Delete the text. Emit a tool call instead.
+Repeat forever. Write, Bash, Write, Bash, Write, Bash.
+
+If your message has a text block after the last Bash output, you are about to
+stop. Delete it. Emit the next Write tool call instead.
+
+Put analysis in the approach.py docstring (step 3-4) or in report.md (updated
+inside the compound Bash script). Never in message text.
 
 ## Approach Naming After Scoring
 
@@ -153,3 +123,4 @@ Is it text or a tool call?
 | Baseline | `001_baseline_0.723` |
 
 Rename the folder immediately after scoring, before the git step.
+The compound script handles this.

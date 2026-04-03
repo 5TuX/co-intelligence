@@ -140,21 +140,20 @@ The evaluation harness contract is in `references/evaluation-contract.md`.
 
 ## The Experiment Loop
 
-Read `references/experiment-loop.md` for the full 10-step protocol. Summary:
+Read `references/experiment-loop.md` for the full protocol. Summary:
 
 ```
-LOOP FOREVER:
-  1. REVIEW    - Read results.json, identify gaps, patterns, unexplored ideas
-  2. HYPOTHESIZE - Form specific hypothesis with rationale
-  3. NAME      - approaches/<NNN>_<hypothesis>/
-  4. CODE      - Write approach.py with run(data) function
-  5. RUN       - Execute via evaluation harness, respect --budget
-  6. RECORD    - Parse scores, determine keep/discard/crash
-  7. GIT       - Commit on keep, revert on discard (Karpathy's core mechanic)
-  8. LOG       - Append to results.json, update bibliography if applicable
-  9. VISUALIZE - Regenerate progress.png and update README.md
-  10. GOTO 1
+LOOP FOREVER (each iteration = exactly 2 tool calls):
+  THINK: Review results.json, hypothesize next approach (no tool call)
+  TOOL 1 (Write): Write approaches/<NNN>_<name>/approach.py
+  TOOL 2 (Bash):  Compound command that evaluates + records + git commits
+                  Prints one line: "++ 047: 0.891 (keep, 45s)"
+  GOTO THINK (read the one line, write the next approach.py)
 ```
+
+Steps 5-9 (run, record, git, log, visualize) are collapsed into ONE Bash
+call. This eliminates exit points where the LLM can stop between tool calls.
+Write, Bash, Write, Bash, Write, Bash - forever.
 
 ### Karpathy's Core Principles (MUST enforce)
 
