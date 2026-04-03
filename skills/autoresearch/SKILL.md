@@ -52,7 +52,7 @@ autoresearch -- <mode>
 
 ## List Sessions (no args)
 
-Scan for `autoresearch/*/results.json` in CWD. For each: tag, task, approaches
+Scan for `$PLUGIN_DATA/autoresearch/*/results.json`. For each: tag, task, approaches
 tried, best score(s). Suggest `--resume=<tag>` or a new task.
 
 ---
@@ -70,7 +70,7 @@ Follow the detailed protocol in `references/planning-protocol.md`. Summary of th
 5. **Scope and Constraints** - what agent CAN/CANNOT modify, complexity limits
 6. **Baseline, Hypotheses, and User Ideas** - seed the queue, open-ended prompt:
    > "Any other thoughts, ideas, hunches, papers, or directions you'd like explored?"
-7. **Produce Experiment Plan** - write `autoresearch/<tag>/experiment-plan.md`,
+7. **Produce Experiment Plan** - write `$PLUGIN_DATA/autoresearch/<tag>/experiment-plan.md`,
    include User Ideas Queue, confirm with user before proceeding
 
 Wait for explicit confirmation. Then `ExitPlanMode` and proceed to initialization.
@@ -85,8 +85,11 @@ and other problems to address during planning.
 After plan confirmation, create the session structure. The experiment directory
 is its own **git repository**, managed by the skill throughout the session.
 
+Sessions live in the plugin data directory, NOT in the project CWD. This keeps
+experiment state portable and separate from project code.
+
 ```
-autoresearch/<tag>/          <-- git init here
+$PLUGIN_DATA/autoresearch/<tag>/          <-- git init here
   experiment-plan.md         (from planning phase)
   results.json               (experiment log, append-only)
   report.md                  (living synthesis)
@@ -101,10 +104,14 @@ autoresearch/<tag>/          <-- git init here
     (created during loop)
 ```
 
+`$PLUGIN_DATA` resolves to the value of the `CLAUDE_PLUGIN_DATA` environment variable
+(set automatically by Claude Code when a plugin is active). Typical value:
+`~/.claude/plugins/data/<plugin-id>/`.
+
 ### Git Repo Setup
 
 ```bash
-cd autoresearch/<tag>
+cd "$PLUGIN_DATA/autoresearch/<tag>"
 git init
 # .gitignore: data/, *.csv, *.npy, *.pkl, *.h5, *.pt, *.bin, *.parquet,
 #   *.env, credentials.*, __pycache__/, *.pyc, run.log, artifacts/
@@ -202,7 +209,7 @@ See `references/report-template.md` for the full template. Key features:
 
 ## Resume Mode (`--resume=<tag>`)
 
-1. Read `autoresearch/<tag>/results.json` and `report.md`
+1. Read `$PLUGIN_DATA/autoresearch/<tag>/results.json` and `report.md`
 2. Verify git repo is clean (`git status`)
 3. Print: N approaches, best score(s), last 5 entries
 4. Continue loop from next approach number

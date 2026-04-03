@@ -1,12 +1,12 @@
 # Git Repository Management
 
-Each experiment session (`autoresearch/<tag>/`) is its own git repository,
+Each experiment session (`$PLUGIN_DATA/autoresearch/<tag>/`) is its own git repository,
 managed by the skill throughout the session.
 
 ## Initialization
 
 ```bash
-cd autoresearch/<tag>
+cd "$PLUGIN_DATA/autoresearch/<tag>"
 git init
 
 cat > .gitignore << 'EOF'

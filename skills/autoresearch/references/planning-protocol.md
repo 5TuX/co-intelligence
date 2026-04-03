@@ -129,7 +129,7 @@ the agent's own ideation.
 
 ## Step 7 - Produce Experiment Plan
 
-Write `autoresearch/<tag>/experiment-plan.md` with all collected info.
+Write `$PLUGIN_DATA/autoresearch/<tag>/experiment-plan.md` with all collected info.
 Template:
 
 ```markdown

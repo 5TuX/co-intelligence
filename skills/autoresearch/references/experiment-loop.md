@@ -41,7 +41,7 @@ Write `approaches/<NNN>_<hypothesis>/approach.py`:
 ### 5. RUN
 Execute the evaluation:
 ```bash
-cd autoresearch/<tag>
+cd "$PLUGIN_DATA/autoresearch/<tag>"
 python -c "
 import sys, importlib.util, json, time
 sys.path.insert(0, '.')
