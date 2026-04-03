@@ -1,6 +1,6 @@
 # Experiment Loop Protocol
 
-Full 10-step protocol for the autonomous experiment loop.
+Full protocol for the autonomous experiment loop.
 
 ## The Loop
 
@@ -39,12 +39,19 @@ This is what prevents the loop from stopping. If you break these into
 separate tool calls, you create exit points where your message can end
 in text. One Bash call. One tool use. Non-negotiable.
 
-The compound command evaluates, records, git commits/reverts, and prints
-a one-line result. Adapt this template for your experiment:
+The compound command:
+1. Evaluates the approach
+2. Writes `scores.json` (objectives) and `metrics.json` (additional measurements)
+3. Calls `fixed/visualize.py` to generate `visualization.png`
+4. Determines keep/discard based on primary score
+5. Git commits the approach (NEVER reverts - all approaches stay in working tree)
+6. Prints a one-line result
+
+Adapt this template for your experiment:
 
 ```bash
 cd "$SESSION_DIR" && python3 << 'EVALSCRIPT'
-import sys, importlib.util, json, time, subprocess, os
+import sys, importlib.util, json, time, subprocess, os, traceback
 
 APPROACH_DIR = "approaches/<NNN>_<name>"
 APPROACH_FILE = f"{APPROACH_DIR}/approach.py"
@@ -59,42 +66,67 @@ try:
     sys.path.insert(0, ".")
     from fixed.evaluate import evaluate
     result = evaluate(mod.run)
-    score = result[PRIMARY_METRIC]
     elapsed = round(time.time() - start, 1)
     crashed = False
 except Exception as e:
-    score = 0
+    result = {}
     elapsed = round(time.time() - start, 1)
     crashed = True
     print(f"CRASH: {e}")
 
+# --- SCORES (objectives - used for keep/discard) ---
+objectives = json.load(open("results.json"))["objectives"]
+scores = {obj: result.get(obj, 0) for obj in objectives} if not crashed else None
+primary_score = scores[PRIMARY_METRIC] if scores else 0
+
+# --- METRICS (additional measurements - not used for keep/discard) ---
+metrics = {k: v for k, v in result.items() if k not in objectives} if not crashed else None
+
 # --- KEEP/DISCARD ---
 best_file = "best_score.txt"
 best = float(open(best_file).read().strip()) if os.path.exists(best_file) else 0
-kept = not crashed and score > best
+kept = not crashed and primary_score > best
+status = "keep" if kept else ("crash" if crashed else "discard")
 
-# --- SCORES FILE ---
+# --- WRITE SCORES + METRICS ---
 with open(f"{APPROACH_DIR}/scores.json", "w") as f:
-    json.dump({"scores": {PRIMARY_METRIC: score}, "status": "keep" if kept else ("crash" if crashed else "discard"), "runtime_seconds": elapsed}, f)
+    json.dump({"scores": scores, "status": status, "runtime_seconds": elapsed}, f, indent=2)
+if metrics:
+    with open(f"{APPROACH_DIR}/metrics.json", "w") as f:
+        json.dump(metrics, f, indent=2)
 
-# --- GIT ---
-label = "keep" if kept else ("crash" if crashed else "discard")
+# --- VISUALIZE (non-fatal) ---
+try:
+    from fixed.visualize import visualize
+    visualize(result, APPROACH_DIR)
+except Exception as ve:
+    print(f"VIZ WARNING: {ve}")
+
+# --- GIT (commit only, NEVER revert) ---
 subprocess.run(["git", "add", APPROACH_DIR], check=True, capture_output=True)
-subprocess.run(["git", "commit", "-m", f"{label}: {APPROACH_DIR} ({PRIMARY_METRIC}={score:.3f})"], check=True, capture_output=True)
-if not kept:
-    subprocess.run(["git", "revert", "HEAD", "--no-edit"], check=True, capture_output=True)
-else:
-    open(best_file, "w").write(str(score))
+subprocess.run(["git", "commit", "-m",
+    f"{status}: {APPROACH_DIR} ({PRIMARY_METRIC}={primary_score:.3f})"],
+    check=True, capture_output=True)
+
+# --- UPDATE BEST ---
+if kept:
+    open(best_file, "w").write(str(primary_score))
 
 # --- ONE LINE OUTPUT ---
-print(f"{'++' if kept else '--'} {APPROACH_DIR}: {score:.3f} ({label}, {elapsed}s)")
+print(f"{'++' if kept else '--'} {APPROACH_DIR}: {primary_score:.3f} ({status}, {elapsed}s)")
 EVALSCRIPT
 ```
 
-**If the experiment has a custom evaluation flow** (e.g., the evaluator is
-called differently), adapt the script but keep the structure: one Bash call
-that evaluates + records + git commits and prints one line. The LLM MUST NOT
-parse results, decide keep/discard, or run git as separate tool calls.
+**Key differences from Karpathy's original:**
+- **No git revert.** All approaches (keep, discard, crash) stay in the working
+  tree. The user can browse `approaches/` to see every attempt with its code,
+  scores, metrics, and visualization. `scores.json` has the `status` field to
+  distinguish keep from discard.
+- **Separate scores and metrics.** `scores.json` contains objectives (used for
+  keep/discard). `metrics.json` contains additional measurements (runtime,
+  per-component breakdowns, complexity indicators) for analysis.
+- **Visualization.** `fixed/visualize.py` generates a `visualization.png` per
+  approach. Experiment-specific (defined at session setup). Non-fatal if it fails.
 
 ### 10. GOTO 1
 
@@ -119,6 +151,7 @@ inside the compound Bash script). Never in message text.
 |-----------|-------------|
 | Single metric, keep | `003_relu_instead_of_gelu_0.892` |
 | Multi-metric, keep | `012_ensemble_top3_avg0.834` |
+| Discard | `005_deep_mlp_0.712` (same format, status in scores.json) |
 | Crash | `005_deep_mlp_crash` |
 | Baseline | `001_baseline_0.723` |
 
