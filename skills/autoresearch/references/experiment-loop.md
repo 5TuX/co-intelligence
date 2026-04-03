@@ -130,12 +130,18 @@ Commit visualization: `git add progress.png README.md results.json report.md bib
 
 ### 10. GOTO 1
 
-**Do not stop here.** Do not summarize. Do not ask the user anything. Do not
-write a "progress update" as your final output. Immediately start step 1 of
-the next iteration. The user will interrupt you when they want you to stop.
+Your message MUST end with a tool call that begins step 1 of the next iteration.
 
-If you are about to end your message without a tool call that begins the next
-approach, you are violating this step. Fix it by starting step 1 now.
+**Structural rule:** After recording results (step 8) and committing (step 7),
+write AT MOST one line identifying the next approach, then immediately emit the
+tool call (Write or Bash) that creates or runs it. Do not write analysis. Do
+not write summaries. Do not recap the score trajectory. Put analysis in
+report.md (a file), not in your message output.
+
+**Self-check before sending:** Look at the last content block in your message.
+Is it text or a tool call?
+- Tool call: correct, send the message.
+- Text: you are about to stop. Delete the text. Emit a tool call instead.
 
 ## Approach Naming After Scoring
 

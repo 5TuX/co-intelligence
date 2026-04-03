@@ -173,23 +173,57 @@ LOOP FOREVER:
 6. **When stuck, think harder.** Re-read the log, combine near-misses, try radically
    different paradigms. Check user ideas queue. You are never out of ideas.
 
+### Mandatory Message Structure (STRUCTURAL ENFORCEMENT)
+
+Every message you produce during the loop MUST end with a tool call. Not text.
+A tool call. This is not a suggestion. This is the output format.
+
+**Correct message structure:**
+```
+[1-2 lines: result of previous approach]
+[tool call: git commit/revert for previous approach]
+[1 line: "LOOP ITERATION N - Approach NNN: <name>"]
+[tool call: Write or Bash that begins the next approach]
+```
+
+**Forbidden message structure (causes stopping):**
+```
+[results of previous approach]
+[git commit]
+[multi-paragraph analysis of what was learned]    <-- THIS TRIGGERS WRAP-UP
+[summary table of all approaches]                 <-- THIS SIGNALS COMPLETION
+[sentence about "continuing to search"]           <-- THIS IS A LIE IF NO TOOL FOLLOWS
+```
+
+**Rules:**
+- Maximum 2 lines of text between tool calls during the loop
+- NEVER write a summary table, trajectory list, or architecture recap mid-loop
+  (save those for the report.md file, not for message output)
+- NEVER use plateau language ("confirmed optimal", "exhaustive search",
+  "well-tuned", "firmly settled") - these trick you into thinking you're done
+- The LAST content block in your message MUST be a tool_use, not text
+- If you catch yourself writing a third paragraph of analysis, STOP WRITING
+  TEXT and emit a tool call instead
+
 ### Anti-Stopping Red Flags
 
 If you catch yourself thinking any of these, you are about to violate rule #1:
 
 | Thought | What to do instead |
 |---------|-------------------|
-| "Want me to keep going?" | GOTO 1 |
-| "Would you like to steer the direction?" | GOTO 1 |
-| "Here's a summary, let me know..." | GOTO 1 |
-| "Ready to resume when you say go" | GOTO 1 |
-| "The session is running" (then stop) | Actually keep running |
-| "I've tried N approaches, should I..." | GOTO 1 |
-| "Diminishing returns, maybe we should..." | GOTO 1, try a radically different paradigm |
-| "I found a bug in the eval framework" | Fix it, then GOTO 1 |
-| "I need to update the report first" | Update it, then GOTO 1 (not as final action) |
+| "Want me to keep going?" | Emit a tool call |
+| "Would you like to steer the direction?" | Emit a tool call |
+| "Here's a summary, let me know..." | Emit a tool call |
+| "Ready to resume when you say go" | Emit a tool call |
+| "The session is running" (then stop) | Emit a tool call |
+| "I've tried N approaches, should I..." | Emit a tool call |
+| "Diminishing returns, maybe we should..." | Emit a tool call for a radically different paradigm |
+| "The architecture is confirmed optimal" | Emit a tool call (you are wrong, keep searching) |
+| "Plateau reached / exhaustive search" | Emit a tool call (plateaus break with new paradigms) |
+| "I found a bug in the eval framework" | Fix it, then emit a tool call |
 
-**The user will interrupt you when they want you to stop.** Until then, run.
+**The user will interrupt you when they want you to stop.** Until then, your
+message must end with a tool call. Every single time. No exceptions.
 
 ### User Ideas Tracking
 
@@ -258,7 +292,7 @@ paths, credentials. Flag anything found.
 - NEVER modify `fixed/evaluate.py` or `fixed/data_prep.py` after session starts
 - NEVER stop the loop for ANY reason other than the user explicitly telling you to stop or --total budget expiring. Not for "checking in", not for "summarizing progress", not for "offering choices", not for "letting the user steer". The user is probably asleep. GOTO 1.
 - NEVER ask "should I keep going?" or any variant ("want me to continue?", "ready to resume?", "shall I proceed?") during the loop
-- NEVER end a message with a status update and no pending tool call. If your message doesn't end with a tool call that starts the next approach, you have stopped. Don't stop.
+- NEVER end a message with text as the last content block. The last content block MUST be a tool_use. Text followed by nothing = you stopped. This is the structural rule that supersedes all others.
 - ALWAYS log every approach including crashes and failures
 - ALWAYS commit on keep, revert on discard (git is memory)
 - ALWAYS regenerate progress.png and README after each approach

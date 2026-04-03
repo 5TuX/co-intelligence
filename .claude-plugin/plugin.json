@@ -1,7 +1,7 @@
 {
   "name": "co-intelligence",
   "description": "Self-refining skills for human-AI collaborative work: autoresearch, bibliography, career, plugin lifecycle, reports, skill authoring, multi-agent chat",
-  "version": "2.1.3",
+  "version": "2.1.4",
   "author": {
     "name": "Dimitris Klockenbring",
     "email": "klockenbring@users.noreply.github.com"
