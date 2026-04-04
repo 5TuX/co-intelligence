@@ -54,7 +54,7 @@ Ask:
 Propose the `get_data()` contract: return type, shape, example.
 Confirm before moving on.
 
-## Step 3 - Metrics
+## Step 3 - Metrics and Visualization
 
 Ask:
 
@@ -69,8 +69,23 @@ Ask:
 6. **Anti-gaming**: Are there ways the metric could be gamed?
    (e.g., always predict majority class for accuracy)
    If so, add guard metrics.
+7. **Per-approach visualization**: What should each approach's plot show?
+   Ask: "What visualization would help you judge each approach at a glance?"
+   Examples by task type:
+   - **Forecasting**: train/test split with predictions overlaid per series
+   - **Classification**: confusion matrix, ROC curves, precision-recall curves
+   - **Regression**: actual vs predicted scatter, residual distribution
+   - **Generation**: grid of sample outputs
+   - **Optimization**: convergence plot, parameter landscape, Pareto front
+   - **NLP**: attention heatmaps, token-level scores, sample predictions
 
-Confirm the final metrics dict before moving on.
+   Also ask: "Does the visualization need access to the approach's `run`
+   function to generate predictions, or can it work from the evaluation
+   result dict alone?" This determines whether `visualize()` receives
+   `run_fn` (the approach's factory/model function) for detailed plots,
+   or just the result dict for summary plots.
+
+Confirm the final metrics dict and visualization design before moving on.
 
 ## Step 4 - Evaluation Contract
 
@@ -160,6 +175,11 @@ Template:
 ## Metrics
 | Metric | Direction | Primary? | Weight | Anti-gaming note |
 |--------|-----------|----------|--------|-----------------|
+
+## Per-Approach Visualization
+- **What to show:** <description of what each approach plot displays>
+- **Needs run_fn:** <yes/no - whether visualize() needs the approach's run function>
+- **Format:** <e.g., one subplot per series, confusion matrix grid, etc.>
 
 ## Evaluation Harness (pseudo-code)
 <from Step 4>

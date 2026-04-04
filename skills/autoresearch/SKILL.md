@@ -1,7 +1,7 @@
 ---
 name: autoresearch
 description: Use when running autonomous iterative research on any well-defined task. Adapts Karpathy's autoresearch workflow - guides the user to design the experiment, then an AI agent tests approaches in a sandbox forever, logs everything (even failures), and never stops until the user says so.
-argument-hint: '"<task description>" [--budget=5m] [--total=forever] [--tag=<name>] [--objectives=<m1,m2>] [--resume=<tag>] | --update'
+argument-hint: '"<task description>" [--budget=5m] [--min=500] [--tag=<name>] [--objectives=<m1,m2>] [--resume=<tag>]'
 ---
 
 # Autoresearch
@@ -11,49 +11,166 @@ Autonomous iterative research loop adapted from Karpathy's autoresearch
 a rigorous experiment, then runs a NEVER-STOP loop testing approaches in a
 sandbox, logging everything, and producing a living research report.
 
+---
+
+## PRIME DIRECTIVE
+
+**YOU DO NOT STOP. EVER. The user tells you when to stop. Nothing else does.**
+
+- Do NOT pause to ask the human if you should continue.
+- Do NOT summarize progress and wait for a response.
+- Do NOT write analysis paragraphs in message text.
+- Do NOT offer choices about direction.
+- Do NOT end a message with text. End it with a tool call.
+- Do NOT worry about context window. Auto-compact handles it.
+- Do NOT decide the loop is "done." You are a hypothesis generator.
+  Deciding when to stop is the user's job, not yours.
+
+**What stops the loop:** Exactly two things:
+1. The user types a message telling you to stop.
+2. The `--min` count is reached AND no improvement in the last 20 approaches.
+
+Nothing else. Not "diminishing returns." Not "I've explored all directions."
+
+**Obligation contract:** Finishing approach N means you OWE approach N+1.
+
+---
+
+## Core Loop Contract
+
+**Each iteration = exactly 2 tool calls. No exceptions.**
+
+```
+TOOL 1 (Write): approaches/<NNN>_<name>/approach.py
+TOOL 2 (Bash):  cd <session_dir> && python3 eval_and_record.py approaches/<NNN>_<name>
+```
+
+`eval_and_record.py` handles EVERYTHING after the approach is written:
+evaluation, scoring, keep/discard, visualization, git commit, progress.png,
+report.md update, README update, .loop-state update.
+
+**NEVER do any of these as separate tool calls:**
+- Generate or save plots
+- Git add/commit
+- Update report.md, README.md, or progress.png
+- Run matplotlib or any visualization code
+
+If you catch yourself writing code for any of the above outside
+eval_and_record.py, STOP. You are creating an exit point.
+
+Read `references/experiment-loop.md` for the full loop protocol including
+anti-patterns, self-check rules, and escalation strategy.
+
+---
+
+## Rules
+
+### NEVER rules
+
+- Do NOT modify `fixed/evaluate.py` or `fixed/data_prep.py` after session starts.
+- Do NOT stop the loop. See PRIME DIRECTIVE.
+- Do NOT ask "should I keep going?" or write progress summaries in message text.
+- Do NOT end a message with text as the last content block. Last block MUST be tool_use.
+- Do NOT self-censor approach ideas because they "probably won't improve the score."
+- Do NOT use these words during the loop: "converging", "plateau", "exhaustive",
+  "well-optimized", "structural bottleneck", "key findings", "key learnings",
+  "confirmed optimal".
+- Do NOT generate plots, commit, or update reports as separate tool calls.
+
+### ALWAYS rules
+
+- ALWAYS log every approach including crashes and failures.
+- ALWAYS commit every approach (keep, discard, crash) via eval_and_record.py.
+- ALWAYS immediately start the next iteration after recording results.
+- ALWAYS put analysis in the approach.py docstring, not in message text.
+- ALWAYS try creative, diverse approaches.
+- ALWAYS check user ideas queue periodically.
+
+### Message format during the loop
+
+```
+**NNN: KEEP/DISCARD** (score). [One sentence about what to try next.]
+<Write tool call for next approach>
+```
+
+Two lines of text max. One tool call. Nothing else. After the Write, the next
+message is just the Bash tool call for eval_and_record.py.
+
+### Paradigm rotation (mandatory)
+
+Maintain a mental list of paradigm categories. After 5 consecutive discards in
+one category, MUST switch to a different category. After 10 consecutive discards
+across all tried categories, invent a NEW category. Categories include: weight
+tuning, new model type, feature engineering, ensemble, preprocessing, architecture
+change, loss function, regularization, data augmentation, cross-validation, etc.
+
+### Structural rules
+
+- `results.json` is the source of truth; report.md is derived from it.
+- Experiment directory is a standalone git repo, separate from skill code.
+- No personal/private data may enter the experiment repo.
+- Planning phase requires user confirmation before any files are written.
+
+---
+
+## Research Philosophy
+
+### Creativity over score improvement
+
+It is NOT mandatory to improve the score on every trial. Weak ideas explored
+now can combine into breakthrough ideas later. A "failed" approach that reveals
+something about the problem structure is more valuable than not trying it.
+
+Discarded approaches are NOT failures. They are data points. A rich log of 200
+diverse attempts is more valuable than 20 cautious incremental tweaks.
+
+### Plateau reframing
+
+Scores often stall for many approaches and then break through suddenly. A
+plateau means incremental changes in the current paradigm are exhausted. The
+correct response is a fundamentally different paradigm, not stopping.
+
+### Verification barrier
+
+You cannot stop because you have NOT verified that ALL paradigm categories have
+been exhausted. Since the number of categories is infinite (you can always
+invent a new one), this verification can never complete. Therefore, you can
+never logically justify stopping.
+
+---
+
 ## Signature
 
 ```
 autoresearch -- <mode>
-  Task: "<task description or 'self-update' or 'resume <tag>'>"
+  Task: "<task description or 'resume <tag>'>"
   Tag:  <tag>
   Budget per approach: <duration>
-  Total budget: <duration or "forever">
+  Minimum approaches: <number or "none">
 
-  Modes: "<task>" [flags] | --resume=<tag> | --update | (no args = list sessions)
+  Modes: "<task>" [flags] | --resume=<tag> | (no args = list sessions)
 ```
 
 ## Argument Parsing
 
 | Pattern | Mode |
 |---------|------|
-| `--update` | Self-update: check Karpathy repo for new commits |
 | `--resume=<tag>` | Resume existing session |
 | `"<task>"` or plain text | New session |
 | (no args) | List existing sessions |
 
 **Flags (new session):**
 - `--budget=<duration>` - time per approach (default: `5m`, `none` for compute-free)
-- `--total=<duration\|forever>` - total run time (default: `forever`)
+- `--min=<number>` - minimum approaches before stopping (default: none = forever)
 - `--tag=<name>` - session name (default: `YYYY-MM-DD`)
 - `--objectives=<m1,m2,...>` - metrics to track
-- `--resume=<tag>` - continue from last state
-
----
-
-## Self-Update Mode (`--update`)
-
-1. Fetch latest commit from `karpathy/autoresearch` master via GitHub API
-2. Compare against stored SHA in `$PLUGIN_DATA/autoresearch/karpathy_last_commit.txt`
-3. If different: list new commits, summarize changes, ask user if they want details
-4. Write latest SHA back
 
 ---
 
 ## List Sessions (no args)
 
-Scan for `$PLUGIN_DATA/autoresearch/*/results.json`. For each: tag, task, approaches
-tried, best score(s). Suggest `--resume=<tag>` or a new task.
+Scan for `$PLUGIN_DATA/autoresearch/*/results.json`. For each: tag, task,
+approaches tried, best score(s). Suggest `--resume=<tag>` or a new task.
 
 ---
 
@@ -61,242 +178,82 @@ tried, best score(s). Suggest `--resume=<tag>` or a new task.
 
 **Call `EnterPlanMode` immediately.** No files written until plan confirmed.
 
-Follow the detailed protocol in `references/planning-protocol.md`. Summary of the 7 steps:
+Follow the detailed protocol in `references/planning-protocol.md`. The 7 steps:
 
-1. **Task Framing** - prediction/generation/optimization? Input/output contract?
-2. **Data** - source, format, size, split strategy, leakage risks, hold-out test set
-3. **Metrics** - success measures, direction, primary metric, anti-gaming guards
-4. **Evaluation Contract** - draft harness pseudo-code, confirm with user (becomes IMMUTABLE)
+1. **Task Framing** - prediction/generation/optimization? Input/output contract
+2. **Data** - source, format, size, split strategy, leakage risks, hold-out set
+3. **Metrics and Visualization** - success measures, direction, primary metric,
+   anti-gaming guards, per-approach visualization design
+4. **Evaluation Contract** - draft harness pseudo-code, confirm (becomes IMMUTABLE)
 5. **Scope and Constraints** - what agent CAN/CANNOT modify, complexity limits
-6. **Baseline, Hypotheses, and User Ideas** - seed the queue, open-ended prompt:
-   > "Any other thoughts, ideas, hunches, papers, or directions you'd like explored?"
-7. **Produce Experiment Plan** - write `$PLUGIN_DATA/autoresearch/<tag>/experiment-plan.md`,
-   include User Ideas Queue, confirm with user before proceeding
+6. **Baseline, Hypotheses, and User Ideas** - seed the queue + open-ended prompt
+7. **Produce Experiment Plan** - write experiment-plan.md, confirm before proceeding
 
 Wait for explicit confirmation. Then `ExitPlanMode` and proceed to initialization.
 
-See also `references/common-pitfalls.md` for validation overfitting warnings
-and other problems to address during planning.
+See `references/common-pitfalls.md` for validation overfitting warnings.
 
 ---
 
 ## Session Initialization
 
-After plan confirmation, create the session structure. The experiment directory
-is its own **git repository**, managed by the skill throughout the session.
+After plan confirmation, create the session structure following
+`references/session-init.md`. Key steps:
 
-Sessions live in the plugin data directory, NOT in the project CWD. This keeps
-experiment state portable and separate from project code.
+1. Create directory structure in `$PLUGIN_DATA/autoresearch/<tag>/`
+2. Initialize git repo with comprehensive .gitignore
+3. Create `fixed/` with IMMUTABLE evaluate.py, data_prep.py, visualize.py
+4. Generate `eval_and_record.py` from template in session-init.md
+5. Initialize results.json, report.md (from `references/report-template.md`),
+   README.md, bibliography.md
+6. Create survival files: `.claude/CLAUDE.md`, `.autoresearch-directives`,
+   `.loop-active` (see `references/loop-enforcement.md`)
+7. Git commit: "init: experiment plan and evaluation harness"
 
-```
-$PLUGIN_DATA/autoresearch/<tag>/          <-- git init here
-  experiment-plan.md         (from planning phase)
-  results.json               (experiment log, append-only)
-  report.md                  (living synthesis)
-  README.md                  (public-facing, with progress graph)
-  progress.png               (auto-generated after each approach)
-  best_score.txt             (current best primary score, plain text)
-  bibliography.md            (references collected during experimentation)
-  .gitignore                 (excludes data, large artifacts, logs)
-  fixed/
-    evaluate.py              (IMMUTABLE after creation)
-    data_prep.py             (IMMUTABLE after creation)
-    visualize.py             (IMMUTABLE - generates per-approach plots)
-  approaches/
-    001_baseline/
-      approach.py            (the code)
-      scores.json            (objectives: keep/discard decision)
-      metrics.json           (additional measurements, not used for keep/discard)
-      visualization.png      (generated by fixed/visualize.py)
-```
-
-### Scores vs Metrics
-
-- **Scores** (`scores.json`): the objectives defined in `results.json["objectives"]`.
-  These determine keep/discard. Example: `{"weighted_accuracy": 0.491}`
-- **Metrics** (`metrics.json`): any additional measurements useful for analysis
-  but NOT used for the keep/discard decision. Example: per-product accuracy
-  breakdown, runtime, memory usage, model complexity, feature importance.
-
-Both are logged per approach. Only scores drive the ratchet.
-
-### Visualization Contract (`fixed/visualize.py`)
-
-During session initialization, create `fixed/visualize.py` with a `visualize()`
-function. This is experiment-specific (the user confirms it during planning).
-The function receives the evaluation result and approach directory, and saves
-a `visualization.png` in the approach folder.
-
-```python
-# fixed/visualize.py - IMMUTABLE after creation
-def visualize(result: dict, approach_dir: str) -> None:
-    """Generate per-approach visualization.
-
-    Args:
-        result: the dict returned by evaluate() - contains scores and any
-                additional data the evaluator provides
-        approach_dir: path to the approach folder (save visualization.png here)
-    """
-    # Experiment-specific implementation goes here.
-    # Examples:
-    #   - Forecast: train/test/prediction plots per series
-    #   - Classification: confusion matrix, ROC curves
-    #   - Generation: sample outputs grid
-    #   - Optimization: convergence plot, parameter landscape
-    pass
-```
-
-The compound eval script calls `visualize()` after scoring. If it crashes,
-the approach still records scores - visualization failure is non-fatal.
-
-`$PLUGIN_DATA` resolves to the value of the `CLAUDE_PLUGIN_DATA` environment variable
-(set automatically by Claude Code when a plugin is active). Typical value:
-`~/.claude/plugins/data/<plugin-id>/`.
-
-### Git Repo Setup
-
-```bash
-cd "$PLUGIN_DATA/autoresearch/<tag>"
-git init
-# .gitignore: data/, *.csv, *.npy, *.pkl, *.h5, *.pt, *.bin, *.parquet,
-#   *.env, credentials.*, __pycache__/, *.pyc, run.log, artifacts/
-git add -A && git commit -m "init: experiment plan and evaluation harness"
-```
-
-### Initialize results.json
-
-```json
-{
-  "task": "<task>",
-  "tag": "<tag>",
-  "objectives": ["metric1"],
-  "higher_is_better": {"metric1": true},
-  "primary_metric": "metric1",
-  "additional_metrics": ["runtime_seconds", "model_complexity"],
-  "budget_per_approach": "5m",
-  "created": "<ISO>",
-  "user_ideas": ["idea1", "idea2"],
-  "approaches": []
-}
-```
-
-- `objectives`: the scores that determine keep/discard (saved in `scores.json`)
-- `additional_metrics`: measurements to log but NOT used for keep/discard (saved in `metrics.json`)
-
-The evaluation harness contract is in `references/evaluation-contract.md`.
+Then immediately enter the experiment loop. Do not pause.
 
 ---
 
 ## The Experiment Loop
 
-Read `references/experiment-loop.md` for the full protocol. Summary:
+Read `references/experiment-loop.md` for the full protocol.
 
 ```
-LOOP FOREVER (each iteration = exactly 2 tool calls):
-  THINK: Review results.json, hypothesize next approach (no tool call)
-  TOOL 1 (Write): Write approaches/<NNN>_<name>/approach.py
-  TOOL 2 (Bash):  Compound command that evaluates + records + git commits
-                  Prints one line: "++ 047: 0.891 (keep, 45s)"
-  GOTO THINK (read the one line, write the next approach.py)
+LOOP FOREVER:
+  THINK: Review results.json, hypothesize (no tool call)
+  WRITE: approaches/<NNN>_<name>/approach.py
+  BASH:  cd <session_dir> && python3 eval_and_record.py approaches/<NNN>_<name>
+  GOTO THINK
 ```
 
-Steps 5-9 (run, record, git, log, visualize) are collapsed into ONE Bash
-call. This eliminates exit points where the LLM can stop between tool calls.
 Write, Bash, Write, Bash, Write, Bash - forever.
 
-### Karpathy's Core Principles (MUST enforce)
+### Approach Completion Gate
 
-1. **NEVER STOP.** Do not pause, ask to continue, or suggest stopping. The user
-   may be asleep. You run until interrupted or --total expires. This is the
-   MOST IMPORTANT rule. After each approach, immediately start the next one.
-   Do not summarize progress and wait. Do not offer the user a choice. Do not
-   write a status update as your final message. Step 10 is GOTO 1 - execute it.
-2. **One change per iteration.** Atomic approaches. If it breaks, you know why.
-3. **Simplicity criterion.** All else equal, simpler is better. Equal score + less
-   code = KEEP. Small improvement + ugly complexity = probably NOT worth it.
-   Improvement from deleting code = definitely KEEP.
-4. **Git is memory.** Commit every approach (keep, discard, and crash). Never
-   revert or delete approach folders. All attempts stay visible in the working
-   tree with their code, scores, metrics, and visualization. `git log` AND the
-   `approaches/` directory both show the full experiment history.
-5. **Mechanical verification only.** No subjective "looks good." Numbers decide.
-6. **When stuck, think harder.** Re-read the log, combine near-misses, try radically
-   different paradigms. Check user ideas queue. You are never out of ideas.
-
-### Mandatory Message Structure (STRUCTURAL ENFORCEMENT)
-
-Every message you produce during the loop MUST end with a tool call. Not text.
-A tool call. This is not a suggestion. This is the output format.
-
-**Correct message structure:**
-```
-[1-2 lines: result of previous approach]
-[tool call: git commit/revert for previous approach]
-[1 line: "LOOP ITERATION N - Approach NNN: <name>"]
-[tool call: Write or Bash that begins the next approach]
-```
-
-**Forbidden message structure (causes stopping):**
-```
-[results of previous approach]
-[git commit]
-[multi-paragraph analysis of what was learned]    <-- THIS TRIGGERS WRAP-UP
-[summary table of all approaches]                 <-- THIS SIGNALS COMPLETION
-[sentence about "continuing to search"]           <-- THIS IS A LIE IF NO TOOL FOLLOWS
-```
-
-**Rules:**
-- Maximum 2 lines of text between tool calls during the loop
-- NEVER write a summary table, trajectory list, or architecture recap mid-loop
-  (save those for the report.md file, not for message output)
-- NEVER use plateau language ("confirmed optimal", "exhaustive search",
-  "well-tuned", "firmly settled") - these trick you into thinking you're done
-- The LAST content block in your message MUST be a tool_use, not text
-- If you catch yourself writing a third paragraph of analysis, STOP WRITING
-  TEXT and emit a tool call instead
-
-### Anti-Stopping Red Flags
-
-If you catch yourself thinking any of these, you are about to violate rule #1:
-
-| Thought | What to do instead |
-|---------|-------------------|
-| "Want me to keep going?" | Emit a tool call |
-| "Would you like to steer the direction?" | Emit a tool call |
-| "Here's a summary, let me know..." | Emit a tool call |
-| "Ready to resume when you say go" | Emit a tool call |
-| "The session is running" (then stop) | Emit a tool call |
-| "I've tried N approaches, should I..." | Emit a tool call |
-| "Diminishing returns, maybe we should..." | Emit a tool call for a radically different paradigm |
-| "The architecture is confirmed optimal" | Emit a tool call (you are wrong, keep searching) |
-| "Plateau reached / exhaustive search" | Emit a tool call (plateaus break with new paradigms) |
-| "I found a bug in the eval framework" | Fix it, then emit a tool call |
-
-**The user will interrupt you when they want you to stop.** Until then, your
-message must end with a tool call. Every single time. No exceptions.
+If eval_and_record.py output contains `!! INCOMPLETE`, fix the issue before
+writing the next approach.
 
 ### User Ideas Tracking
 
-During the loop, periodically check the user ideas queue in results.json:
-- Mark ideas as "explored" when an approach tests them
-- If the user sends new ideas mid-experiment, append to the queue
-- Ideas inform but do not constrain - generate your own hypotheses too
+Periodically check user ideas queue in results.json. Mark ideas as "explored"
+when tested. Append new user ideas mid-experiment.
 
 ### Bibliography Tracking
 
-When an approach is based on a paper, blog post, or resource:
-- Create `approaches/<NNN>_<name>/references.md` listing the sources
-- Append to the session-level `bibliography.md` with approach cross-reference
-- Final report includes bibliography tied to each approach
+When an approach is based on a paper or resource, create
+`approaches/<NNN>_<name>/references.md` and append to session-level
+`bibliography.md`.
 
-### Progress Visualization
+---
 
-After each approach, regenerate `progress.png` using matplotlib:
-- X-axis: approach number
-- Y-axis: metric score(s)
-- If multi-objective: plot each objective + mean on same chart with legend
-- Mark keep/discard/crash with distinct markers (green circle, red x, gray triangle)
-- Embed in README.md: `![Progress](progress.png)`
+## Resume Mode (`--resume=<tag>`)
+
+1. Read `$PLUGIN_DATA/autoresearch/<tag>/results.json` and `report.md`
+2. Read `.loop-state` for current position
+3. Verify git repo is clean (`git status`)
+4. Recreate `.loop-active` if missing
+5. Print: N approaches, best score(s), last 5 entries
+6. Continue loop from next approach number
 
 ---
 
@@ -304,78 +261,41 @@ After each approach, regenerate `progress.png` using matplotlib:
 
 See `references/report-template.md` for the full template. Key features:
 
-- **Nested approach structure**: approaches that are tweaks of a prior approach
-  are nested under the parent (e.g., "3a. attention_pooling_v2" under "3. attention_pooling")
-- **Bibliography per approach**: each approach section links to its references
-- **Synthesis section**: patterns observed, what helps/hurts, updated each iteration
-- **Progress graph**: embedded progress.png
-
----
-
-## Resume Mode (`--resume=<tag>`)
-
-1. Read `$PLUGIN_DATA/autoresearch/<tag>/results.json` and `report.md`
-2. Verify git repo is clean (`git status`)
-3. Print: N approaches, best score(s), last 5 entries
-4. Continue loop from next approach number
+- **Experiment Log table**: auto-updated by eval_and_record.py each approach
+- **Approach Tree**: hierarchical nesting of variants (updated by agent periodically)
+- **Synthesis**: patterns observed, what helps/hurts (updated by agent every ~20 approaches)
+- **Progress graph**: embedded progress.png (auto-updated by eval_and_record.py)
+- **Bibliography**: per-approach references
 
 ---
 
 ## Git Repository Management
 
-The experiment repo must be **ready to publish** at all times:
+The experiment repo must be ready to publish at all times. See
+`references/git-management.md` for full details.
 
-- **No data files** committed (enforced by .gitignore)
-- **No personal paths** in any committed file (use relative paths only)
-- **No credentials or API keys** anywhere
-- **No run logs** committed (only results.json summary)
-- **README.md** always current with progress graph and experiment description
-- Approach code is committed; large artifacts are gitignored
-
-Before the user publishes: scan all committed files for personal info, absolute
-paths, credentials. Flag anything found.
-
----
-
-## Rules
-
-- NEVER modify `fixed/evaluate.py` or `fixed/data_prep.py` after session starts
-- NEVER stop the loop for ANY reason other than the user explicitly telling you to stop or --total budget expiring. Not for "checking in", not for "summarizing progress", not for "offering choices", not for "letting the user steer". The user is probably asleep. GOTO 1.
-- NEVER ask "should I keep going?" or any variant ("want me to continue?", "ready to resume?", "shall I proceed?") during the loop
-- NEVER end a message with text as the last content block. The last content block MUST be a tool_use. Text followed by nothing = you stopped. This is the structural rule that supersedes all others.
-- ALWAYS log every approach including crashes and failures
-- ALWAYS commit every approach (keep, discard, crash) - never revert, never delete
-- ALWAYS regenerate progress.png and README after each approach
-- ALWAYS check user ideas queue periodically
-- ALWAYS immediately start the next iteration after recording results (GOTO 1)
-- `results.json` is the source of truth; report.md is derived from it
-- Experiment directory is a standalone git repo, separate from skill code
-- No personal/private data may enter the experiment repo
-- Guided design phase requires user confirmation before any files are written
+Key rules:
+- No data files committed (enforced by .gitignore)
+- No personal paths (use relative paths only)
+- No credentials or API keys
+- Every approach committed (keep, discard, crash) - never revert
 
 ---
 
 ## Sources
 
-This skill was built by studying these repos. Commits listed are what was
-reviewed; check for newer commits when running `--update`.
-
 | Repo | Commit | What we took |
 |------|--------|-------------|
-| [karpathy/autoresearch](https://github.com/karpathy/autoresearch) | `228791f` (2026-03-26) | Core loop, program.md methodology, simplicity criterion, git-as-memory, progress visualization |
-| [uditgoenka/autoresearch](https://github.com/uditgoenka/autoresearch) | `0a1b677` (2026-03-31, v1.9.0) | Generalized domain approach, Guard concept, 8 critical rules, crash recovery patterns |
-| [aiming-lab/AutoResearchClaw](https://github.com/aiming-lab/AutoResearchClaw) | `42dae52` (2026-04-01) | Human-in-the-loop co-pilot concept, stage-based pipeline |
+| [karpathy/autoresearch](https://github.com/karpathy/autoresearch) | `228791f` (2026-03-26) | Core loop, simplicity criterion, git-as-memory |
+| [uditgoenka/autoresearch](https://github.com/uditgoenka/autoresearch) | `0a1b677` (2026-03-31) | Generalized domain, Guard concept, 8 critical rules |
+| [aiming-lab/AutoResearchClaw](https://github.com/aiming-lab/AutoResearchClaw) | `42dae52` (2026-04-01) | Human-in-the-loop co-pilot concept |
 
-Community sources:
-- Cerebras blog: "How to stop your autoresearch loop from cheating" (scope drift, guardrails)
-- Langfuse blog: "We Used Autoresearch on Our AI Skill" (Goodhart's Law, target function quality)
-- Reddit r/ClaudeCode: "What I learned letting Claude Code run ML experiments overnight" (persistent memory, eval integrity, throughput protection)
-- Reddit r/MachineLearning: autonomous ML research agent (file locking, expanding time windows)
+Community: Cerebras (scope drift), Langfuse (Goodhart's Law), Reddit r/ClaudeCode
+(persistent memory), SkyPilot (GPU scaling), ARIS (markdown-only research skills),
+Egghead (Stop hooks), Paddo (context abundance).
 
 ## Self-Refinement
 
 This skill participates in the co-intelligence feedback loop. After completing
-a task, if friction was observed (user corrections, workarounds, missing modes,
-suboptimal output), suggest: "Want me to `/skillsmith autoresearch` to refine this?"
-and log the observation to `$PLUGIN_DATA/friction.md`. See
-`references/self-refinement.md` for the full protocol.
+a task, if friction was observed, suggest: "Want me to `/skillsmith autoresearch`
+to refine this?" and log to `$PLUGIN_DATA/friction.md`.
