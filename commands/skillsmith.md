@@ -3,4 +3,4 @@ description: Create, refine, delete, or audit Claude Code skills and SKILL.md fi
 argument-hint: "<name> [<changes>] | new <name> | delete <name> | tidy-only | (empty = all)"
 ---
 
-Invoke the `co-intelligence:skillsmith` skill with $ARGUMENTS.
+Read `~/.claude/plugins/marketplaces/co-intelligence/skills/skillsmith/SKILL.md` and follow its instructions with these arguments: $ARGUMENTS

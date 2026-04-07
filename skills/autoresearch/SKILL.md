@@ -252,8 +252,16 @@ When an approach is based on a paper or resource, create
 2. Read `.loop-state` for current position
 3. Verify git repo is clean (`git status`)
 4. Recreate `.loop-active` if missing
-5. Print: N approaches, best score(s), last 5 entries
-6. Continue loop from next approach number
+5. **Verify Stop hook** - Check if `~/.claude/settings.json` contains
+   a Stop hook that searches for `.loop-active`. If missing, warn:
+   > "WARNING: The autoresearch Stop hook is not configured in
+   > settings.json. Without it, there is no technical barrier preventing
+   > the loop from stopping. Add it via `references/loop-enforcement.md`."
+6. **Recreate missing survival files** - If `.autoresearch-directives`
+   or `.claude/CLAUDE.md` are missing, recreate them from templates in
+   `references/loop-enforcement.md`. These files are non-optional.
+7. Print: N approaches, best score(s), last 5 entries
+8. Continue loop from next approach number
 
 ---
 

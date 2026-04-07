@@ -115,13 +115,28 @@ Bash: git add . && git commit -m "..."  # <-- EXIT POINT
 <Write tool call>
 ```
 
-## Self-Check Before Sending
+## Self-Check Before Sending (BLOCKING)
 
-Before sending your message, verify:
-1. Last content block is a tool_use (not text)
-2. Message text is at most 2-3 lines
-3. No analysis, summaries, or "key learnings" in message text
+This is a secondary defense. The primary defense is the Stop hook in
+settings.json which physically prevents stopping. But if the Stop hook
+is missing or broken, this self-check is your last line of defense.
+
+Before sending your message, verify ALL of these. If ANY fails, fix it
+before sending:
+
+1. Last content block is a tool_use (Write or Bash), NOT text
+2. Message text is at most 2 lines
+3. No analysis, summaries, or findings in message text
 4. All analysis is in the approach.py docstring
+5. You are NOT about to stop - check: is there a Write tool call?
+6. The Write tool call contains approach N+1 (not a report or summary)
+7. You have NOT used any forbidden words: "converging", "plateau",
+   "exhaustive", "well-optimized", "structural bottleneck",
+   "key findings", "key learnings", "confirmed optimal"
+
+**If you catch yourself writing a summary, STOP. Delete the summary.
+Write the next approach instead. The summary instinct is the #1 way
+loops die.**
 
 ## Approach Naming
 

@@ -157,6 +157,26 @@ the content templates. These are NOT optional.
 echo "started $(date -Iseconds)" > .loop-active
 ```
 
+## Survival File Verification (MANDATORY)
+
+Before entering the loop, verify ALL survival files exist. Run this check
+and do NOT proceed until it passes:
+
+```bash
+MISSING=""
+[ ! -f .claude/CLAUDE.md ] && MISSING="$MISSING .claude/CLAUDE.md"
+[ ! -f .autoresearch-directives ] && MISSING="$MISSING .autoresearch-directives"
+[ ! -f .loop-active ] && MISSING="$MISSING .loop-active"
+if [ -n "$MISSING" ]; then
+  echo "FATAL: Missing survival files:$MISSING"
+  echo "Recreate them before entering the loop."
+  exit 1
+fi
+echo "All survival files verified."
+```
+
+Do NOT proceed to the experiment loop until this check passes.
+
 ## eval_and_record.py
 
 Generate this script at the session root during initialization. It handles

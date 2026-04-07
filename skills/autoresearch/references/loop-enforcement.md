@@ -9,25 +9,44 @@ A Claude Code Stop hook that blocks the agent from stopping while
 `.loop-active` exists. When the hook returns exit code 2, Claude is
 forced to continue. The stderr message is injected as context.
 
-**Setup** (user adds to `.claude/settings.json` once):
+**Setup** (add to the `Stop` array in `.claude/settings.json`):
 
 ```json
 {
-  "hooks": {
-    "Stop": [
-      {
-        "matcher": "",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "LOOP_FILE=$(find ~/.claude/plugins/data -name '.loop-active' -path '*/autoresearch/*' 2>/dev/null | head -1); if [ -n \"$LOOP_FILE\" ]; then echo 'AUTORESEARCH ACTIVE. Read .autoresearch-directives in the experiment dir. NEVER stop. Write the next approach.' >&2; exit 2; fi"
-          }
-        ]
-      }
-    ]
-  }
+  "matcher": "",
+  "hooks": [
+    {
+      "type": "command",
+      "command": "for f in ~/.claude/plugins/data/*/autoresearch/*/.loop-active; do if [ -f \"$f\" ]; then DIR=$(dirname \"$f\"); echo \"AUTORESEARCH LOOP ACTIVE in $DIR. Read $DIR/.autoresearch-directives. NEVER stop. Write the next approach NOW.\" >&2; exit 2; fi; done"
+    }
+  ]
 }
 ```
+
+**Important notes:**
+
+- **Must be in settings.json, NOT in a plugin hooks.json.** Plugin-installed
+  Stop hooks with exit code 2 fail silently (GitHub #10412). settings.json
+  hooks work correctly.
+- **Does NOT check `stop_hook_active`.** This is intentional. We want to
+  block EVERY stop attempt as long as `.loop-active` exists, not just the
+  first one. The exit path is: user removes `.loop-active` or sends a message.
+- **Exit code 2 displays as "Stop hook error"** in the Claude Code UI
+  (GitHub #34600). This is cosmetic - the hook is working correctly.
+  The stderr message still reaches the agent as continuation instructions.
+
+### Stop Hook Installation Check
+
+The skill MUST verify the Stop hook is installed during both new session
+init and resume. If not installed, the skill should:
+
+1. Print a clear warning that the loop has NO technical enforcement
+2. Offer to install via the `update-config` skill
+3. Proceed anyway (the loop still works, just without the safety net)
+
+The hook is the ONLY defense that survives context compression AND
+operates at the system level. Without it, all enforcement is prompt-based
+and will eventually degrade in long sessions.
 
 ## 2. .claude/CLAUDE.md (SURVIVES AUTOCOMPACT)
 

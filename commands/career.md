@@ -3,4 +3,4 @@ description: Career refresh, job search, CV analysis, skill gap review, or learn
 argument-hint: "[user1,user2] | clean [user] | note [user] <content> | new-user | update-user <user>"
 ---
 
-Invoke the `co-intelligence:career` skill with $ARGUMENTS.
+Read `~/.claude/plugins/marketplaces/co-intelligence/skills/career/SKILL.md` and follow its instructions with these arguments: $ARGUMENTS

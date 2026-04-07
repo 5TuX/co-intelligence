@@ -3,4 +3,4 @@ description: Plugin lifecycle - create from local skills, publish to GitHub, or 
 argument-hint: "create <name> <skills> | publish [<name>] | update [<plugin@marketplace>]"
 ---
 
-Invoke the `co-intelligence:plugin` skill with $ARGUMENTS.
+Read `~/.claude/plugins/marketplaces/co-intelligence/skills/plugin/SKILL.md` and follow its instructions with these arguments: $ARGUMENTS

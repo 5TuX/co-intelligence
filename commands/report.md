@@ -3,4 +3,4 @@ description: Write quality technical reports from codebases with Quarto ODT/PDF 
 argument-hint: "[kickstart|outline|write <section>|extract-metrics|status|test]"
 ---
 
-Invoke the `co-intelligence:report` skill with $ARGUMENTS.
+Read `~/.claude/plugins/marketplaces/co-intelligence/skills/report/SKILL.md` and follow its instructions with these arguments: $ARGUMENTS
