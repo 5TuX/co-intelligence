@@ -6,7 +6,7 @@ description: >
   or pull the latest version of an installed plugin. Triggers on: "publish
   plugin", "update plugin", "create plugin", "pluginify", "push my plugin",
   "check for updates", "plugin publish", "plugin update", "plugin create".
-argument-hint: "create <name> <skills> | publish [<name>] | update [<plugin@marketplace>]"
+argument-hint: "create <name> <skills> | publish [<name>] [-y] | update [<plugin@marketplace>]"
 ---
 
 # Plugin Lifecycle
@@ -29,7 +29,7 @@ plugin -- <mode>
 | Pattern | Mode |
 |---------|------|
 | `create <name> <skills>` | Package local skills into a new plugin |
-| `publish [<name>]` | Push plugin changes to GitHub (default: co-intelligence) |
+| `publish [<name>] [-y]` | Push plugin changes to GitHub (default: co-intelligence). `-y` skips confirmation. |
 | `update [<plugin@marketplace>]` | Pull latest version (default: co-intelligence) |
 | (no args) | Ask which mode |
 
@@ -63,33 +63,35 @@ passing `<plugin-name>` as target. Wait for the structured report.
 
 - **STATUS=preflight-failed**: Show error. Stop.
 - **STATUS=no-changes**: "Nothing to publish." Done.
-- **STATUS=changes-ready**: Show full diff, proceed to step 3.
+- **STATUS=changes-ready**: Show full diff and a drafted commit message.
+  If `-y` flag: skip confirmation, proceed directly to step 3.
+  Otherwise ask: **"Publish? (y/n)"** - this is the ONLY confirmation gate.
 
-### 3. Commit
+### 3. Automated pipeline (after user says yes)
 
-Stage all changes. Draft a commit message from the diff.
-Ask: "Commit? (y/n)"
+If user confirms, run steps 3a-3d without further prompts:
 
+**3a. Commit**
 ```bash
 cd ~/.claude/plugins/marketplaces/<name>
 git add -A
 git commit -m "<message>"
 ```
 
-### 4. Version bump (before push)
+**3b. Version bump**
+Increment patch in `.claude-plugin/plugin.json`, commit separately.
 
-Ask: "Bump version? (y/n)"
-If yes: increment patch in `.claude-plugin/plugin.json`, commit separately.
-
-### 5. Push
-
+**3c. Push**
 ```bash
 cd ~/.claude/plugins/marketplaces/<name>
 git push origin main
 ```
 
-**Rules:** Always show diff before commit. Never force-push. Ask before
-every remote action.
+**3d. Report**
+Print: "Published <name> v<new_version>. Run `/reload-plugins` to activate."
+
+**Rules:** Always show diff before the single confirmation. Never force-push.
+One yes = commit + bump + push. No intermediate prompts.
 
 ---
 
