@@ -1,7 +1,7 @@
 {
   "name": "co-intelligence",
   "description": "Self-refining skills for human-AI collaborative work: autoresearch, bibliography, career, plugin lifecycle, reports, skill authoring, multi-agent chat",
-  "version": "2.5.1",
+  "version": "2.5.2",
   "author": {
     "name": "Dimitris Klockenbring",
     "email": "klockenbring@users.noreply.github.com"
@@ -9,7 +9,20 @@
   "homepage": "https://github.com/5TuX/co-intelligence",
   "repository": "https://github.com/5TuX/co-intelligence",
   "license": "MIT",
-  "keywords": ["skills", "autoresearch", "bibliography", "career", "plugin", "reports", "co-intelligence", "self-refinement"],
-  "skills": ["./skills/"],
-  "commands": ["./commands/"]
+  "keywords": [
+    "skills",
+    "autoresearch",
+    "bibliography",
+    "career",
+    "plugin",
+    "reports",
+    "co-intelligence",
+    "self-refinement"
+  ],
+  "skills": [
+    "./skills/"
+  ],
+  "commands": [
+    "./commands/"
+  ]
 }
