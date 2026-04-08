@@ -6,8 +6,16 @@ beyond prompt instructions. Create ALL survival files during session init.
 ## 1. Stop Hook (MOST RELIABLE - recommended setup)
 
 A Claude Code Stop hook that blocks the agent from stopping while
-`.loop-active` exists. When the hook returns exit code 2, Claude is
-forced to continue. The stderr message is injected as context.
+`.loop-active` exists AND belongs to the current session. When the hook
+returns exit code 2, Claude is forced to continue. The stderr message
+is injected as context.
+
+### Instance Isolation
+
+`.loop-active` contains the `${CLAUDE_SESSION_ID}` of the session that
+started the loop. The Stop hook compares this against the current session
+ID. Only the instance that owns the loop is blocked - other Claude Code
+instances pass through freely.
 
 **Setup** (add to the `Stop` array in `.claude/settings.json`):
 
@@ -17,7 +25,7 @@ forced to continue. The stderr message is injected as context.
   "hooks": [
     {
       "type": "command",
-      "command": "for f in ~/.claude/plugins/data/*/autoresearch/*/.loop-active; do if [ -f \"$f\" ]; then DIR=$(dirname \"$f\"); echo \"AUTORESEARCH LOOP ACTIVE in $DIR. Read $DIR/.autoresearch-directives. NEVER stop. Write the next approach NOW.\" >&2; exit 2; fi; done"
+      "command": "for f in ~/.claude/plugins/data/*/autoresearch/*/.loop-active; do if [ -f \"$f\" ]; then SID=$(head -1 \"$f\" | tr -d '\\r\\n'); if [ \"$SID\" = \"${CLAUDE_SESSION_ID}\" ]; then DIR=$(dirname \"$f\"); echo \"AUTORESEARCH LOOP ACTIVE in $DIR. Read $DIR/.autoresearch-directives. NEVER stop. Write the next approach NOW.\" >&2; exit 2; fi; fi; done"
     }
   ]
 }
@@ -28,12 +36,18 @@ forced to continue. The stderr message is injected as context.
 - **Must be in settings.json, NOT in a plugin hooks.json.** Plugin-installed
   Stop hooks with exit code 2 fail silently (GitHub #10412). settings.json
   hooks work correctly.
+- **Instance-isolated via session ID.** The hook reads the session ID from
+  `.loop-active` and compares with `${CLAUDE_SESSION_ID}` (auto-substituted
+  by Claude Code). Only the owning instance is blocked. Other instances
+  (doing setup, code review, etc.) are not affected.
 - **Does NOT check `stop_hook_active`.** This is intentional. We want to
-  block EVERY stop attempt as long as `.loop-active` exists, not just the
-  first one. The exit path is: user removes `.loop-active` or sends a message.
+  block EVERY stop attempt as long as `.loop-active` exists for this session.
 - **Exit code 2 displays as "Stop hook error"** in the Claude Code UI
   (GitHub #34600). This is cosmetic - the hook is working correctly.
   The stderr message still reaches the agent as continuation instructions.
+- **Project-level sessions:** If the session lives in a project directory
+  (not plugin data), add a project-specific Stop hook in `.claude/settings.json`
+  that checks the project path, using the same session ID comparison pattern.
 
 ### Stop Hook Installation Check
 
@@ -54,6 +68,7 @@ Create `.claude/CLAUDE.md` inside the experiment directory at session init.
 CLAUDE.md files are ALWAYS loaded into the system context, surviving any
 context compression. This is the most reliable persistence mechanism.
 
+
 ```bash
 mkdir -p "$SESSION_DIR/.claude"
 cat > "$SESSION_DIR/.claude/CLAUDE.md" << 'EOF'
@@ -70,6 +85,16 @@ You are running an autonomous research loop. Core rules:
 8. Read results.json for all prior approaches.
 9. If stuck: try a radically different paradigm.
 10. Message format: "**NNN: KEEP/DISCARD** (score). [Next idea.]\n<tool call>"
+11. BEFORE each trial: Read previous trial's visualization.png and artifacts.
+    You are multimodal. Visual analysis of error patterns drives better hypotheses.
+12. If eval says `!! SEARCH_NEEDED`: search web for new ideas before next trial.
+13. If eval says `!! SEARCH_SUGGESTED`: search for one new idea.
+14. If eval says `!! TIMEOUT`: delete the approach folder, adjust, try again.
+15. For long trials (>60s): run eval in background, monitor training_progress.json.
+16. Save and reuse artifacts (weights, loss curves) across trials. Add .gitignore.
+17. Use Optuna for hyperparameter tuning when approach has tunable knobs.
+18. ONE method per trial. No ensembles. Push each method to its optimum before
+    trying a different one. Depth-first per method, breadth across methods.
 EOF
 ```
 
@@ -90,6 +115,11 @@ cat > "$SESSION_DIR/.autoresearch-directives" << 'EOF'
 7. Read experiment-plan.md for the task definition.
 8. Read results.json for all prior approaches.
 9. If stuck: try a radically different paradigm.
+10. BEFORE each trial: Read previous visualization.png and artifacts. You are multimodal.
+11. If eval says !! SEARCH_NEEDED: web search for new ideas before next approach.
+12. If eval says !! TIMEOUT: delete folder, adjust, try again.
+13. For long trials: run eval in background, monitor training_progress.json.
+14. Save and reuse artifacts (weights, loss curves) across trials.
 EOF
 ```
 
@@ -125,5 +155,6 @@ approaches), it should read these files before continuing:
 
 The user can stop the loop by:
 1. Typing a message telling the agent to stop
-2. Running `rm .loop-active` in the experiment directory
-3. The `--min` approach count being reached with no recent improvement
+2. Running `/autoresearch stop` (removes `.loop-active` for active session)
+3. Running `rm .loop-active` in the experiment directory (manual)
+4. The `--min` approach count being reached with no recent improvement

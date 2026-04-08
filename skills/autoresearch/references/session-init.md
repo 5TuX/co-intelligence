@@ -58,8 +58,13 @@ Both are logged per approach. Only scores drive the ratchet.
   "additional_metrics": ["runtime_seconds"],
   "budget_per_approach": "5m",
   "min_approaches": null,
+  "search_on_plateau_threshold": 10,
+  "search_on_plateau_ideas_count": 10,
+  "search_every_trial": false,
+  "allow_ensembles": false,
   "created": "<ISO>",
   "user_ideas": ["idea1", "idea2"],
+  "future_ideas": [],
   "approaches": []
 }
 ```
@@ -144,6 +149,34 @@ git add -A
 git commit -m "init: experiment plan and evaluation harness"
 ```
 
+## README Template
+
+Create `README.md` at session root. The progress chart is embedded and
+auto-updated by eval_and_record.py after each approach.
+
+```markdown
+# <task>
+
+**Tag:** <tag> | **Approaches tried:** 0 | **Best score:** 0.0000
+
+## Progress
+
+![Progress](progress.png)
+
+## Quick Start
+
+```bash
+python3 eval_and_record.py approaches/NNN_name [--timeout=SECONDS]
+```
+
+## Results
+
+See [report.md](report.md) for the full experiment log and approach tree.
+```
+
+The `**Approaches tried:**` and `**Best score:**` lines are auto-updated by
+eval_and_record.py using regex replacement. Do not change their format.
+
 ## Survival Files
 
 Create these ALWAYS during session init. See `loop-enforcement.md` for
@@ -153,9 +186,17 @@ the content templates. These are NOT optional.
 2. `.autoresearch-directives` - checkpoint for context recovery
 3. `.loop-active` - signals the loop should keep running
 
+The `.loop-active` file must contain the `${CLAUDE_SESSION_ID}` on its first
+line. This enables instance isolation - only the owning session is blocked
+by the Stop hook.
+
 ```bash
-echo "started $(date -Iseconds)" > .loop-active
+echo "${CLAUDE_SESSION_ID}" > .loop-active
 ```
+
+Note: `${CLAUDE_SESSION_ID}` is auto-substituted by Claude Code when writing
+the file via the Write tool or Bash. The resulting file contains a UUID like
+`a1b2c3d4-e5f6-7890-abcd-ef1234567890`.
 
 ## Survival File Verification (MANDATORY)
 
@@ -193,16 +234,21 @@ works for any experiment without modification.
 """Compound eval script. Runs eval, records, plots, commits, updates reports.
 Generated during session init. Do NOT modify during the loop.
 
-Usage: python3 eval_and_record.py approaches/NNN_name
+Usage: python3 eval_and_record.py approaches/NNN_name [--timeout=SECONDS]
 """
-import sys, importlib.util, json, time, subprocess, os, traceback
+import sys, importlib.util, json, time, subprocess, os, traceback, threading
 import glob as _glob
 
 SESSION_DIR = os.path.dirname(os.path.abspath(__file__))
 os.chdir(SESSION_DIR)
 
+# Parse args
 APPROACH_DIR = sys.argv[1]
 APPROACH_FILE = os.path.join(APPROACH_DIR, "approach.py")
+TIMEOUT = None
+for arg in sys.argv[2:]:
+    if arg.startswith("--timeout="):
+        TIMEOUT = int(arg.split("=", 1)[1])
 
 # Load experiment config
 with open("results.json") as f:
@@ -210,6 +256,18 @@ with open("results.json") as f:
 PRIMARY_METRIC = config["primary_metric"]
 OBJECTIVES = config["objectives"]
 HIGHER = config["higher_is_better"]
+
+# --- TIMEOUT SETUP ---
+timed_out = False
+if TIMEOUT:
+    def _timeout_handler():
+        global timed_out
+        timed_out = True
+        print(f"\n!! TIMEOUT {os.path.basename(APPROACH_DIR)} after {TIMEOUT}s (budget: {TIMEOUT}s)")
+        os._exit(124)
+    timer = threading.Timer(TIMEOUT, _timeout_handler)
+    timer.daemon = True
+    timer.start()
 
 # --- EVALUATE ---
 spec = importlib.util.spec_from_file_location("approach", APPROACH_FILE)
@@ -228,6 +286,9 @@ except Exception as e:
     crashed = True
     traceback.print_exc()
     print(f"CRASH: {e}")
+finally:
+    if TIMEOUT:
+        timer.cancel()
 
 # --- SCORES (objectives - used for keep/discard) ---
 scores = {obj: result.get(obj, 0) for obj in OBJECTIVES} if not crashed else None
@@ -401,6 +462,42 @@ if missing:
 else:
     symbol = '++' if kept else ('!!' if crashed else '--')
     print(f"{symbol} {approach_name}: {primary_score:.4f} ({status}, {elapsed}s)")
+
+# --- SEARCH CALLBACKS ---
+# Plateau detection: consecutive discards without improvement
+consecutive_discards = 0
+for a in reversed(config['approaches']):
+    if a['status'] in ('discard', 'crash'):
+        consecutive_discards += 1
+    else:
+        break
+if consecutive_discards >= 5:
+    print(f"NEXT: {consecutive_discards} consecutive discards. Switch paradigm category.")
+plateau_threshold = config.get('search_on_plateau_threshold', 10)
+if consecutive_discards >= plateau_threshold:
+    ideas_count = config.get('search_on_plateau_ideas_count', 10)
+    print(f"!! SEARCH_NEEDED ({consecutive_discards} consecutive discards, "
+          f"threshold: {plateau_threshold}, find {ideas_count} new ideas)")
+
+# Per-trial search
+if config.get('search_every_trial', False):
+    print("!! SEARCH_SUGGESTED")
+
+# --- RUNTIME STATS ---
+runtimes = [a['runtime_seconds'] for a in config['approaches']
+            if a.get('runtime_seconds') and a['status'] != 'crash']
+if runtimes:
+    sorted_rt = sorted(runtimes)
+    median_rt = sorted_rt[len(sorted_rt) // 2]
+    print(f"RUNTIME: this={elapsed}s, median={median_rt:.0f}s, "
+          f"range={sorted_rt[0]:.0f}-{sorted_rt[-1]:.0f}s")
+
+# --- PERSISTENT DIRECTIVES (survives context compaction) ---
+# These print EVERY trial so the agent always sees them, even after
+# context compression removes the original SKILL.md instructions.
+print(f"NEXT: Read {APPROACH_DIR}/visualization.png before writing next approach.")
+print("NEXT: Estimate --timeout for next trial. Save artifacts + .gitignore.")
+print("NEXT: For long trials (>60s est), use run_in_background and monitor progress.")
 ```
 
 **Customization during init:** The template above is generic. The only

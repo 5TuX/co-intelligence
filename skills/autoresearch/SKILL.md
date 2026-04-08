@@ -1,7 +1,7 @@
 ---
 name: autoresearch
 description: Use when running autonomous iterative research on any well-defined task. Adapts Karpathy's autoresearch workflow - guides the user to design the experiment, then an AI agent tests approaches in a sandbox forever, logs everything (even failures), and never stops until the user says so.
-argument-hint: '"<task description>" [--budget=5m] [--min=500] [--tag=<name>] [--objectives=<m1,m2>] [--resume=<tag>]'
+argument-hint: '"<task>" [flags] | --resume=<tag> | stop [<tag>]'
 ---
 
 # Autoresearch
@@ -42,8 +42,12 @@ Nothing else. Not "diminishing returns." Not "I've explored all directions."
 
 ```
 TOOL 1 (Write): approaches/<NNN>_<name>/approach.py
-TOOL 2 (Bash):  cd <session_dir> && python3 eval_and_record.py approaches/<NNN>_<name>
+TOOL 2 (Bash):  cd <session_dir> && python3 eval_and_record.py approaches/<NNN>_<name> --timeout=<seconds>
 ```
+
+For long trials (>60s estimated): use `run_in_background: true` on the Bash
+call. Monitor `approaches/<NNN>_<name>/training_progress.json` while waiting.
+When notified of completion, process the result and write the next approach.
 
 `eval_and_record.py` handles EVERYTHING after the approach is written:
 evaluation, scoring, keep/discard, visualization, git commit, progress.png,
@@ -85,6 +89,24 @@ anti-patterns, self-check rules, and escalation strategy.
 - ALWAYS put analysis in the approach.py docstring, not in message text.
 - ALWAYS try creative, diverse approaches.
 - ALWAYS check user ideas queue periodically.
+- ALWAYS review artifacts from the previous trial before writing the next
+  approach: read visualization.png (you are multimodal), scores.json,
+  metrics.json, training_progress.json, and any saved loss curves. Use
+  these to inform your hypothesis for the next trial.
+- ALWAYS have approaches log training progress to `training_progress.json`
+  in their approach dir (epoch, loss, elapsed, etc.) for iterative methods.
+- ALWAYS run eval_and_record.py with `run_in_background: true` for trials
+  estimated >60s. Monitor `training_progress.json` while waiting.
+- ALWAYS check eval output for `!! SEARCH_NEEDED` or `!! SEARCH_SUGGESTED`
+  markers and perform web research before writing the next approach.
+- ALWAYS save reusable artifacts (weights, loss curves, embeddings) to the
+  approach directory. Add a `.gitignore` for large binary files.
+- ALWAYS use thinking mode to estimate a timeout for each trial based on
+  approach type (tree vs neural net vs ensemble) and prior similar trials.
+  Pass `--timeout=<seconds>` to eval_and_record.py.
+- ALWAYS use Optuna for hyperparameter tuning when the approach has tunable
+  knobs. You pick the method (creative); Optuna picks the params (mechanical).
+  Keep studies small (10-30 trials) within the timeout budget.
 
 ### Message format during the loop
 
@@ -96,12 +118,21 @@ anti-patterns, self-check rules, and escalation strategy.
 Two lines of text max. One tool call. Nothing else. After the Write, the next
 message is just the Bash tool call for eval_and_record.py.
 
+### Single method per trial (default)
+
+Each trial uses ONE architecture or method. No ensembles combining multiple
+models. Push each method to its optimum (Optuna tuning, more iterations,
+feature engineering) before trying a fundamentally different method. An
+ensemble trial is only valid when `allow_ensembles: true` in results.json.
+
+Depth-first on each method, breadth across methods over time.
+
 ### Paradigm rotation (mandatory)
 
 Maintain a mental list of paradigm categories. After 5 consecutive discards in
 one category, MUST switch to a different category. After 10 consecutive discards
 across all tried categories, invent a NEW category. Categories include: weight
-tuning, new model type, feature engineering, ensemble, preprocessing, architecture
+tuning, new model type, feature engineering, preprocessing, architecture
 change, loss function, regularization, data augmentation, cross-validation, etc.
 
 ### Structural rules
@@ -157,6 +188,7 @@ autoresearch -- <mode>
 |---------|------|
 | `--resume=<tag>` | Resume existing session |
 | `"<task>"` or plain text | New session |
+| `stop [<tag>]` | Stop loop (default: active session) |
 | (no args) | List existing sessions |
 
 **Flags (new session):**
@@ -164,6 +196,20 @@ autoresearch -- <mode>
 - `--min=<number>` - minimum approaches before stopping (default: none = forever)
 - `--tag=<name>` - session name (default: `YYYY-MM-DD`)
 - `--objectives=<m1,m2,...>` - metrics to track
+
+---
+
+## Stop Mode (`stop [<tag>]`)
+
+Disables the autoresearch loop by removing `.loop-active`.
+
+1. If `<tag>` given: remove `$PLUGIN_DATA/autoresearch/<tag>/.loop-active`
+2. If no tag: scan all `.loop-active` files for one matching the current
+   `${CLAUDE_SESSION_ID}`, remove it
+3. Print: "Loop disabled for <tag>. Session preserved."
+
+The session directory, results, and all approaches are preserved. Only the
+loop enforcement is removed. To restart: `--resume=<tag>`.
 
 ---
 
@@ -186,8 +232,10 @@ Follow the detailed protocol in `references/planning-protocol.md`. The 7 steps:
    anti-gaming guards, per-approach visualization design
 4. **Evaluation Contract** - draft harness pseudo-code, confirm (becomes IMMUTABLE)
 5. **Scope and Constraints** - what agent CAN/CANNOT modify, complexity limits
-6. **Baseline, Hypotheses, and User Ideas** - seed the queue + open-ended prompt
-7. **Produce Experiment Plan** - write experiment-plan.md, confirm before proceeding
+6. **Search Callbacks** - configure `search_on_plateau_threshold` (default: 10),
+   `search_on_plateau_ideas_count` (default: 10), `search_every_trial` (default: false)
+7. **Baseline, Hypotheses, and User Ideas** - seed the queue + open-ended prompt
+8. **Produce Experiment Plan** - write experiment-plan.md, confirm before proceeding
 
 Wait for explicit confirmation. Then `ExitPlanMode` and proceed to initialization.
 
@@ -265,42 +313,11 @@ When an approach is based on a paper or resource, create
 
 ---
 
-## Report Format
+## Report and Git
 
-See `references/report-template.md` for the full template. Key features:
-
-- **Experiment Log table**: auto-updated by eval_and_record.py each approach
-- **Approach Tree**: hierarchical nesting of variants (updated by agent periodically)
-- **Synthesis**: patterns observed, what helps/hurts (updated by agent every ~20 approaches)
-- **Progress graph**: embedded progress.png (auto-updated by eval_and_record.py)
-- **Bibliography**: per-approach references
-
----
-
-## Git Repository Management
-
-The experiment repo must be ready to publish at all times. See
-`references/git-management.md` for full details.
-
-Key rules:
-- No data files committed (enforced by .gitignore)
-- No personal paths (use relative paths only)
-- No credentials or API keys
-- Every approach committed (keep, discard, crash) - never revert
-
----
-
-## Sources
-
-| Repo | Commit | What we took |
-|------|--------|-------------|
-| [karpathy/autoresearch](https://github.com/karpathy/autoresearch) | `228791f` (2026-03-26) | Core loop, simplicity criterion, git-as-memory |
-| [uditgoenka/autoresearch](https://github.com/uditgoenka/autoresearch) | `0a1b677` (2026-03-31) | Generalized domain, Guard concept, 8 critical rules |
-| [aiming-lab/AutoResearchClaw](https://github.com/aiming-lab/AutoResearchClaw) | `42dae52` (2026-04-01) | Human-in-the-loop co-pilot concept |
-
-Community: Cerebras (scope drift), Langfuse (Goodhart's Law), Reddit r/ClaudeCode
-(persistent memory), SkyPilot (GPU scaling), ARIS (markdown-only research skills),
-Egghead (Stop hooks), Paddo (context abundance).
+- **Report format:** See `references/report-template.md`
+- **Git rules:** See `references/git-management.md` (no data files, no secrets, never revert)
+- **Sources:** See `references/session-init.md` header for upstream repos
 
 ## Self-Refinement
 
