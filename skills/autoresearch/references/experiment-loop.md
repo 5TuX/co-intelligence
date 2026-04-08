@@ -38,13 +38,28 @@ Strategy:
   try radically different paradigms, look at bibliography for inspiration
 - Do NOT self-censor ideas that "probably won't beat the best." Try them.
 
-**Timeout estimation (use thinking mode):** Before writing the approach,
-estimate its runtime based on:
-- Method type: tree-based models (fast, 10-60s), neural nets (slow, 2-20min),
-  simple baselines (instant, <10s), ensembles (sum of components)
+**Runtime estimation (use thinking mode):** Before writing the approach,
+estimate total runtime (data loading + feature extraction + training + prediction) based on:
+- Method type: tree models (10-60s/model), neural nets (2-20min), baselines (<10s)
 - Prior trials of similar type (check results.json for runtime_seconds)
-- Code complexity: number of iterations, dataset passes, model size
-Set `--timeout=<seconds>` accordingly. Err on the generous side (2-3x estimate).
+- Fixed costs: feature extraction, data loading, visualization (often 30-300s)
+- Number of models: key days x seeds, ensemble members, Optuna trials
+
+Use this estimate to decide launch strategy:
+- If <60s: standard Bash call (foreground)
+- If 60s-5min: `run_in_background: true`, monitor every 30-60s
+- If >5min or uncertain: `run_in_background: true`, aggressive monitoring every 20-30s
+
+**Soft-kill protocol:** If monitoring reveals the trial is doomed (projected
+time far exceeds budget, loss diverging, training stalled), kill the process:
+```bash
+# Cross-platform kill
+pkill -f 'eval_and_record.*approaches/<NNN>' 2>/dev/null  # Unix
+wmic process where "commandline like '%approaches/<NNN>%'" call terminate 2>/dev/null  # Windows
+```
+Then check what checkpoints were saved and adjust the next approach.
+
+Do NOT pass `--timeout` to eval_and_record.py (no longer supported).
 
 **Artifact reuse:** Check if prior trials saved reusable artifacts (weights,
 embeddings, preprocessed features). If the new approach uses the same or
@@ -57,7 +72,7 @@ hyperparameters (learning rate, regularization, tree depth, layer sizes),
 use Optuna inside approach.py to search efficiently rather than guessing.
 The agent picks the method and features (creative); Optuna picks the knobs
 (mechanical). Keep the Optuna study small (10-30 trials) and count it toward
-the timeout budget. Not every approach needs it - skip for simple baselines,
+your estimated runtime budget. Not every approach needs it - skip for simple baselines,
 rule-based methods, or when testing a structural change where hyperparams
 are secondary.
 
@@ -72,7 +87,7 @@ def objective(trial):
     return score
 
 study = optuna.create_study(direction="minimize")
-study.optimize(objective, n_trials=20, timeout=timeout_budget * 0.8)
+study.optimize(objective, n_trials=20, timeout=estimated_budget * 0.8)
 best_params = study.best_params
 ```
 
@@ -91,32 +106,49 @@ Write `approaches/<NNN>_<name>/approach.py`:
       json.dump({"epoch": epoch, "loss": loss, "elapsed": elapsed,
                  "best_val": best_val}, f)
   ```
-- **Artifact saving:** Save model weights, loss curves, and other reusable
-  artifacts to the approach directory. Add a `.gitignore` for large files:
+- **Checkpoint loading (when reusing architecture):** Before training, check
+  if prior approaches saved checkpoints for the same or similar model. Load
+  them as initialization:
   ```python
-  # At end of run(), save artifacts
-  import torch  # or equivalent
-  torch.save(model.state_dict(), os.path.join(approach_dir, "model_weights.pt"))
-  # Write .gitignore for large files
-  gitignore_path = os.path.join(os.path.dirname(__file__), ".gitignore")
-  with open(gitignore_path, "w") as f:
-      f.write(".gitignore\n*.pt\n*.pth\n*.bin\n*.safetensors\n")
+  import glob, pickle
+  approach_dir = os.path.dirname(__file__)
+  parent = os.path.dirname(approach_dir)
+  ckpts = sorted(glob.glob(os.path.join(parent, "*_*/model_*.pkl")),
+                 key=os.path.getmtime)
+  if ckpts:
+      prior_model = pickle.load(open(ckpts[-1], "rb"))
+      # Use as initialization or warm start
   ```
+  Skip for fundamentally different architectures.
+- **Artifact saving (MANDATORY):** Save model checkpoints to disk during
+  training, not just at the end. This enables trial recovery and iterative
+  refinement when a trial is killed or adjusted.
+  ```python
+  import pickle
+  approach_dir = os.path.dirname(__file__)
+  # During training - save after each model/epoch:
+  with open(os.path.join(approach_dir, f"model_day{d}.pkl"), "wb") as f:
+      pickle.dump(model, f)
+  ```
+  `.gitignore` is auto-created by eval_and_record.py - do not create it yourself.
 
 ### 4. EVALUATE (tool call 2: Bash)
 
 **CRITICAL: This is ONE Bash call. Nothing else.**
 
 ```bash
-cd <session_dir> && python3 eval_and_record.py approaches/<NNN>_<name> --timeout=<seconds>
+cd <session_dir> && python3 eval_and_record.py approaches/<NNN>_<name>
 ```
 
-**For long trials (>60s estimated):** Use `run_in_background: true` on the
-Bash tool call. While waiting, monitor `approaches/<NNN>/training_progress.json`
-by reading it periodically. This lets you observe convergence, detect divergence
-early, and make informed decisions about the next trial. When the background
-task completes, you'll be notified automatically - process the result and
-continue the loop.
+**For trials estimated <60s:** Run normally (foreground). Full output appears.
+
+**For trials estimated >60s:** Use `run_in_background: true` on the Bash call.
+Monitor `approaches/<NNN>/training_progress.json` every 30-60s:
+- Check: elapsed time, current phase, loss trend, models completed
+- If training is stalled, diverging, or projected time far exceeds budget:
+  soft-kill the process (see soft-kill protocol above)
+- If progress looks healthy: let it run to completion
+When the background task completes, process the result and continue the loop.
 
 `eval_and_record.py` handles everything:
 1. Loads and runs the approach
@@ -273,16 +305,19 @@ When you see this marker:
 3. Consider using it for the next approach (not mandatory).
 4. Continue the loop.
 
-## Timeout Recovery
+## Soft-Kill Recovery
 
-When eval_and_record.py outputs `!! TIMEOUT <name> after <N>s`:
+When you kill a background trial early (via pkill/wmic/taskkill):
 
-1. The approach exceeded its time budget. eval_and_record.py has already
-   recorded it with status "timeout" in results.json.
-2. Delete the approach folder: `rm -rf approaches/<NNN>_<name>`
+1. The process terminates. eval_and_record.py will NOT have recorded results.
+2. Check the approach folder for partial artifacts:
+   - `training_progress.json` - how far did it get?
+   - `model_*.pkl` or similar checkpoints - any saved models?
+   - `scores.json` - did evaluation complete before the kill?
 3. Decide next action using thinking mode:
    - **Same idea, faster method:** Reduce iterations, simplify model, subsample data
-   - **Same idea, more budget:** Increase `--timeout` if the approach was close
+   - **Resume from checkpoint:** If checkpoints exist, write a new approach that
+     loads them and continues from where training stopped
    - **Different idea:** Switch to a fundamentally different, faster paradigm
 4. Write the replacement approach (reuse the same NNN number or increment).
 

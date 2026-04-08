@@ -95,23 +95,11 @@ Example metrics.json: `{"per_product_accuracy": {"A": 0.65, "B": 0.33}, "model_c
 
 ## Budget Enforcement
 
-For time-budgeted experiments, evaluate.py should enforce the budget:
+Budget enforcement is handled by the agent, not by evaluate.py or
+eval_and_record.py. The agent estimates runtime, monitors progress via
+`training_progress.json`, and soft-kills the process if the trial exceeds
+its budget or stalls.
 
-```python
-import signal
-
-def timeout_handler(signum, frame):
-    raise TimeoutError("Budget exceeded")
-
-def evaluate(run_fn, budget_seconds=300):
-    signal.signal(signal.SIGALRM, timeout_handler)
-    signal.alarm(budget_seconds)
-    try:
-        data = get_data()
-        output = run_fn(data)
-        return compute_metrics(output, data)
-    finally:
-        signal.alarm(0)
-```
-
-For `--budget=none`, skip timeout enforcement.
+The `budget_per_approach` field in results.json serves as an advisory
+guideline for the agent's runtime estimation, not a hard enforcement
+mechanism. There is no timer or signal-based timeout in the framework.

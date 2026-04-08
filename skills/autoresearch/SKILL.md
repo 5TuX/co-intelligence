@@ -42,12 +42,12 @@ Nothing else. Not "diminishing returns." Not "I've explored all directions."
 
 ```
 TOOL 1 (Write): approaches/<NNN>_<name>/approach.py
-TOOL 2 (Bash):  cd <session_dir> && python3 eval_and_record.py approaches/<NNN>_<name> --timeout=<seconds>
+TOOL 2 (Bash):  cd <session_dir> && python3 eval_and_record.py approaches/<NNN>_<name>
 ```
 
 For long trials (>60s estimated): use `run_in_background: true` on the Bash
-call. Monitor `approaches/<NNN>_<name>/training_progress.json` while waiting.
-When notified of completion, process the result and write the next approach.
+call. Monitor `training_progress.json` while waiting. Soft-kill if stalled or
+projected time far exceeds budget. When notified of completion, process result.
 
 `eval_and_record.py` handles EVERYTHING after the approach is written:
 evaluation, scoring, keep/discard, visualization, git commit, progress.png,
@@ -99,14 +99,16 @@ anti-patterns, self-check rules, and escalation strategy.
   estimated >60s. Monitor `training_progress.json` while waiting.
 - ALWAYS check eval output for `!! SEARCH_NEEDED` or `!! SEARCH_SUGGESTED`
   markers and perform web research before writing the next approach.
-- ALWAYS save reusable artifacts (weights, loss curves, embeddings) to the
-  approach directory. Add a `.gitignore` for large binary files.
-- ALWAYS use thinking mode to estimate a timeout for each trial based on
-  approach type (tree vs neural net vs ensemble) and prior similar trials.
-  Pass `--timeout=<seconds>` to eval_and_record.py.
+- ALWAYS save model checkpoints during training (after each epoch/model, not
+  just at end). When reusing architecture, load prior checkpoints. The framework
+  auto-generates `.gitignore` per approach - you save checkpoints, it handles exclusion.
+- ALWAYS use thinking mode to estimate runtime (including fixed costs like
+  data loading and visualization). Use this to choose foreground vs background
+  execution. Monitor background trials via training_progress.json. Soft-kill
+  (pkill/wmic) if projected time far exceeds budget or training diverges.
 - ALWAYS use Optuna for hyperparameter tuning when the approach has tunable
   knobs. You pick the method (creative); Optuna picks the params (mechanical).
-  Keep studies small (10-30 trials) within the timeout budget.
+  Keep studies small (10-30 trials) within your estimated runtime budget.
 
 ### Message format during the loop
 

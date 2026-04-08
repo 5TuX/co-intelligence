@@ -78,7 +78,26 @@ or creates overly complex approaches that slow training to a crawl.
 
 ---
 
-## 5. Scope Drift / Agent Goes Off-Script
+## 5. Lost Compute from Killed Trials
+
+**Problem:** When a trial is killed (soft-kill, crash, or interruption), all
+model weights are lost since they were in memory only. The next trial trains
+from scratch, wasting all prior compute.
+
+> "Trial 063 trained 15 LightGBM models over 28 minutes, then the eval phase
+> ran over budget. All model weights were lost - the entire training run was
+> wasted. The next trial started from scratch."
+> - Real autoresearch session, MTG forecasting experiment
+
+**Solution baked in:**
+- Approaches MUST save checkpoints during training (per epoch/model)
+- When reusing architecture, load latest checkpoint from prior trials
+- eval_and_record.py auto-generates `.gitignore` per approach folder
+- See experiment-loop.md for checkpoint save/load patterns
+
+---
+
+## 6. Scope Drift / Agent Goes Off-Script
 
 **Problem:** Instead of optimizing the target, the agent pursues its own
 research interests.
@@ -96,7 +115,7 @@ research interests.
 
 ---
 
-## 6. Loop Ending Too Soon
+## 7. Loop Ending Too Soon
 
 **Problem:** The agent decides to stop, asks permission to continue,
 or concludes "we've reached a good stopping point."
@@ -115,7 +134,7 @@ or concludes "we've reached a good stopping point."
 
 ---
 
-## 7. Context Window Growth
+## 8. Context Window Growth
 
 **Problem:** With long-running experiments, context grows until the agent
 loses coherence or hits limits.
@@ -138,7 +157,8 @@ loses coherence or hits limits.
 | All approaches "improve" | Leaky validation | Switch to expanding windows, add hold-out |
 | Agent stops after 10 runs | Missing NEVER STOP directive | Re-read SKILL.md rules |
 | Same experiment repeated | Not reading results.json | Force read at loop start |
-| Runs taking 30+ minutes | No budget enforcement | Add timeout, kill at 2x budget |
+| Runs taking 30+ minutes | Poor runtime estimate | Estimate fixed costs, monitor training_progress.json, soft-kill if stalled |
+| Model weights lost on kill | No checkpoint saving | Save checkpoints every epoch/model, load in next trial |
 | Evaluation scores nonsensical | Agent modified fixed/ | Check git diff, restore fixed/ |
 | Agent off on tangent | No scope constraint | Re-read experiment-plan.md |
 | Crashes from OOM | No complexity limits | Add feature/model size caps |
