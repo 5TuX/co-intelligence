@@ -1,13 +1,28 @@
 #!/usr/bin/env bash
-# plugin-update.sh - Pull latest marketplace and compare versions.
+# plugin-update.sh - Check and apply plugin updates.
+# Reads latest version from GitHub API directly, detects code changes via commits.
 # Usage: plugin-update.sh <plugin@marketplace>
+# Usage: plugin-update.sh <plugin@marketplace> apply-update
 # Usage: plugin-update.sh              (list all installed plugins)
-# Example: plugin-update.sh co-intelligence@co-intelligence
 
 set -euo pipefail
 
 PLUGINS_FILE="$HOME/.claude/plugins/installed_plugins.json"
 MARKETPLACES="$HOME/.claude/plugins/marketplaces"
+
+PY=$(command -v python3 2>/dev/null || command -v python 2>/dev/null || echo "")
+
+# Read version from a GitHub repo file via API + base64 decode
+# Args: <owner/repo> <file_path> <python_extract_expression>
+gh_read_version() {
+    local repo="$1" path="$2" expr="$3"
+    [ -z "$PY" ] && return 1
+    command -v gh >/dev/null 2>&1 || return 1
+    local content
+    content=$(gh api "repos/$repo/contents/$path" --jq '.content' 2>/dev/null) || return 1
+    [ -z "$content" ] && return 1
+    echo "$content" | $PY -c "$expr" 2>/dev/null | tr -d '\r'
+}
 
 # No argument: list installed plugins with versions
 if [ -z "${1:-}" ]; then
@@ -43,57 +58,88 @@ if [ -z "$INSTALLED" ]; then
     exit 1
 fi
 
-# State file to persist BEFORE_HASH across check/apply invocations
+# State file to persist LOCAL_HEAD across check/apply invocations
 STATE_FILE="/tmp/plugin-update-${MARKETPLACE_NAME}.hash"
 
-# Pull latest from remote
-echo "Pulling $MARKETPLACE_NAME marketplace..."
-BEFORE_HASH=$(git -C "$MARKETPLACE_DIR" rev-parse HEAD)
-git -C "$MARKETPLACE_DIR" pull origin main 2>&1
-AFTER_HASH=$(git -C "$MARKETPLACE_DIR" rev-parse HEAD)
+# Record local HEAD before any network operations
+LOCAL_HEAD=$(git -C "$MARKETPLACE_DIR" rev-parse HEAD)
 
-# Count new commits pulled
-COMMITS_PULLED=0
-if [ "$BEFORE_HASH" != "$AFTER_HASH" ]; then
-    COMMITS_PULLED=$(git -C "$MARKETPLACE_DIR" rev-list --count "${BEFORE_HASH}..${AFTER_HASH}")
-    echo "$BEFORE_HASH" > "$STATE_FILE"
+# --- Read latest version from GitHub API (not local clone) ---
+REMOTE_URL=$(git -C "$MARKETPLACE_DIR" remote get-url origin 2>/dev/null || echo "")
+OWNER_REPO=$(echo "$REMOTE_URL" | sed -E 's|.*github\.com[:/]([^/]+/[^/.]+)(\.git)?$|\1|')
+
+LATEST=""
+if [ -n "$OWNER_REPO" ] && [ -n "$PY" ] && command -v gh >/dev/null 2>&1; then
+    # plugin.json is authoritative for version
+    LATEST=$(gh_read_version "$OWNER_REPO" ".claude-plugin/plugin.json" "
+import sys,json,base64
+try:
+    d=json.loads(base64.b64decode(sys.stdin.read().strip()))
+    v=d.get('version','')
+    if v: print(v)
+except: pass
+") || true
+    # Fallback to marketplace.json
+    if [ -z "$LATEST" ]; then
+        LATEST=$(gh_read_version "$OWNER_REPO" ".claude-plugin/marketplace.json" "
+import sys,json,base64
+try:
+    d=json.loads(base64.b64decode(sys.stdin.read().strip()))
+    v=d.get('plugins',[{}])[0].get('version','')
+    if v: print(v)
+except: pass
+") || true
+    fi
 fi
 
-# Read latest version from marketplace
-LATEST=$(jq -r '.plugins[0].version' "$MARKETPLACE_DIR/.claude-plugin/marketplace.json")
+# Last resort: read from local clone (plugin.json is authoritative, same as API path)
 if [ -z "$LATEST" ]; then
-    echo "ERROR: could not read version from marketplace.json"
+    LATEST=$(jq -r '.version' "$MARKETPLACE_DIR/.claude-plugin/plugin.json" 2>/dev/null | tr -d '\r')
+fi
+if [ -z "$LATEST" ]; then
+    LATEST=$(jq -r '.plugins[0].version' "$MARKETPLACE_DIR/.claude-plugin/marketplace.json" 2>/dev/null | tr -d '\r')
+fi
+
+if [ -z "$LATEST" ]; then
+    echo "ERROR: could not determine latest version"
     exit 1
+fi
+
+# --- Detect code changes via commit comparison ---
+git -C "$MARKETPLACE_DIR" fetch origin main >/dev/null 2>&1 || true
+REMOTE_HEAD=$(git -C "$MARKETPLACE_DIR" rev-parse origin/main 2>/dev/null || echo "")
+
+COMMITS_BEHIND=0
+CHANGES_SUMMARY=""
+if [ -n "$REMOTE_HEAD" ] && [ "$LOCAL_HEAD" != "$REMOTE_HEAD" ]; then
+    COMMITS_BEHIND=$(git -C "$MARKETPLACE_DIR" rev-list --count "HEAD..origin/main" 2>/dev/null || echo 0)
+    if [ "$COMMITS_BEHIND" -gt 0 ]; then
+        CHANGES_SUMMARY=$(git -C "$MARKETPLACE_DIR" log --oneline "HEAD..origin/main" 2>/dev/null | head -20)
+        echo "$LOCAL_HEAD" > "$STATE_FILE"
+    fi
 fi
 
 PLUGIN_NAME="${KEY%%@*}"
 CACHE_BASE="$HOME/.claude/plugins/cache/$MARKETPLACE_NAME/$PLUGIN_NAME"
 
-# Check actual file state in cache - may be ahead of registry
-CACHE_FILE_VER=""
-for dir in "$CACHE_BASE"/*/; do
-    [ -d "$dir" ] || continue
-    v=$(jq -r '.plugins[0].version // empty' "$dir/.claude-plugin/marketplace.json" 2>/dev/null || echo "")
-    [ -n "$v" ] && CACHE_FILE_VER="$v" && break
-done
-
+# --- Output ---
 echo ""
 echo "INSTALLED=$INSTALLED"
 echo "LATEST=$LATEST"
+echo "COMMITS_BEHIND=$COMMITS_BEHIND"
 
-if [ "$INSTALLED" = "$LATEST" ]; then
-    if [ "$COMMITS_PULLED" -gt 0 ]; then
-        echo "COMMITS_PULLED=$COMMITS_PULLED"
-        echo "STATUS=files-changed"
-    else
-        echo "STATUS=up-to-date"
-    fi
-elif [ -n "$CACHE_FILE_VER" ] && [ "$CACHE_FILE_VER" = "$LATEST" ]; then
-    # Files already match upstream but registry lags
-    echo "CACHE_VERSION=$CACHE_FILE_VER"
-    echo "STATUS=files-current"
-else
+if [ "$INSTALLED" != "$LATEST" ]; then
     echo "STATUS=update-available"
+elif [ "$COMMITS_BEHIND" -gt 0 ]; then
+    echo "STATUS=files-changed"
+else
+    echo "STATUS=up-to-date"
+fi
+
+if [ -n "$CHANGES_SUMMARY" ]; then
+    echo "CHANGES_START"
+    echo "$CHANGES_SUMMARY"
+    echo "CHANGES_END"
 fi
 
 # Subcommand: apply-update - sync marketplace files into all cache directories
@@ -104,6 +150,10 @@ if [ "${2:-}" = "apply-update" ]; then
         SUMMARY_FROM=$(cat "$STATE_FILE")
         rm -f "$STATE_FILE"
     fi
+
+    # Merge fetched changes into working directory (fetch already happened in check phase)
+    git -C "$MARKETPLACE_DIR" merge origin/main --ff-only 2>&1 || \
+        git -C "$MARKETPLACE_DIR" pull origin main 2>&1
 
     # Sync into every version directory (Claude Code may recreate them)
     SYNCED=0

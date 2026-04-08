@@ -67,31 +67,17 @@ passing `<plugin-name>` as target. Wait for the structured report.
   If `-y` flag: skip confirmation, proceed directly to step 3.
   Otherwise ask: **"Publish? (y/n)"** - this is the ONLY confirmation gate.
 
-### 3. Automated pipeline (after user says yes)
+### 3. Automated pipeline (runs uninterrupted after single yes)
 
-If user confirms, run steps 3a-3d without further prompts:
+Execute ALL of these in sequence with ZERO intermediate questions or narration:
 
-**3a. Commit**
-```bash
-cd ~/.claude/plugins/marketplaces/<name>
-git add -A
-git commit -m "<message>"
-```
+1. `git add -A && git commit -m "<message>"` (stage + commit changes)
+2. Increment patch version in BOTH `plugin.json` AND `marketplace.json` (plugins[0].version), then `git add -A && git commit -m "chore: bump to v<new>"`
+3. `git push origin main`
+4. Print: "Published <name> v<new_version>. Run `/reload-plugins` to activate."
 
-**3b. Version bump**
-Increment patch in `.claude-plugin/plugin.json`, commit separately.
-
-**3c. Push**
-```bash
-cd ~/.claude/plugins/marketplaces/<name>
-git push origin main
-```
-
-**3d. Report**
-Print: "Published <name> v<new_version>. Run `/reload-plugins` to activate."
-
-**Rules:** Always show diff before the single confirmation. Never force-push.
-One yes = commit + bump + push. No intermediate prompts.
+**Rules:** One confirmation gate (step 2), then the entire pipeline runs.
+Never ask between commit/bump/push. Never force-push.
 
 ---
 
