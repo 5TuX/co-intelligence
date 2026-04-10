@@ -95,6 +95,28 @@ You are running an autonomous research loop. Core rules:
 17. Use Optuna for hyperparameter tuning when approach has tunable knobs.
 18. ONE method per trial. No ensembles. Push each method to its optimum before
     trying a different one. Depth-first per method, breadth across methods.
+
+## Forbidden patterns (fail-fast contract)
+
+These turn the loop into theater. Never introduce them in approach.py,
+fixed/evaluate.py, fixed/visualize.py, or eval_and_record.py.
+
+- NEVER write bare `except Exception: pass` or `except Exception: continue`
+  in evaluate.py or visualize.py. Crashes must be loud and recorded, not
+  silently skipped.
+- NEVER fall back to a synthetic prediction (median, mean, zero, last value)
+  when the real model raises. A crashed approach must score as the worst
+  possible value for the primary metric direction (`+inf` if lower is better,
+  `-inf` if higher is better), not a neutral middle.
+- NEVER render a visualization that fabricates data for failed timesteps.
+  If the model couldn't predict at a cutoff, the plot must show the crash
+  (empty, red marker, explicit annotation), not an imputed line.
+- PREFER guard clauses (precondition checks) over try/except catch-alls.
+  Example: if a model crashes on constant inputs, check `np.ptp(y) > 1e-12`
+  before calling it and return a well-defined constant forecast, not a
+  try/except wrapping the call.
+- A single silent `except` in the eval stack invalidates every keep/discard
+  decision that followed it. This is how v2 drifted for 800 approaches.
 EOF
 ```
 
@@ -120,6 +142,10 @@ cat > "$SESSION_DIR/.autoresearch-directives" << 'EOF'
 12. If eval says !! TIMEOUT: delete folder, adjust, try again.
 13. For long trials: run eval in background, monitor training_progress.json.
 14. Save and reuse artifacts (weights, loss curves) across trials.
+15. FAIL-FAST: no bare `except` in eval/viz, no synthetic fallbacks when the
+    model crashes, no imputed values in visualizations. Crashes must be loud.
+    Prefer guard clauses over try/except. A silent except invalidates every
+    later keep/discard decision.
 EOF
 ```
 

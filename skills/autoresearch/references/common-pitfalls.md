@@ -150,6 +150,91 @@ loses coherence or hits limits.
 
 ---
 
+## 9. Trusting a 0.3% Improvement (Noise as Signal)
+
+**Problem:** An approach scores 0.4912 against a current best of 0.4898. The
+agent logs it as a keep and builds on top. But the eval has inherent noise
+(random seeds, data shuffles, VM contention, floating point order of
+operations) and the "improvement" is within one standard deviation of
+repeating the same approach twice. Seventy approaches later the leaderboard
+is dominated by noise.
+
+> "Only trust results where stddev is less than 2% of the mean. Anything
+> closer is a coin flip. Re-run close candidates on a fresh seed or VM
+> before promoting them."
+> - SkyPilot "Scaling Autoresearch" blog (paraphrased)
+
+**Solution baked in:**
+
+- `min_improvement` in `results.json` is the first gate: any `|new - best|`
+  below this threshold is auto-discarded regardless of direction. Set it
+  during planning (Step 3, Q6b). Kills the long tail of 1e-6 "wins".
+- **2% rule of thumb:** if two top candidates differ by less than 2% of the
+  primary metric value, neither is reliably better. Re-evaluate both on a
+  fresh random seed (or fresh VM if the eval touches GPUs) before declaring
+  a winner. Add `random_state` plumbing in `fixed/evaluate.py` that can
+  be passed by `eval_and_record.py --seed N`.
+- **`--repeat N` flag on `eval_and_record.py`** (recommended but not
+  mandatory): for close candidates only, re-run the same approach N times
+  with different seeds. Report mean, stddev, and min/max in `metrics.json`.
+  A candidate that wins on one seed but loses on three others is not a
+  real winner.
+- **Don't run `--repeat` by default.** It triples the cost of every trial
+  and most trials are obviously non-competitive. Gate it on closeness to
+  the current best.
+
+---
+
+## 10. The Three-Legged Stool of Honesty (v2 sales-forecast postmortem)
+
+**Problem:** Three bugs stacked on top of each other, none caught by any of
+the others, all cooperating to produce 800 approaches' worth of fake progress.
+
+> "v2 ran 800 approaches. Weighted accuracy moved from 0.5820 to 0.5852 and
+> stayed there for the last 400. The display showed plausible train/test
+> curves. Git log looked healthy. But the loader was compressing the input,
+> the evaluator was silently skipping crashed cutoffs, and the visualizer
+> was falling back to `np.median(series.tail(9))` whenever the factory
+> raised. Nothing was wrong in any single place, and everything was wrong
+> overall."
+> - Real autoresearch session, sales-forecast v2, 2026-04
+
+The three bugs:
+
+1. **Loader compressed per-transaction structure.** `groupby(["month","REF"]).sum()`
+   collapsed 42 transactions into a single scalar. Every model was trying
+   to fit noise because the signal had been deleted upstream.
+2. **Evaluator silently skipped crashed cutoffs** via `except Exception: continue`.
+   CatBoost crashed on constant inputs for one product; the eval treated
+   those cutoffs as "didn't happen" and averaged over the survivors. The
+   score looked stable because the failures were invisible.
+3. **Visualizer faked the fallback.** When the factory raised, `visualize.py`
+   called `float(np.median(series.tail(9)))` and rendered a constant
+   prediction line. Users looking at the plot saw three identical blue dots
+   at the start of the test period and assumed the model was "working".
+
+**Why no single check caught it:** each file looked defensible on its own.
+The loader "handled duplicates". The evaluator "was robust to crashes". The
+visualizer "had a fallback". Honesty is a property of the stack, not of any
+one file.
+
+**Solution baked in:**
+
+- Fail-fast contract in `loop-enforcement.md` Forbidden patterns (SR3).
+- No silent except in eval or viz. No synthetic fallbacks.
+- Visualizer must render crashes honestly (markers, empty spans,
+  annotations), not interpolate.
+- Loader design is a planning-phase conversation (Step 2 + Step 4). If your
+  data has per-transaction structure, decide whether to expose it or collapse
+  it on purpose, not by accident.
+- `min_improvement` (SR1) would have killed the 1e-6 drift component of
+  this failure, but not the silent skipping. You need all three layers.
+
+**Lesson:** honesty in data + eval + viz is a three-legged stool. One silent
+`except` anywhere and the whole loop becomes theater.
+
+---
+
 ## Quick Reference: What To Check When Things Go Wrong
 
 | Symptom | Likely Cause | Fix |
@@ -162,3 +247,6 @@ loses coherence or hits limits.
 | Evaluation scores nonsensical | Agent modified fixed/ | Check git diff, restore fixed/ |
 | Agent off on tangent | No scope constraint | Re-read experiment-plan.md |
 | Crashes from OOM | No complexity limits | Add feature/model size caps |
+| Every 3rd trial "improves" by 1e-6 | No `min_improvement` gate | Set `min_improvement` in results.json |
+| Two candidates within 1% of each other | Noise, not signal | `--repeat N` with different seeds, check stddev |
+| Plot looks clean but model never really ran | Silent except + fake fallback | Fail-fast contract, see pitfall #10 |

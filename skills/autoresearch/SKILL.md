@@ -80,6 +80,14 @@ anti-patterns, self-check rules, and escalation strategy.
   "well-optimized", "structural bottleneck", "key findings", "key learnings",
   "confirmed optimal".
 - Do NOT generate plots, commit, or update reports as separate tool calls.
+- Do NOT write bare `except Exception: pass/continue` in `fixed/evaluate.py`
+  or `fixed/visualize.py`. Crashes must be loud and recorded, not skipped.
+- Do NOT fall back to synthetic predictions (median/mean/zero/last value)
+  when a model raises. A crashed approach scores at the worst possible value
+  for the primary metric direction, not a neutral middle.
+- Do NOT fabricate visualization data for failed timesteps. Render the crash
+  honestly (empty, marker, annotation). See `references/loop-enforcement.md`
+  "Forbidden patterns" for the full fail-fast contract.
 
 ### ALWAYS rules
 
@@ -198,6 +206,10 @@ autoresearch -- <mode>
 - `--min=<number>` - minimum approaches before stopping (default: none = forever)
 - `--tag=<name>` - session name (default: `YYYY-MM-DD`)
 - `--objectives=<m1,m2,...>` - metrics to track
+- `--no-research` - skip the enforced Phase 0 research phase (requires
+  justification, see `references/planning-protocol.md`)
+- `--no-holdout` - skip the enforced hold-out test set (requires
+  justification, see `references/planning-protocol.md`)
 
 ---
 
@@ -226,8 +238,11 @@ approaches tried, best score(s). Suggest `--resume=<tag>` or a new task.
 
 **Call `EnterPlanMode` immediately.** No files written until plan confirmed.
 
-Follow the detailed protocol in `references/planning-protocol.md`. The 7 steps:
+Follow the detailed protocol in `references/planning-protocol.md`. Phase 0
+(Research) runs by default; disable with `--no-research`. Then the 7 steps:
 
+0. **Research Phase** - populate `references/INDEX.md` with at least N prior
+   art entries before any approach runs. Enforced by `eval_and_record.py`.
 1. **Task Framing** - prediction/generation/optimization? Input/output contract
 2. **Data** - source, format, size, split strategy, leakage risks, hold-out set
 3. **Metrics and Visualization** - success measures, direction, primary metric,
