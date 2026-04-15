@@ -385,13 +385,14 @@ $SESSION_DIR/
 └── approaches/
     ├── 000_naive_baseline/     (smoke test, unchanged)
     ├── 001_<name>/             ➕ new on iteration 1
-    │   ├── approach.py         (the code; analysis lives in the docstring)
-    │   ├── rationale.md        (reproducibility sidecar — idea, hypothesis, what we'll learn)
-    │   ├── live.log
-    │   ├── training_progress.json
-    │   ├── visualization.png
-    │   ├── scores.json
-    │   ├── metrics.json
+    │   ├── rationale.md        ⬛ written BEFORE eval — idea, hypothesis, what we'll learn
+    │   ├── approach.py         ⬛ the code (analysis lives in the docstring)
+    │   ├── live.log            ⬛ written by eval_and_record.py
+    │   ├── training_progress.json  ⬛ written by training loop
+    │   ├── visualization.png   ⬛ written by fixed/visualize.py
+    │   ├── scores.json         ⬛ written by fixed/evaluate.py
+    │   ├── metrics.json        ⬛ written by fixed/evaluate.py
+    │   ├── commentary.md       ⬛ written AFTER eval, on next iteration — result, vs-hypothesis, lessons
     │   ├── checkpoints/        (not in git — excluded by per-approach .gitignore)
     │   │   ├── epoch_01.pt     (reusable by later approaches)
     │   │   └── epoch_02.pt

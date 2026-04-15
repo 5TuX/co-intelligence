@@ -41,29 +41,53 @@ turn-end is blocked and you are forced to write the next approach.
 
 ## Core Loop Contract
 
-**Each iteration = exactly 2 tool calls. No exceptions.**
+**Each iteration = up to 4 tool calls in a fixed order. No exceptions.**
 
 ```
-TOOL 1 (Write): approaches/<NNN>_<name>/approach.py
-TOOL 2 (Bash):  cd <session_dir> && python3 eval_and_record.py approaches/<NNN>_<name>
+TOOL 1 (Write, conditional): approaches/<PREV>/commentary.md
+                              — postmortem for the approach JUST finished
+                                (skip on iteration 1 — there is no previous)
+
+TOOL 2 (Write): approaches/<NNN>_<name>/rationale.md
+                 — pre-trial hypothesis for the NEW approach
+
+TOOL 3 (Write): approaches/<NNN>_<name>/approach.py
+                 — the actual code for the new approach
+
+TOOL 4 (Bash):  cd <session_dir> && python3 eval_and_record.py approaches/<NNN>_<name>
+                 — runs the trial, scores it, commits, updates reports
 ```
 
-For long trials (>60s estimated): use `run_in_background: true` on the Bash
-call. Monitor `training_progress.json` while waiting. Soft-kill if stalled or
-projected time far exceeds budget. When notified of completion, process result.
+**On iteration 1** (first real approach after session init or after the
+smoke test): skip Tool 1 — there is no previous approach to comment on
+(the smoke test's commentary is written as part of the smoke-test
+approval flow, not inside the loop).
 
-`eval_and_record.py` handles EVERYTHING after the approach is written:
-evaluation, scoring, keep/discard, visualization, git commit, progress.png,
-report.md update, README update, .loop-state update.
+**On every subsequent iteration**: all 4 tool calls fire, in order.
+Commentary.md is written BEFORE rationale.md because the lessons from
+the previous trial shape the hypothesis for the next one.
 
-**NEVER do any of these as separate tool calls:**
+For long trials (>60s estimated): use `run_in_background: true` on Tool
+4. Monitor `training_progress.json` while waiting. Soft-kill if stalled
+or projected time far exceeds budget. When notified of completion,
+process the result and proceed to the next iteration's commentary.
+
+`eval_and_record.py` handles EVERYTHING scoring-and-bookkeeping-related
+after the approach is written: evaluation, scoring, keep/discard,
+visualization, git commit, progress.png, report.md update, README
+update, .loop-state update.
+
+**NEVER do any of these as separate tool calls outside Tool 4:**
 - Generate or save plots
 - Git add/commit
 - Update report.md, README.md, or progress.png
 - Run matplotlib or any visualization code
 
-If you catch yourself writing code for any of the above outside
-eval_and_record.py, STOP. You are creating an exit point.
+The only files the agent writes directly per iteration are the three
+sidecar markdown files (commentary, rationale) and approach.py. Every
+other artifact is produced by `eval_and_record.py`. If you catch
+yourself writing code for any of the forbidden items above outside
+Tool 4, STOP. You are creating an exit point.
 
 Read `references/experiment-loop.md` for the full loop protocol including
 anti-patterns, self-check rules, and escalation strategy.
@@ -98,18 +122,29 @@ anti-patterns, self-check rules, and escalation strategy.
 - ALWAYS commit every approach (keep, discard, crash) via eval_and_record.py.
 - ALWAYS immediately start the next iteration after recording results.
 - ALWAYS put analysis in the approach.py docstring, not in message text.
-- ALWAYS write a short `rationale.md` alongside every `approach.py`.
-  Rationale.md is a 5-15 line human-readable explanation of the *idea*
-  behind the approach — what hypothesis is being tested, what we expect
-  to learn, why this idea now (as opposed to another), and any link to a
-  paper or prior approach it builds on. This is a reproducibility
-  sidecar: anyone reading the session months later should be able to
-  understand the thinking without reverse-engineering the code. Required
-  fields: **Idea** (one sentence), **Hypothesis** (what we think will
-  happen and why), **Builds on** (prior approach NNN or paper citation,
-  if any), **What we'll learn** (what this trial resolves regardless of
-  score). Keep it short — the code explains the how; rationale.md
-  explains the why.
+- ALWAYS write a short `rationale.md` alongside every `approach.py`
+  **before** running eval. Rationale.md is a 5-15 line human-readable
+  explanation of the *idea* behind the approach — what hypothesis is
+  being tested, what we expect to learn, why this idea now (as opposed
+  to another), and any link to a paper or prior approach it builds on.
+  Required fields: **Idea** (one sentence), **Hypothesis** (what we
+  think will happen and why), **Builds on** (prior approach NNN or
+  paper citation, if any), **What we'll learn** (what this trial
+  resolves regardless of score).
+- ALWAYS write a short `commentary.md` **after** eval completes, on
+  the next iteration, as part of reviewing the previous approach's
+  artifacts. Commentary.md is a 5-15 line postmortem — what actually
+  happened vs. the rationale's hypothesis, what the visualization
+  shows (you are multimodal — describe it), what the numbers actually
+  say, and what this result implies for the next trials. Required
+  fields: **Result** (keep/discard + score), **Vs. hypothesis** (did
+  reality match the prediction?), **Visualization** (one paragraph
+  describing what the plot shows), **Lessons** (what to try next,
+  what to avoid, what's now unclear). Together, `rationale.md` and
+  `commentary.md` form a reproducibility sidecar: anyone reading the
+  session months later should be able to understand both the idea and
+  the outcome without reverse-engineering the code or re-running the
+  trial.
 - ALWAYS try creative, diverse approaches.
 - ALWAYS check user ideas queue periodically.
 - ALWAYS review artifacts from the previous trial before writing the next
