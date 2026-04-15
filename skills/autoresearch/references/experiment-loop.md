@@ -97,8 +97,14 @@ Write `approaches/<NNN>_<name>/approach.py`:
 - Self-contained, no hardcoded paths
 - Put your hypothesis and analysis in the **docstring**, not in message text
 - If based on a paper/resource, create `references.md` in the same dir
-- **Progress logging:** For iterative training (neural nets, boosting with many
-  rounds), write progress to `training_progress.json` in the approach dir:
+- **Progress logging (BINDING RULE):** See "BINDING RULES: Live Progress Logging Convention"
+  in SKILL.md. Every approach MUST:
+  1. Define `_log(msg)` helper that appends timestamped lines to `live.log` AND prints to stdout
+  2. Call `_log()` at meaningful intervals during training (start, every epoch, completion with elapsed time)
+  3. Call `_log()` periodically during prediction (every 50 samples, report count/rate/ETA)
+  
+  For iterative training (neural nets, boosting with many rounds), ALSO write progress 
+  to `training_progress.json` in the approach dir:
   ```python
   progress_file = os.path.join(os.path.dirname(__file__), "training_progress.json")
   # During training loop:
@@ -106,6 +112,7 @@ Write `approaches/<NNN>_<name>/approach.py`:
       json.dump({"epoch": epoch, "loss": loss, "elapsed": elapsed,
                  "best_val": best_val}, f)
   ```
+  Both streams (live.log and training_progress.json) enable real-time monitoring.
 - **Checkpoint loading (when reusing architecture):** Before training, check
   if prior approaches saved checkpoints for the same or similar model. Load
   them as initialization:
@@ -136,14 +143,24 @@ Write `approaches/<NNN>_<name>/approach.py`:
 
 **CRITICAL: This is ONE Bash call. Nothing else.**
 
+**BINDING RULE: Eval launches MUST redirect stdout+stderr to live.log** (see SKILL.md 
+"BINDING RULES" section). Canonical launch:
+
 ```bash
-cd <session_dir> && python3 eval_and_record.py approaches/<NNN>_<name>
+timeout <N> uv run python -u eval_and_record.py approaches/<NNN>_<name> > approaches/<NNN>_<name>/live.log 2>&1
 ```
 
-**For trials estimated <60s:** Run normally (foreground). Full output appears.
+Key points:
+- Use `python -u` (unbuffered) to flush output immediately
+- Redirect BOTH stdout AND stderr (`2>&1`) to the approach's `live.log` file
+- Use `timeout <N>` to bound execution
+- When background launch, include the exact `tail -f approaches/<NNN>_<name>/live.log` 
+  command in your message so the user can copy-paste it
+
+**For trials estimated <60s:** Run normally (foreground). Full output appears in live.log.
 
 **For trials estimated >60s:** Use `run_in_background: true` on the Bash call.
-Monitor `approaches/<NNN>/training_progress.json` every 30-60s:
+Monitor `approaches/<NNN>/live.log` and `approaches/<NNN>/training_progress.json` every 30-60s:
 - Check: elapsed time, current phase, loss trend, models completed
 - If training is stalled, diverging, or projected time far exceeds budget:
   soft-kill the process (see soft-kill protocol above)

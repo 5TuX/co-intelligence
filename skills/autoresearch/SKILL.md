@@ -118,6 +118,80 @@ anti-patterns, self-check rules, and escalation strategy.
   knobs. You pick the method (creative); Optuna picks the params (mechanical).
   Keep studies small (10-30 trials) within your estimated runtime budget.
 
+---
+
+## BINDING RULES: Live Progress Logging Convention
+
+**EVERY trial MUST conform to this live-progress-logging convention.** This enables
+the user and Claude to monitor training progress in real-time via `tail -f`.
+
+### Rule 1: _log() Helper in Every approach.py
+
+Every `approaches/<NNN>_<name>/approach.py` file MUST define a `_log(msg)` helper function that:
+1. Appends a timestamped line to `approaches/<NNN>_<name>/live.log`
+2. Prints to stdout with `flush=True` for immediate display
+
+**Canonical implementation:**
+```python
+import os, time
+_LIVE_LOG = os.path.join(os.path.dirname(__file__), "live.log")
+def _log(msg: str) -> None:
+    line = f"[{time.strftime('%H:%M:%S')}] {msg}\n"
+    print(line, end="", flush=True)
+    with open(_LIVE_LOG, "a") as f:
+        f.write(line)
+```
+
+### Rule 2: Logging Points in Training Loops
+
+Training loops in approach.py MUST call `_log()` at meaningful intervals:
+- **START:** `_log("Training started with <config summary>")`
+- **PERIODIC:** Every epoch/batch/fit step: `_log(f"Epoch {e}: loss={loss:.4f}, val={val:.4f}")`
+- **COMPLETION:** `_log(f"Training complete. Elapsed: {elapsed:.1f}s, final_loss={loss:.4f}")`
+
+For iterative training (neural nets, boosting), also write to `training_progress.json` 
+(already required in ALWAYS rules).
+
+### Rule 3: Logging Points in Prediction Loops
+
+Prediction loops MUST call `_log()` periodically (e.g., every 50 samples):
+- Include: count processed, elapsed time, rate (samples/sec), rough ETA
+- Example: `_log(f"Predicted {i}/{total} ({rate:.1f} Hz). ETA: {eta:.0f}s")`
+
+### Rule 4: Eval Launch MUST Redirect stdout+stderr to live.log
+
+**CANONICAL LAUNCH COMMAND:**
+```bash
+<env vars> timeout <N> uv run python -u eval_and_record.py approaches/v4_NNN_name > approaches/v4_NNN_name/live.log 2>&1
+```
+
+Key constraints:
+- Use `python -u` (unbuffered) for immediate output
+- Redirect both stdout AND stderr (`2>&1`) to the same stable path `approaches/v4_NNN_name/live.log`
+- The file path MUST match the approach directory exactly
+- Use `timeout <N>` to bound execution and enable soft-kill recovery
+- Background launches OK: use `run_in_background: true` on the Bash tool call
+
+**Effect:** When eval_and_record.py runs, its output streams directly to live.log, and
+the user can monitor progress in another terminal without needing approach.py's `_log()` calls.
+
+### Rule 5: User Copy-Paste Command in Background Launch Message
+
+When posting a background launch (Bash with `run_in_background: true`), the message
+MUST include the exact `tail -f` command the user can copy-paste in another terminal:
+
+**Example message:**
+```
+**NNN: [background launch]**
+Monitor progress:
+  tail -f approaches/v4_NNN_name/live.log
+<Bash tool call with run_in_background: true>
+```
+
+This ensures the user can immediately see live progress without guessing the path.
+
+---
+
 ### Message format during the loop
 
 ```
