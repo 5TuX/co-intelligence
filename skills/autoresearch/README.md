@@ -525,7 +525,7 @@ Results in `results.json` are preserved.
   planning phase
 - **`references/experiment-loop.md`** — the loop protocol, anti-patterns,
   escalation strategy
-- **`references/evaluation-contract.md`** — what "immutable evaluator"
+- **`docs/evaluation-contract.md`** — what "immutable evaluator"
   means and how to draft one
 - **`references/session-init.md`** — directory structure, `fixed/`
   templates, survival files
@@ -533,7 +533,7 @@ Results in `results.json` are preserved.
   autocompact survival strategy, the natural-language stopping feature
 - **`references/git-management.md`** — repo hygiene rules (no data files,
   no secrets, never revert)
-- **`references/common-pitfalls.md`** — validation overfitting, silent
+- **`docs/common-pitfalls.md`** — validation overfitting, silent
   drift, and other failure modes to avoid
 - **`references/report-template.md`** — the shape of the auto-generated
   report
