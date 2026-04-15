@@ -249,17 +249,40 @@ the content templates. These are NOT optional.
 2. `.autoresearch-directives` - checkpoint for context recovery
 3. `.loop-active` - signals the loop should keep running
 
-The `.loop-active` file must contain the `${CLAUDE_SESSION_ID}` on its first
-line. This enables instance isolation - only the owning session is blocked
-by the Stop hook.
+The `.loop-active` file must contain the current Claude Code session ID on
+its first line. This enables instance isolation — only the owning session is
+blocked by the Stop hook; other Claude Code instances pass through freely.
+
+**Important:** `CLAUDE_SESSION_ID` is **not** available as a shell environment
+variable in Bash tool calls, and Claude Code does **not** perform string
+substitution on `${CLAUDE_SESSION_ID}` in Write/Bash content. The session ID
+must be obtained by reading the current session's transcript filename.
 
 ```bash
-echo "${CLAUDE_SESSION_ID}" > .loop-active
+# Derive session ID from the most recently active transcript.
+# Claude Code names session transcripts <session_id>.jsonl in
+# ~/.claude/projects/<project-dir>/ . The most-recently-modified one
+# belongs to the current running session.
+LATEST=$(ls -t ~/.claude/projects/*/*.jsonl 2>/dev/null | head -1)
+if [ -z "$LATEST" ]; then
+  echo "ERROR: could not find any Claude Code transcript" >&2
+  exit 1
+fi
+SESSION_ID=$(basename "$LATEST" .jsonl)
+echo "$SESSION_ID" > "$SESSION_DIR/.loop-active"
 ```
 
-Note: `${CLAUDE_SESSION_ID}` is auto-substituted by Claude Code when writing
-the file via the Write tool or Bash. The resulting file contains a UUID like
-`a1b2c3d4-e5f6-7890-abcd-ef1234567890`.
+The resulting file contains a UUID like
+`a1b2c3d4-e5f6-7890-abcd-ef1234567890` — the same value Claude Code puts
+in the `session_id` field of its Stop-hook stdin JSON, which the hook
+parses via `jq` to match.
+
+**Concurrent-session caveat:** if multiple Claude Code sessions are running
+simultaneously on the same machine during session init, the "most recently
+active transcript" heuristic could pick the wrong one. In practice,
+autoresearch setup is intensive enough that concurrent sessions are
+unlikely, but the loop can be re-armed at any time by manually writing the
+correct UUID to `.loop-active` once the owning session is identified.
 
 ## Survival File Verification (MANDATORY)
 

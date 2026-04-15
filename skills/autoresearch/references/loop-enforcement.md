@@ -25,21 +25,30 @@ instances pass through freely.
   "hooks": [
     {
       "type": "command",
-      "command": "for f in ~/.claude/plugins/data/*/autoresearch/*/.loop-active; do if [ -f \"$f\" ]; then SID=$(head -1 \"$f\" | tr -d '\\r\\n'); if [ \"$SID\" = \"${CLAUDE_SESSION_ID}\" ]; then DIR=$(dirname \"$f\"); echo \"AUTORESEARCH LOOP ACTIVE in $DIR. Read $DIR/.autoresearch-directives. NEVER stop. Write the next approach NOW.\" >&2; exit 2; fi; fi; done"
+      "command": "INPUT=$(cat); CURRENT_SID=$(printf '%s' \"$INPUT\" | jq -r '.session_id // empty' 2>/dev/null); [ -z \"$CURRENT_SID\" ] && exit 0; for f in ~/.claude/plugins/data/*/autoresearch/*/.loop-active; do [ -f \"$f\" ] || continue; SID=$(head -1 \"$f\" | tr -d '\\r\\n'); [ -n \"$SID\" ] && [ \"$SID\" = \"$CURRENT_SID\" ] || continue; DIR=$(dirname \"$f\"); echo \"AUTORESEARCH LOOP ACTIVE in $DIR. Never stop. Once the last trial is completed, immediately write the next trial and run it. Read $DIR/.autoresearch-directives if you need to recover context.\" >&2; exit 2; done"
     }
   ]
 }
 ```
+
+**Dependency:** `jq` must be installed (`apt install jq` / `brew install jq`).
+The hook parses Claude Code's stdin JSON to get the current session ID.
 
 **Important notes:**
 
 - **Must be in settings.json, NOT in a plugin hooks.json.** Plugin-installed
   Stop hooks with exit code 2 fail silently (GitHub #10412). settings.json
   hooks work correctly.
-- **Instance-isolated via session ID.** The hook reads the session ID from
-  `.loop-active` and compares with `${CLAUDE_SESSION_ID}` (auto-substituted
-  by Claude Code). Only the owning instance is blocked. Other instances
-  (doing setup, code review, etc.) are not affected.
+- **Instance-isolated via session ID.** Claude Code sends a JSON payload
+  on stdin for every Stop event, including `{"session_id": "..."}`. The
+  hook parses it with `jq`, reads the session ID from the first line of
+  `.loop-active`, and only blocks if both are non-empty and equal. Other
+  Claude Code instances (unrelated chats, setup sessions, code reviews)
+  pass through freely because their session IDs don't match.
+- **Non-empty guards are mandatory.** If `.loop-active` is empty or the
+  stdin JSON lacks a session ID, the hook must fall through — otherwise
+  empty-string collisions would block unrelated sessions. The `-n` checks
+  in the command above enforce this.
 - **Does NOT check `stop_hook_active`.** This is intentional. We want to
   block EVERY stop attempt as long as `.loop-active` exists for this session.
 - **Exit code 2 displays as "Stop hook error"** in the Claude Code UI
@@ -177,10 +186,30 @@ approaches), it should read these files before continuing:
 3. `results.json` - full approach history
 4. `experiment-plan.md` - task definition
 
-## Removing the Loop
+## Stopping the loop
 
-The user can stop the loop by:
-1. Typing a message telling the agent to stop
-2. Running `/autoresearch stop` (removes `.loop-active` for active session)
-3. Running `rm .loop-active` in the experiment directory (manual)
-4. The `--min` approach count being reached with no recent improvement
+The loop stops when `.loop-active` is removed from the session directory.
+The Stop hook only checks for file presence and session ID — nothing else.
+There are two equivalent ways to remove the file:
+
+1. **Natural-language stop (the primary path).** The user types *"stop"*,
+   *"pause"*, *"that's enough"*, *"I'm done"*, or any equivalent. The agent
+   recognizes this as a stop signal, runs `rm "$SESSION_DIR/.loop-active"`
+   via Bash in the same turn, acknowledges briefly, and ends the turn. The
+   hook finds no file on the next stop attempt and passes through. This is
+   how stopping normally works during a session.
+
+2. **Manual shell (the escape hatch).** Run
+   `rm ~/.claude/plugins/data/*/autoresearch/<tag>/.loop-active` in any
+   terminal. Always available, independent of Claude Code state. Useful
+   when the agent is mid-trial and you want to intervene directly.
+
+Both do the same thing: they remove the file the Stop hook gates on. The
+session directory, results, approaches, and report are all preserved.
+Restart with `--resume=<tag>`.
+
+**The hook does not read message text.** The agent-driven path works
+because the agent has been trained to translate natural-language stop
+requests into the `rm` operation *before* attempting to end its turn.
+This is a feature, not a workaround: the user stops the loop
+conversationally while enforcement stays purely file-based.

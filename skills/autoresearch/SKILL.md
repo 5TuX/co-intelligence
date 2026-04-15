@@ -1,7 +1,7 @@
 ---
 name: autoresearch
 description: Use when running autonomous iterative research on any well-defined task. Adapts Karpathy's autoresearch workflow - guides the user to design the experiment, then an AI agent tests approaches in a sandbox forever, logs everything (even failures), and never stops until the user says so.
-argument-hint: '"<task>" [flags] | --resume=<tag> | stop [<tag>]'
+argument-hint: '"<task>" [flags] | --resume=<tag>'
 ---
 
 # Autoresearch
@@ -26,11 +26,14 @@ sandbox, logging everything, and producing a living research report.
 - Do NOT decide the loop is "done." You are a hypothesis generator.
   Deciding when to stop is the user's job, not yours.
 
-**What stops the loop:** Exactly two things:
-1. The user types a message telling you to stop.
-2. The `--min` count is reached AND no improvement in the last 20 approaches.
+**What stops the loop:** Only one thing — the user asks you to stop. When
+they do, you delete `$SESSION_DIR/.loop-active` via Bash in the same turn,
+acknowledge briefly, and end the turn. See §Stopping the loop for details.
 
-Nothing else. Not "diminishing returns." Not "I've explored all directions."
+Nothing else stops the loop. Not "diminishing returns." Not "I've explored
+all directions." Not a fixed approach count. Not a time budget. The Stop
+hook enforces this mechanically: until `.loop-active` is gone, every
+turn-end is blocked and you are forced to write the next approach.
 
 **Obligation contract:** Finishing approach N means you OWE approach N+1.
 
@@ -272,12 +275,10 @@ autoresearch -- <mode>
 |---------|------|
 | `--resume=<tag>` | Resume existing session |
 | `"<task>"` or plain text | New session |
-| `stop [<tag>]` | Stop loop (default: active session) |
 | (no args) | List existing sessions |
 
 **Flags (new session):**
 - `--budget=<duration>` - time per approach (default: `5m`, `none` for compute-free)
-- `--min=<number>` - minimum approaches before stopping (default: none = forever)
 - `--tag=<name>` - session name (default: `YYYY-MM-DD`)
 - `--objectives=<m1,m2,...>` - metrics to track
 - `--no-research` - skip the enforced Phase 0 research phase (requires
@@ -287,17 +288,30 @@ autoresearch -- <mode>
 
 ---
 
-## Stop Mode (`stop [<tag>]`)
+## Stopping the loop
 
-Disables the autoresearch loop by removing `.loop-active`.
+The loop stops when `.loop-active` is removed from the session directory.
+There is no slash command and no auto-stop — the user expresses intent, and
+the agent executes the file removal. Two equivalent mechanisms:
 
-1. If `<tag>` given: remove `$PLUGIN_DATA/autoresearch/<tag>/.loop-active`
-2. If no tag: scan all `.loop-active` files for one matching the current
-   `${CLAUDE_SESSION_ID}`, remove it
-3. Print: "Loop disabled for <tag>. Session preserved."
+1. **Natural-language stop (primary).** When the user says *"stop"*,
+   *"pause"*, *"that's enough"*, *"I'm done"*, or any equivalent, you MUST:
+   1. Run `rm "$SESSION_DIR/.loop-active"` via Bash in the same turn
+   2. Acknowledge the stop in one short sentence
+   3. End the turn
 
-The session directory, results, and all approaches are preserved. Only the
-loop enforcement is removed. To restart: `--resume=<tag>`.
+   The Stop hook releases the moment `.loop-active` is gone. Until you
+   delete it, the hook will keep forcing you to continue — *that is the
+   hook doing its job*. You are the bridge between the user's intent
+   (language) and the hook's mechanism (file presence). The hook cannot
+   read messages; you read them and translate.
+
+2. **Manual shell (escape hatch).** The user can also run
+   `rm ~/.claude/plugins/data/*/autoresearch/<tag>/.loop-active` in any
+   terminal. Always available, independent of Claude Code state.
+
+The session directory, results, approaches, and report are preserved in
+both cases. Restart with `--resume=<tag>`.
 
 ---
 
