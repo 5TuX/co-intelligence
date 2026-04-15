@@ -1,346 +1,557 @@
-# Planning Protocol
+# Planning Protocol — Deep Content per Topic
 
-Detailed protocol for designing a rigorous experiment before the loop begins.
-This phase runs entirely in Plan Mode. No files are written until confirmed.
+This file is the **why and how** reference for each of the eleven
+clarifying-questions topics. It complements
+`references/clarifying-questions.md`, which is the operational
+checklist ("which question to ask next").
 
-## Pre-Planning Checklist
+Agent workflow:
 
-Before asking questions, verify:
-- [ ] Working directory has enough disk space
-- [ ] Python/uv available (if compute experiments)
-- [ ] `autoresearch/` dir exists or can be created in CWD
+- Use `clarifying-questions.md` to decide which topic to ask next and
+  what wording to use.
+- Use this file (`planning-protocol.md`) when the user pushes back, or
+  when the agent needs to explain WHY a default matters, or when
+  drafting the concrete `fixed/evaluate.py` / visualization / plan
+  template content.
 
-## Phase 0 - Research (strongly recommended, offered as a clarifying question)
+The loop cannot start until all eleven topics are confirmed AND the
+pre-flight walkthrough is approved. See
+`references/preflight-walkthrough.md` for the post-clarifying step.
 
-Before any approach can run, seed the session with prior art. The agent
-asks during clarifying questions whether to run Phase 0. It is strongly
-recommended for any task that isn't a pure toy demo; the agent should
-argue for it when the user hesitates.
+---
 
-**Why this exists:** HN/SkyPilot evidence and our own v2 postmortem both show
-the same failure mode: agents skip the library and spend hundreds of trials
-reinventing known-bad ideas. A 30-minute research phase saves days of loop time.
+## Pre-planning checklist
 
-**What the agent does (with user-in-the-loop):**
+Before asking any clarifying questions, verify:
 
-1. Ask the user: "Point me at any papers, blog posts, benchmarks, prior code,
-   or forks you already know about for this task. I'll read them and summarize."
-2. **Delegate to `co-intelligence:bibliography`** in short-form mode
-   (target 15-25 papers, 1-2 waves). Feed it the task framing and any
-   user-provided seed papers. It returns a ranked bibliography in
-   `$PLUGIN_DATA/bibliography/<slug>/`.
-3. Copy the bibliography results into the session directory as
-   `$SESSION_DIR/bibliography.md` and `$SESSION_DIR/bibliography.bib`.
-   Also write a short `$SESSION_DIR/references/INDEX.md` summarizing
-   the key insights per paper (one paragraph each). Target: at least 10
-   entries in `bibliography.md`.
-4. Summarize findings to the user and ask: "Anything missing? Anything wrong?"
-   Revise. This is the only place agent-only research enters the loop; from
-   here on the agent reads its own INDEX.md before writing new approaches.
+- [ ] The chosen session storage location (from topic 11) has enough
+      disk space for approaches × checkpoints × visualizations
+- [ ] Python / `uv` available if the task involves compute experiments
+- [ ] The session directory can be created at the chosen location
+      (permissions, parent dir exists)
 
-**Enforcement:**
+---
 
-- Session init writes `research_phase_required: true` into
-  `loop-settings.json` if the user opted in, `false` if the user opted
-  out during clarifying questions.
-- `eval_and_record.py` refuses to run the first approach if
-  `research_phase_required: true` AND `$SESSION_DIR/bibliography.md` has
-  fewer than 10 entries. It prints:
-  `!! RESEARCH_INCOMPLETE: <n>/10 entries, run bibliography search before continuing`.
-- If the user opts out during clarifying questions, the agent asks why
-  and records the justification string in `loop-settings.json` as
-  `research_phase_skip_reason` (e.g., "pure toy demo, no prior art applies").
+## Topic 1 — Task framing (deep content)
 
-**What does NOT count as research:**
+Reformulate the task as a clean input/output contract:
 
-- Reading results.json from a prior unrelated session.
-- "I already know X" without a citation.
-- An empty stub file that just names papers without key-insight summaries.
+> "Each approach receives **X** and returns **Y**."
 
-Research is about importing specific, cited knowledge into the session, not
-about satisfying a checkbox.
+The agent should present this back in its own words and get explicit
+confirmation before proceeding. If the user struggles to commit to a
+single-sentence contract, that's a signal the task is under-specified
+and should be decomposed into sub-tasks (each with its own session)
+rather than papered over.
 
-## Step 1 - Task Framing
+Classification helps downstream:
 
-Present the task back in your own words. Then ask:
+- **Prediction** — output a value (regression, classification,
+  forecasting, ranking). Primary metric is usually an error/score on
+  predicted vs. actual.
+- **Generation** — produce an artifact (text, image, code, music).
+  Primary metric is usually a learned or rule-based quality score.
+- **Optimization** — find best parameters for a closed-form or
+  simulated objective. Primary metric is the objective value itself.
 
-1. **Task type**: prediction (output a value), generation (produce an artifact),
-   or optimization (find best parameters)?
-2. **Input**: What does each approach receive? (raw data, feature matrix, text,
-   images, time series, configuration...)
-3. **Output**: What must each approach return? (label, score, mask, forecast,
-   embedding, generated artifact...)
-4. **Hard constraints**: Must be interpretable? Must run in <Ns per sample?
-   Only pre-installed packages? Memory limit?
+Hard constraints belong in topic 1 if they shape the fundamental
+contract (must be interpretable, must run in <N seconds per sample,
+only pre-installed packages, memory ceiling). Runtime budget per
+approach is NOT a topic-1 constraint — it's loop tuning, asked in the
+pre-flight walkthrough.
 
-Reformulate as: "Each approach receives **X** and returns **Y**."
-Confirm before moving on.
+---
 
-## Step 2 - Data
+## Topic 2 — Data (deep content)
 
-Ask:
+Walk through these sub-questions in order:
 
-1. **Source**: Local path, URL, API, generated synthetically?
-2. **Format**: CSV, images, JSON, numpy, parquet, text files?
-3. **Size**: Approximate sample count, file size
-4. **Features**: Key columns/fields, types (numeric, categorical, text, temporal)
-5. **Split strategy**: Options and risks:
-   - Random train/val/test: simple but risks temporal leakage
-   - Time-based expanding window: best for time series (RECOMMENDED for temporal data)
-   - Stratified: if class imbalance
-   - Pre-existing split: if dataset comes with one
-6. **Known gotchas**: Class imbalance? Missing values? Leakage risks?
-   Duplicate rows? Encoding issues?
+1. **Source** — local path, URL, API, synthetic
+2. **Format** — CSV, parquet, images, JSON, numpy, text
+3. **Size** — approximate sample count, file size on disk
+4. **Features** — key columns/fields and their types (numeric,
+   categorical, text, temporal, image)
+5. **Split strategy** — options and risks:
+   - Random train/val/test — simple but risks temporal leakage
+   - Time-based expanding window — best for time series, **strongly
+     recommended** for anything temporal
+   - Stratified — if class imbalance
+   - Pre-existing split — if the dataset comes with one
+6. **Known gotchas** — class imbalance, missing values, duplicate
+   rows, encoding issues, label noise, leakage patterns
 
-**Hold-out test set is ENFORCED BY DEFAULT.**
+Propose a `fixed/data_prep.py` contract: `get_data()` returning what
+shape, with what example. Get confirmation before topic 3.
 
-Agents running hundreds of experiments against a fixed validation set will
-overfit to quirks of that specific data. This is Goodhart's Law at machine
-speed. The hold-out test set is the only defense that actually works against
-this pattern at scale: the agent literally cannot see those samples, so it
-cannot overfit to them.
+---
 
-Required setup (default):
+## Topic 3 — Hold-out test set (deep content)
 
-- `get_data()` in `fixed/data_prep.py` takes an `include_test_months` (or
-  equivalent name) flag. The loop-time loader calls it with `False`, which
-  strips the last N samples (time series) or the designated test split
-  (non-temporal).
-- `final_eval.py` is scaffolded at session init. It is the only file allowed
-  to call `get_data(include_test_months=True)`. The loop never runs it.
-- `eval_and_record.py` enforces the invariant via `test_set_reserved: true`
-  in results.json.
-- The final report (end of loop) compares loop-best validation score to
-  final_eval test score. A large gap is the signature of validation
-  overfitting.
+**Hold-out test set is strongly recommended by default.**
 
-For time series: also use expanding windows (train on past, predict future)
-and log validation AND test scores separately.
+### Why this exists
 
-Ask:
-- "Confirm default: reserve a hold-out test set? [Y/n]"
-- If yes: "What size? (For time series: how many trailing months/days. For
-  non-temporal: what fraction or absolute count.)"
-- If no: "Opting out requires a one-line justification — why is a hold-out
-  test set not applicable here?" Record the answer as
-  `test_set_skip_reason` in `loop-settings.json`.
+Agents running hundreds of experiments against a fixed validation set
+WILL overfit to quirks of that specific data. This is Goodhart's Law
+at machine speed. The hold-out test set is the only defense that
+actually works against this pattern at scale: the agent literally
+cannot see those samples, so it cannot overfit to them.
 
-Valid opt-out reasons:
-- Pure toy/demo with no generalization claim.
-- The evaluation itself is the ground truth (e.g., running user-provided
-  unit tests as the metric; there is no "held-out unit test").
-- Theoretical optimization on a closed-form objective.
+### Required setup when enabled
 
-Not valid opt-out reasons:
-- "I don't have enough data." (The right answer is a smaller hold-out or
-  cross-validation with a final unseen fold, not skipping the gate.)
-- "It makes the loop slower." (The loop does not use the hold-out; it's
-  stripped at load time.)
+- `get_data()` in `fixed/data_prep.py` takes an
+  `include_test_months=False` (or equivalent name) flag. The
+  loop-time loader calls it with `False`, which strips the last N
+  samples (time series) or the designated test split (non-temporal).
+- `final_eval.py` is scaffolded at session init. It is the ONLY file
+  allowed to call `get_data(include_test_months=True)`. The loop
+  never runs it.
+- `eval_and_record.py` enforces the invariant via
+  `test_set_reserved: true` in `loop-settings.json`.
+- The final report (end of loop) compares loop-best validation score
+  to `final_eval` test score. A large gap is the signature of
+  validation overfitting.
 
-Propose the `get_data()` contract: return type, shape, example.
-Confirm before moving on.
+For time series: also use expanding windows (train on past, predict
+future) and log validation AND test scores separately throughout the
+loop.
 
-## Step 3 - Metrics and Visualization
+### Valid opt-out reasons
 
-### Goodhart warning (read before picking the primary metric)
+- Pure toy / demo with no generalization claim
+- The evaluation itself is the ground truth (e.g., running
+  user-provided unit tests as the metric — there is no
+  "held-out unit test")
+- Theoretical optimization on a closed-form objective
 
-Every metric you expose will be gamed. The agent is not being malicious;
-gradient descent on a proxy is what optimization *is*. Your job during
-planning is to pick a primary metric where gaming it and improving the
-underlying task are hard to distinguish, and to add guard metrics that
-catch gaming when they diverge.
+### NOT valid opt-out reasons
+
+- *"I don't have enough data."* — the right answer is a smaller
+  hold-out or cross-validation with a final unseen fold, not skipping
+  the gate.
+- *"It makes the loop slower."* — the loop does not use the hold-out;
+  it's stripped at load time, so the loop is unaffected.
+
+Record the justification in `loop-settings.json` as
+`test_set_skip_reason` when the user opts out.
+
+---
+
+## Topic 4 — Metrics (deep content)
+
+### Goodhart warning — read before picking the primary metric
+
+**Every metric you expose will be gamed.** The agent is not being
+malicious; gradient descent on a proxy is what optimization *is*. The
+planner's job is to pick a primary metric where gaming it and
+improving the underlying task are hard to distinguish, and to add
+guard metrics that catch gaming when they diverge.
 
 Two useful classifications:
 
-- **Phenomenon-improving change:** makes the model actually better at the
-  underlying task (exposes hidden structure, uses a more expressive family,
-  fixes a data bug, adds a signal the model was blind to).
-- **Metric-gaming change:** improves the scalar score without improving the
-  underlying task. Example: tuning a damping coefficient to squeeze 0.2% out
-  of a weighted-accuracy metric; exploiting how rounding in predictions
-  interacts with rounding in the scorer; overfitting to the validation
-  window's quirks.
+- **Phenomenon-improving change** — makes the model actually better
+  at the underlying task. Exposes hidden structure, uses a more
+  expressive family, fixes a data bug, adds a signal the model was
+  blind to.
+- **Metric-gaming change** — improves the scalar score without
+  improving the underlying task. Examples: tuning a damping
+  coefficient to squeeze 0.2% out of a weighted-accuracy metric;
+  exploiting how rounding in predictions interacts with rounding in
+  the scorer; overfitting to the validation window's quirks.
 
-The heuristic, reused at hypothesis selection (Step 6): if you can't explain
-in one sentence how the change would improve behavior on new, unseen data
-from the same distribution, it's probably metric-gaming.
+**Heuristic, reused at hypothesis selection:** if you can't explain
+in one sentence how the change would improve behavior on new, unseen
+data from the same distribution, it's probably metric-gaming.
 
-Defense in depth:
-- Pick a metric that rewards generalization, not memorization.
-- Add guard metrics (e.g., per-slice scores, worst-case error) that must
-  not degrade.
-- Enforce `min_improvement` (Step 3 Q6b) to kill noise.
-- Enforce the hold-out test set (Step 2) so metric-gaming on validation
-  shows up as test-set regression.
+### Defense in depth
 
-Ask:
+- Pick a metric that rewards generalization, not memorization
+- Add guard metrics (per-slice scores, worst-case error) that must
+  not degrade
+- Enforce `min_improvement` (see below) to kill noise
+- Enforce the hold-out test set (topic 3) so metric-gaming on
+  validation shows up as test-set regression
 
-1. **Success metrics**: List all (accuracy, F1, RMSE, latency, code quality score...)
-2. **Direction**: Higher is better or lower is better? (per metric)
-3. **Primary metric**: Which one governs keep/discard decisions?
-4. **Multi-objective**: If multiple metrics, how to combine?
-   - Weighted sum (specify weights)
-   - Pareto front (keep if improves any without degrading others)
-   - Simple average of normalized scores
-5. **Target**: Known baseline to beat? Published benchmark? Prior art?
-6. **Anti-gaming**: Are there ways the metric could be gamed?
-   (e.g., always predict majority class for accuracy)
-   If so, add guard metrics.
-6b. **Significance threshold (`min_improvement`)**: What is the smallest
-    absolute delta on the primary metric that counts as a real improvement?
-    Ask: "Below what delta should we treat a 'win' as noise and discard it?"
-    Defaults to 0.0 (any strict improvement counts), but for most problems
-    you want something like 0.001 (accuracy) or 0.01 (MASE/RMSE). This goes
-    into `results.json` as `min_improvement` and is enforced in
-    `eval_and_record.py`. Prevents 800-approach drift logs where every
-    third trial claims a 1e-6 "win".
-7. **Per-approach visualization**: What should each approach's plot show?
-   Ask: "What visualization would help you judge each approach at a glance?"
-   Examples by task type:
-   - **Forecasting**: train/test split with predictions overlaid per series
-   - **Classification**: confusion matrix, ROC curves, precision-recall curves
-   - **Regression**: actual vs predicted scatter, residual distribution
-   - **Generation**: grid of sample outputs
-   - **Optimization**: convergence plot, parameter landscape, Pareto front
-   - **NLP**: attention heatmaps, token-level scores, sample predictions
+### Questions to ask
 
-   Also ask: "Does the visualization need access to the approach's `run`
-   function to generate predictions, or can it work from the evaluation
-   result dict alone?" This determines whether `visualize()` receives
-   `run_fn` (the approach's factory/model function) for detailed plots,
-   or just the result dict for summary plots.
+1. **All success metrics** — accuracy, F1, RMSE, latency, quality
+   score, etc.
+2. **Direction** — higher is better or lower is better (per metric)
+3. **Primary metric** — which one governs keep/discard decisions
+4. **Multi-objective** — if multiple primaries, how to combine:
+   weighted sum (specify weights), Pareto front (keep if improves any
+   without degrading others), simple average of normalized scores
+5. **Target** — known baseline to beat, published benchmark, prior
+   art
+6. **Anti-gaming** — obvious gameable shortcuts (always predict
+   majority class for accuracy, always predict previous value for
+   time series)? Add guard metrics.
+7. **Significance threshold `min_improvement`** — what is the smallest
+   absolute delta on the primary metric that counts as a real
+   improvement? Defaults to `0.0` (any strict improvement counts),
+   but for most problems something like `0.001` (accuracy) or `0.01`
+   (RMSE/MASE) is saner. Stored in `loop-settings.json` and enforced
+   by `eval_and_record.py`. Prevents 800-approach drift logs where
+   every third trial claims a 1e-6 "win".
 
-Confirm the final metrics dict and visualization design before moving on.
+---
 
-## Step 4 - Evaluation Contract
+## Topic 5 — Visualization (deep content)
 
-Draft the evaluation harness in pseudo-code:
+Ask: *"What visualization would help you judge each approach at a
+glance?"*
+
+The per-approach plot is the single most important artifact the agent
+reads between trials. A vague or uninformative plot hobbles the
+loop's ability to learn from failures. Push for specificity.
+
+### Examples by task type
+
+- **Forecasting** — train/test split with predictions overlaid per
+  series, residuals below
+- **Classification** — confusion matrix, ROC curves, precision-recall
+  curves, per-class F1 bars
+- **Regression** — actual vs predicted scatter, residual distribution
+  histogram, residuals vs. feature
+- **Generation** — grid of sample outputs with metric annotations
+- **Optimization** — convergence plot, parameter landscape, Pareto
+  front
+- **NLP** — attention heatmaps, token-level scores, sample
+  predictions with highlighting
+- **Time series anomaly** — full series with anomaly markers, ROC vs
+  confidence threshold
+
+### `visualize()` contract
+
+Ask: *"Does the visualization need access to the approach's `run`
+function to generate predictions, or can it work from the evaluation
+result dict alone?"*
+
+This determines the signature of `fixed/visualize.py`:
+
+- `visualize(result_dict, approach_dir)` — if the result dict already
+  contains predictions
+- `visualize(run_fn, data, result_dict, approach_dir)` — if the
+  visualization needs to call `run_fn` on specific samples for
+  detailed plots
+
+Pick one and commit to it. This contract becomes IMMUTABLE alongside
+`fixed/evaluate.py`.
+
+---
+
+## Topic 6 — Evaluation harness (deep content)
+
+Draft `fixed/evaluate.py` as pseudo-code. Example:
 
 ```python
-def run_approach(approach_module) -> dict[str, float]:
-    data = get_data()
-    output = approach_module.run(data)
-    scores = {
-        "metric1": compute_metric1(output, data.ground_truth),
-        "metric2": compute_metric2(output, data.ground_truth),
+def evaluate(approach_module, data_prep) -> dict:
+    """Called by eval_and_record.py for every approach.
+
+    Returns a dict that eval_and_record.py writes to scores.json.
+    Must contain the primary metric under the 'primary' key.
+    """
+    train, val = data_prep.get_data(include_test_months=False)
+    result = approach_module.run(train)
+    preds = result.predict(val.X)
+    primary = custom_metric(val.y, preds)
+    return {
+        "primary": primary,
+        "secondary": {
+            "rmse": rmse(val.y, preds),
+            "mae": mae(val.y, preds),
+        },
+        "predictions": preds.tolist(),  # optional, for visualize()
     }
-    return scores
 ```
 
-Ask:
-- "Does this contract correctly capture what you want to measure?"
-- "Are there edge cases the harness should handle?" (empty output, wrong shape, NaN)
-- "Should there be a guard command? (a check that must ALWAYS pass, like existing tests)"
+Edge cases to discuss with the user:
 
-The harness becomes IMMUTABLE once the session starts. Get it right here.
+- Empty output from `run()` — should it score at the worst value or
+  raise?
+- Wrong output shape — fail-fast (raise) is always correct, never
+  silently coerce
+- NaN in predictions — treat as crash at the worst metric value
+- Runtime exceeds the per-approach budget — handled by soft-kill, not
+  by evaluate.py
+- Guard command — is there a check that MUST pass (existing unit
+  tests, sanity constraints)? If so, it goes inside evaluate.py
+  before metric computation.
 
-## Step 5 - Scope and Constraints
+**Once the user confirms, `fixed/evaluate.py` becomes IMMUTABLE.** The
+agent cannot edit it during the loop. Get it right here.
 
-Define what the agent CAN and CANNOT do:
+---
+
+## Topic 7 — Scope and constraints (deep content)
 
 | Allowed | Forbidden |
-|---------|-----------|
-| Create/edit `approaches/*/approach.py` | Modify `fixed/evaluate.py` |
-| Use any installed library | Modify `fixed/data_prep.py` |
-| Use `uv add <package>` for new deps | Install system packages |
-| Read any file in the session dir | Modify evaluation metrics |
-| Create helper modules inside approach dir | Import between approaches |
+|---|---|
+| Create/edit `approaches/*/approach.py` | Modify `fixed/evaluate.py`, `fixed/data_prep.py`, `fixed/visualize.py` |
+| Create/edit `approaches/*/rationale.md` and `commentary.md` | Modify `eval_and_record.py` |
+| Use any pre-installed Python library | Modify `experiment-plan.md` after init |
+| `uv add <package>` for new dependencies | Install system packages |
+| Read any file in the session dir | Import between approach directories |
+| Create helper modules inside an approach dir | Call out to external APIs without mentioning it |
 
-**Complexity limits** (prevent throughput collapse):
-- Max lines per approach.py: 500
-- Max new features engineered: 50 (if applicable)
-- Max training time: 2x budget (kill after)
-- One experiment at a time (no background processes)
+### Complexity limits (prevent throughput collapse)
 
-## Step 6 - Baseline, Hypotheses, and User Ideas
+- Max lines per `approach.py`: 500 (soft cap; reach for helper
+  modules inside the approach dir if you need more)
+- Max new features engineered per approach: 50 (if applicable)
+- Max training time: 2× the per-approach budget from
+  `loop-settings.json` — `eval_and_record.py` enforces via `timeout`
+- One trial at a time (background launches are OK; concurrent
+  approaches are not)
 
-### Goodhart filter (reject metric-gaming hypotheses)
+Do NOT discuss runtime budget in topic 7. Budget is loop tuning; it
+goes in the pre-flight walkthrough where the user can adjust it at
+every loop entry.
 
-See Step 3's Goodhart block. Reject metric-gaming hypotheses from the initial
-queue: if you can't explain in one sentence how the change would improve
-behavior on new, unseen data from the same distribution, it's probably
-metric-gaming. Phenomenon-improving hypotheses go into the queue;
-metric-gaming ones do not.
+---
 
-Ask:
+## Topic 8 — Bibliography research / Phase 0 (deep content)
 
-1. **Simplest baseline?** (random predictor, mean, majority class, off-the-shelf model)
-2. **Known good starting point?** (if user has prior work)
-3. **Top 3-5 hypotheses** to try first, ordered by expected impact
+### Why this exists
+
+HN/SkyPilot evidence and our own v2 postmortem both show the same
+failure mode: agents skip the library and spend hundreds of trials
+reinventing known-bad ideas. A 30-minute research phase saves days
+of loop time.
+
+### What the agent does when opted in
+
+1. Ask the user: *"Point me at any papers, blog posts, benchmarks,
+   prior code, or forks you already know about for this task. I'll
+   read them and summarize."*
+2. **Delegate to `co-intelligence:bibliography`** in short-form mode
+   (target 15-25 papers, 1-2 waves). Feed it the task framing from
+   topic 1 and any user-provided seed papers. It writes its results
+   to `$PLUGIN_DATA/bibliography/<slug>/`.
+3. Copy the bibliography results into the session directory as
+   `$SESSION_DIR/bibliography.md` and `$SESSION_DIR/bibliography.bib`.
+   Also write a short `$SESSION_DIR/references/INDEX.md` summarizing
+   the key insight per paper (one paragraph each). Target: at least
+   10 entries in `bibliography.md`.
+4. Summarize findings to the user and ask:
+   *"Anything missing? Anything wrong?"* Revise.
+
+### Enforcement
+
+- Session init writes `research_phase_required: true` into
+  `loop-settings.json` when the user opts in, `false` when they opt
+  out.
+- `eval_and_record.py` refuses to run the first approach if
+  `research_phase_required: true` AND `$SESSION_DIR/bibliography.md`
+  has fewer than 10 entries. It prints:
+  `!! RESEARCH_INCOMPLETE: <n>/10 entries, run bibliography search before continuing`.
+- When the user opts out, the agent records the justification as
+  `research_phase_skip_reason` in `loop-settings.json`
+  (e.g., "pure toy demo, no prior art applies"). One line. Stored
+  for reproducibility.
+
+### What does NOT count as research
+
+- Reading `results.json` from a prior unrelated session
+- *"I already know X"* without a citation
+- An empty stub file that just names papers without key-insight
+  summaries
+
+Research is about importing specific, cited knowledge into the
+session, not about satisfying a checkbox. The bibliography delegation
+enforces this: `co-intelligence:bibliography` rejects non-peer-reviewed
+sources and returns structured entries with abstracts and citation
+metrics.
+
+---
+
+## Topic 9 — Baseline and user ideas (deep content)
+
+### Goodhart filter for the initial queue
+
+Reject metric-gaming hypotheses from the initial queue. If the user
+can't explain in one sentence how a proposed change would improve
+behavior on new, unseen data from the same distribution, it's
+probably metric-gaming. Phenomenon-improving hypotheses go into the
+queue; metric-gaming ones do not.
+
+### Questions to ask
+
+1. **Simplest baseline** — random predictor, mean, majority class,
+   off-the-shelf model. This is what the smoke test will run as
+   approach 000.
+2. **Known good starting point** — if the user has prior work to
+   build on
+3. **Top 3-5 hypotheses to try first**, ordered by expected impact.
+   Each should come with a one-sentence rationale.
 4. **Open-ended prompt:**
-   > "Any other thoughts, ideas, hunches, papers, resources, or directions
-   > you'd like explored? These go into the User Ideas Queue and will be
-   > tracked throughout the experiment. Nothing is too speculative."
 
-Record all ideas. They will be explored during the loop but don't limit
-the agent's own ideation.
+   > *"Any other thoughts, ideas, hunches, papers, resources, or
+   > directions you'd like explored? These go into the User Ideas
+   > Queue and will be tracked throughout the experiment. Nothing is
+   > too speculative — weird ideas are data points."*
 
-## Step 7 - Produce Experiment Plan
+Record all ideas in `results.json` under `user_ideas_queue` with:
 
-Write `$SESSION_DIR/experiment-plan.md` with all collected info.
-Template:
+```json
+{
+  "id": "u003",
+  "text": "Try an attention-free transformer variant (linear attention)",
+  "status": "pending",
+  "source": "user",
+  "created_at": "<ISO timestamp>"
+}
+```
+
+The loop tracks these and marks `status: "explored"` with an
+`approach_ref` when an approach is based on the idea.
+
+---
+
+## Topic 10 — Session tag
+
+Simple. Default: `YYYY-MM-DD-<slug-of-task>`. Becomes the session
+directory name and the `report.md` title. Users can pick anything
+that's a valid directory name.
+
+---
+
+## Topic 11 — Session storage location (deep content)
+
+Default: `$PLUGIN_DATA/autoresearch/<tag>/` — i.e.
+`~/.claude/plugins/data/co-intelligence-co-intelligence/autoresearch/<tag>/`.
+
+Users can pick any directory they have write access to:
+
+- Larger disk (experiments with heavy checkpoints)
+- Project subdirectory (convenience, co-located with source)
+- Dedicated research folder on a non-home SSD
+- Networked storage for team visibility
+
+### Symlink requirement for non-default locations
+
+If the user picks a non-default location, session init MUST create a
+discovery symlink at `$PLUGIN_DATA/autoresearch/<tag>/` pointing to
+the physical directory. Rationale: the Stop hook in
+`~/.claude/settings.json` globs
+`$PLUGIN_DATA/autoresearch/*/.loop-active` and cannot be reconfigured
+per session. The symlink is what keeps instance isolation working.
+
+Record both paths in `loop-settings.json`:
+
+```json
+{
+  "physical_path": "/data/research/autoresearch/2026-04-15-forecast/",
+  "discovery_symlink": "/home/user/.claude/plugins/data/co-intelligence-co-intelligence/autoresearch/2026-04-15-forecast"
+}
+```
+
+Session init creates the symlink via:
+
+```bash
+ln -s "$PHYSICAL_PATH" "$DISCOVERY_SYMLINK"
+```
+
+Validate that the symlink resolves and that `.loop-active` in the
+physical dir is visible through the symlink.
+
+---
+
+## After all eleven topics
+
+Transition to the pre-flight walkthrough (see
+`references/preflight-walkthrough.md`). Do NOT write
+`experiment-plan.md` yet — the walkthrough can surface tweaks that
+retro-affect the plan.
+
+Once the walkthrough is approved, write the plan using the template
+below.
+
+---
+
+## Experiment plan template
+
+Write to `$SESSION_DIR/experiment-plan.md`:
 
 ```markdown
 # Experiment Plan: <task>
 
-> To continue: type `/autoresearch resume <tag>` or
+> To continue after stopping: type `/autoresearch resume <tag>` or
 > `/autoresearch continue that session` or any equivalent natural-language
 > phrasing. The loop runs until you interrupt it.
 
 **Goal:** <one sentence>
 **Task type:** prediction | generation | optimization
 **Tag:** <tag>
-**Storage location:** <session directory path>
-**Budget per approach:** recorded in `loop-settings.json`
-**Total budget:** <duration or "until stopped">
+**Physical path:** <from topic 11>
+**Discovery symlink:** <from topic 11, or "none" if default location>
 
 ## Input/Output Contract
-- **Input:** <type, shape, example>
-- **Output:** <type, shape, example>
-- **Constraints:** <list>
+
+- **Input:** <type, shape, example — from topic 1>
+- **Output:** <type, shape, example — from topic 1>
+- **Hard constraints:** <list — from topic 1>
 
 ## Data
-- **Source:** <path or URL>
+
+- **Source:** <path or URL — from topic 2>
 - **Format:** <format>
 - **Size:** <N samples>
-- **Split:** <strategy + rationale>
+- **Split:** <strategy + rationale — from topic 2>
 - **Gotchas:** <known issues>
-- **Hold-out test set:** <yes/no, size, never used during loop>
+- **Hold-out test set:** <yes/no + size, from topic 3>
 
 ## Metrics
+
 | Metric | Direction | Primary? | Weight | Anti-gaming note |
-|--------|-----------|----------|--------|-----------------|
+|---|---|---|---|---|
+| ... | ... | ... | ... | ... |
 
-## Per-Approach Visualization
-- **What to show:** <description of what each approach plot displays>
-- **Needs run_fn:** <yes/no - whether visualize() needs the approach's run function>
-- **Format:** <e.g., one subplot per series, confusion matrix grid, etc.>
+- **`min_improvement`:** <threshold from topic 4>
 
-## Evaluation Harness (pseudo-code)
-<from Step 4>
+## Per-approach visualization
+
+- **What to show:** <from topic 5>
+- **Needs `run_fn`?** <yes/no, from topic 5>
+- **Format:** <one subplot per series / confusion matrix grid / etc.>
+
+## Evaluation harness (pseudo-code)
+
+<pseudo-code from topic 6, with commitment that this becomes IMMUTABLE
+at session init>
 
 ## Scope
-- Editable: approaches/*/approach.py
-- Read-only: fixed/*, experiment-plan.md
-- Complexity limits: <from Step 5>
 
-## Initial Hypotheses Queue
-1. [ ] 001: baseline
-2. [ ] 002: <hypothesis>
+- **Editable:** `approaches/*/approach.py`, `rationale.md`, `commentary.md`
+- **Read-only:** `fixed/*`, `experiment-plan.md`, `eval_and_record.py`
+- **Complexity limits:** <from topic 7>
+
+## Bibliography research (Phase 0)
+
+- **Enabled:** yes / no
+- **If no — justification:** <reason>
+- **If yes — current entry count:** <N in bibliography.md>
+
+## Initial hypotheses queue
+
+1. [ ] `001_baseline` — <hypothesis>
+2. [ ] `002_<name>` — <hypothesis>
 3. [ ] ...
 
-## User Ideas Queue
-- [ ] <idea 1>
-- [ ] <idea 2>
-- (explored ideas get checked off with approach # reference)
+## User ideas queue
 
-## Settings
-- Budget per approach: <duration>
-- Total budget: <duration or "forever">
-- Guard command: <if any>
+(synced to `results.json` under `user_ideas_queue`)
+
+- [ ] `u001` — <idea>
+- [ ] `u002` — <idea>
+- (explored ideas get checked off with `status: "explored"` and an `approach_ref`)
 ```
 
-Show the plan. Ask:
-> "Does this experiment plan look right? Confirm to start, or tell me what to adjust."
+Then show the plan to the user and ask:
 
-**Wait for explicit confirmation.** Revise if needed. Do not proceed until confirmed.
+> *"Does this experiment plan look right? Confirm to start, or tell
+> me what to adjust."*
+
+**Wait for explicit confirmation.** Revise if needed. Do NOT proceed
+to session init or the smoke-test proposal until the plan is
+confirmed.

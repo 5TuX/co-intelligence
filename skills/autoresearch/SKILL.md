@@ -123,45 +123,16 @@ anti-patterns, self-check rules, and escalation strategy.
 - ALWAYS immediately start the next iteration after recording results.
 - ALWAYS put analysis in the approach.py docstring, not in message text.
 - ALWAYS write a short `rationale.md` alongside every `approach.py`
-  **before** running eval. Rationale.md is a 5-15 line human-readable
-  explanation of the *idea* behind the approach — what hypothesis is
-  being tested, what we expect to learn, why this idea now (as opposed
-  to another), and any link to a paper or prior approach it builds on.
-  Required fields:
-  - **Idea** — one sentence
-  - **Hypothesis** — what we think will happen and why
-  - **Builds on** — prior approach NNN (e.g. "approach 007 weight
-    tuning") or paper citation. **If this trial is based on specific
-    entries from `bibliography.md`, they MUST be cited here by their
-    BibTeX key** (e.g. `[Sur25]`, `[Zha22c]`), one per line, with a
-    one-line note per citation saying how the paper informs the trial.
-    When the trial is pure exploration with no bibliography basis,
-    write "none — exploratory".
-  - **What we'll learn** — what this trial resolves regardless of
-    score
-- ALWAYS write a short `commentary.md` **after** eval completes, on
-  the next iteration, as part of reviewing the previous approach's
-  artifacts. Commentary.md is a 5-15 line postmortem — what actually
-  happened vs. the rationale's hypothesis, what the visualization
-  shows (you are multimodal — describe it), what the numbers actually
-  say, and what this result implies for the next trials. Required
-  fields:
-  - **Result** — keep/discard + score
-  - **Vs. hypothesis** — did reality match the rationale's prediction?
-  - **Visualization** — one paragraph describing what the plot shows
-  - **Vs. bibliography** — if the rationale cited papers, do the
-    results confirm, contradict, or extend what those papers claimed?
-    Cite them again here by the same BibTeX keys. If the rationale
-    had no citations, write "n/a".
-  - **Lessons** — what to try next, what to avoid, what's now unclear
-
-  Together, `rationale.md` and `commentary.md` form a reproducibility
-  sidecar: anyone reading the session months later should be able to
-  understand both the idea and the outcome without reverse-engineering
-  the code or re-running the trial. The `Builds on` / `Vs. bibliography`
-  cross-links also turn the session into a searchable research
-  narrative — grepping `bibliography.bib` keys across all sidecars
-  finds every trial that touched a given paper.
+  **before** running eval (5-15 lines, required fields: Idea,
+  Hypothesis, Builds on, What we'll learn).
+- ALWAYS write a short `commentary.md` **after** eval completes, at
+  the start of the next iteration, as part of reviewing the previous
+  approach's artifacts (5-15 lines, required fields: Result,
+  Vs. hypothesis, Visualization, Vs. bibliography, Lessons).
+- If the rationale cites papers from `bibliography.md`, it MUST use
+  BibTeX keys (e.g. `[Sur25]`) and the commentary MUST reassess them.
+- **Full spec with field definitions, examples, crash handling, and
+  git lifecycle: `references/sidecars.md`.**
 - ALWAYS try creative, diverse approaches.
 - ALWAYS check user ideas queue periodically.
 - ALWAYS review artifacts from the previous trial before writing the next
@@ -187,87 +158,40 @@ anti-patterns, self-check rules, and escalation strategy.
 
 ---
 
-## BINDING RULES: Live Progress Logging Convention
+## Live Progress Logging Convention
 
-**EVERY trial MUST conform to this live-progress-logging convention.** This enables
-the user and Claude to monitor training progress in real-time via `tail -f`.
+Every trial conforms to a strict live-progress-logging convention so
+that trial output is visible in **three** places simultaneously —
+`tail -f` in a separate terminal, Claude Code's background-shell
+"N shell" indicator, and the committed `live.log` file — with
+progress and ETA continuously displayed. The five rules:
 
-### Rule 1: _log() Helper in Every approach.py
+1. Every `approach.py` defines a `_log(msg)` helper that writes to
+   `live.log` AND stdout with `flush=True`.
+2. Training loops call `_log()` at start, every epoch, and on
+   completion. **Every periodic log line carries elapsed time,
+   percent complete, and ETA** — not just epoch + loss.
+3. Prediction loops call `_log()` every ~50 samples with count, rate,
+   and ETA.
+4. Eval launches use **`tee`** so output streams to both `live.log`
+   and stdout simultaneously:
+   ```
+   timeout <N> stdbuf -oL -eL uv run python -u eval_and_record.py approaches/<NNN>_<name> 2>&1 \
+     | stdbuf -oL tee approaches/<NNN>_<name>/live.log
+   ```
+   Claude Code's background-shell indicator captures stdout, so the
+   user can watch progress live by clicking the "N shell" tab — no
+   second terminal needed (though `tail -f live.log` still works).
+5. Background launches include the exact `tail -f` command in the
+   message so users who prefer a second terminal can copy-paste it.
 
-Every `approaches/<NNN>_<name>/approach.py` file MUST define a `_log(msg)` helper function that:
-1. Appends a timestamped line to `approaches/<NNN>_<name>/live.log`
-2. Prints to stdout with `flush=True` for immediate display
+**Full spec with canonical code snippets and rationale:
+`references/live-logging.md`.**
 
-**Canonical implementation:**
-```python
-import os, time
-_LIVE_LOG = os.path.join(os.path.dirname(__file__), "live.log")
-def _log(msg: str) -> None:
-    line = f"[{time.strftime('%H:%M:%S')}] {msg}\n"
-    print(line, end="", flush=True)
-    with open(_LIVE_LOG, "a") as f:
-        f.write(line)
-```
-
-### Rule 2: Logging Points in Training Loops
-
-Training loops in approach.py MUST call `_log()` at meaningful intervals:
-- **START:** `_log("Training started with <config summary>")`
-- **PERIODIC:** Every epoch/batch/fit step: `_log(f"Epoch {e}: loss={loss:.4f}, val={val:.4f}")`
-- **COMPLETION:** `_log(f"Training complete. Elapsed: {elapsed:.1f}s, final_loss={loss:.4f}")`
-
-For iterative training (neural nets, boosting), also write to `training_progress.json` 
-(already required in ALWAYS rules).
-
-### Rule 3: Logging Points in Prediction Loops
-
-Prediction loops MUST call `_log()` periodically (e.g., every 50 samples):
-- Include: count processed, elapsed time, rate (samples/sec), rough ETA
-- Example: `_log(f"Predicted {i}/{total} ({rate:.1f} Hz). ETA: {eta:.0f}s")`
-
-### Rule 4: Eval Launch MUST Redirect stdout+stderr to live.log
-
-**CANONICAL LAUNCH COMMAND:**
-```bash
-<env vars> timeout <N> uv run python -u eval_and_record.py approaches/v4_NNN_name > approaches/v4_NNN_name/live.log 2>&1
-```
-
-Key constraints:
-- Use `python -u` (unbuffered) for immediate output
-- Redirect both stdout AND stderr (`2>&1`) to the same stable path `approaches/v4_NNN_name/live.log`
-- The file path MUST match the approach directory exactly
-- Use `timeout <N>` to bound execution and enable soft-kill recovery
-- Background launches OK: use `run_in_background: true` on the Bash tool call
-
-**Effect:** When eval_and_record.py runs, its output streams directly to live.log, and
-the user can monitor progress in another terminal without needing approach.py's `_log()` calls.
-
-### Rule 5: User Copy-Paste Command in Background Launch Message
-
-When posting a background launch (Bash with `run_in_background: true`), the message
-MUST include the exact `tail -f` command the user can copy-paste in another terminal:
-
-**Example message:**
-```
-**NNN: [background launch]**
-Monitor progress:
-  tail -f approaches/v4_NNN_name/live.log
-<Bash tool call with run_in_background: true>
-```
-
-This ensures the user can immediately see live progress without guessing the path.
-
----
-
-### Message format during the loop
-
-```
-**NNN: KEEP/DISCARD** (score). [One sentence about what to try next.]
-<Write tool call for next approach>
-```
-
-Two lines of text max. One tool call. Nothing else. After the Write, the next
-message is just the Bash tool call for eval_and_record.py.
+Also — per §Core Loop Contract — `approach.py` must write
+`training_progress.json` in its directory for any iterative training
+(neural nets, boosting). This is the structured counterpart to
+`live.log` and is what the agent reads during background monitoring.
 
 ### Single method per trial (default)
 
@@ -406,100 +330,31 @@ proposal. This is what the agent does BEFORE the loop starts.*
 
 ## Setup: New Session — Guided Planning Discussion
 
-**Call `EnterPlanMode` immediately.** No files written until plan confirmed.
+**Call `EnterPlanMode` immediately.** No files written until the plan
+is confirmed by both clarifying questions AND the pre-flight
+walkthrough.
 
-The planning dialog produces an `experiment-plan.md` in the session
-directory. The conversation should cover — in order — task framing,
-data and splits, metrics and visualization, evaluation contract (which
-becomes IMMUTABLE), scope and constraints, whether to run the bibliography
-research phase, whether to hold out a test set, search-on-plateau
-thresholds, and baseline/user-ideas queue. See
-`references/planning-protocol.md` for the full checklist.
+The planning discussion has two phases, run back-to-back in one
+continuous conversation:
 
-### Delegation: use superpowers:brainstorming when available
+1. **Clarifying questions** — eleven topics defining the experiment
+   (task, data, metrics, evaluation harness, scope, bibliography
+   research, user ideas, session tag, storage location). Delegates to
+   `superpowers:brainstorming` when available; falls back to a
+   built-in Q&A procedure otherwise. **Full checklist and delegation
+   guardrails: `references/clarifying-questions.md`.**
 
-If the `superpowers:brainstorming` skill is installed (check for
-`~/.claude/plugins/cache/claude-plugins-official/superpowers/*/skills/brainstorming/SKILL.md`
-or `~/.claude/skills/brainstorming/SKILL.md`), **delegate the Q&A phase
-to it**. Invoke it with these guardrails:
+2. **Pre-flight walkthrough** — the agent explains *what will happen*
+   in the loop (budget, plateau, paradigm rotation, sidecars, stopping)
+   and the user tweaks any loop-tuning knob in natural language. **Full
+   template and `loop-settings.json` schema:
+   `references/preflight-walkthrough.md`.**
 
-- Tell brainstorming that the spec location is
-  `$SESSION_DIR/experiment-plan.md` (NOT the default
-  `docs/superpowers/specs/...`). `$SESSION_DIR` is
-  `~/.claude/plugins/data/co-intelligence-co-intelligence/autoresearch/<tag>/`
-  and must be created first (mkdir only, no git init yet).
-- Give it the §Clarifying Questions checklist below as the list of
-  topics to cover.
-- Tell it that the implementation step after brainstorming is NOT
-  `superpowers:writing-plans` — it is handing control back to
-  `autoresearch` to run session init and enter the loop.
-- Tell it the spec will be committed by `autoresearch`'s session init,
-  not by brainstorming itself.
-
-If `superpowers:brainstorming` is NOT available, run the built-in
-fallback Q&A procedure described in `references/planning-protocol.md`.
-The fallback mirrors brainstorming's structure (one question at a time,
-multiple choice preferred, propose 2-3 approaches, present design in
-sections, user approval gate) but is leaner.
-
-### Clarifying Questions (experiment design — asked once)
-
-The Q&A phase (whether delegated to brainstorming or run built-in) MUST
-cover these topics. Ask one question at a time. Prefer multiple choice.
-These are **experiment definition** — they are set once and become part
-of the immutable experiment plan.
-
-1. **Task framing** — prediction? generation? optimization? What is the
-   input/output contract?
-2. **Data** — source, format, size, train/val/test split strategy,
-   leakage risks
-3. **Hold-out test set** — do you want one? (Strongly recommended; ask
-   for explicit opt-out with a reason if the user refuses. This becomes
-   part of the experiment structure and is not revised later.)
-4. **Metrics** — primary metric, direction (higher/lower better),
-   secondary metrics to track, anti-gaming guards
-5. **Visualization** — what should every approach's `visualization.png`
-   show? (Needed so you can read artifacts between trials)
-6. **Evaluation harness** — draft `fixed/evaluate.py` as pseudo-code,
-   confirm. Once confirmed it is IMMUTABLE.
-7. **Scope and constraints** — what can the agent modify? Complexity
-   limits? Forbidden imports? (Do NOT ask about runtime budget here —
-   that's a loop-tuning setting asked in the settings gate.)
-8. **Bibliography research** — do you want a Phase 0 bibliography pass
-   before trials start? (Strongly recommended; see §Bibliography research
-   below)
-9. **Baseline and user ideas** — seed the ideas queue with approaches
-   you already want tested, plus an open-ended prompt for "anything
-   else you want me to try"
-10. **Session tag** — what should we call this session? (default:
-    `YYYY-MM-DD-<slug-of-task>`)
-11. **Session storage location** — where should this session's data
-    live? Default: `$PLUGIN_DATA/autoresearch/<tag>/` (i.e.
-    `~/.claude/plugins/data/co-intelligence-co-intelligence/autoresearch/<tag>/`).
-    Users can pick any directory they have write access to — a larger
-    disk, a project subdirectory, a dedicated research folder, etc.
-    **If the user picks a non-default location**, session init MUST
-    create a discovery symlink at `$PLUGIN_DATA/autoresearch/<tag>/`
-    pointing to the physical directory, so the Stop hook (which globs
-    `$PLUGIN_DATA/autoresearch/*/.loop-active`) keeps working without
-    reconfiguration. Record both paths in `loop-settings.json` under
-    `physical_path` and `discovery_symlink`.
-
-Once all ten clarifying questions have landed, transition naturally
-into the pre-flight walkthrough (§Pre-flight walkthrough, below):
-
-> "OK, the experiment is defined — that's the part that stays fixed
-> for the whole session. Now let me walk you through what'll actually
-> happen when I enter the loop. You'll be able to tweak any of the
-> loop-tuning knobs (time budget, plateau behavior, paradigm
-> rotation) before I start."
-
-Then run the walkthrough. Do not write `experiment-plan.md` until
-after the walkthrough too — the walkthrough can surface tweaks that
-need to be reflected in the plan (e.g. the user bumps the time budget,
-which affects what's computationally feasible, which might retro-change
-the data split strategy). Write the plan only once both the experiment
-design and the loop settings are confirmed.
+Write `experiment-plan.md` and `loop-settings.json` only after BOTH
+phases are confirmed. The walkthrough can surface tweaks that
+retro-affect the plan (e.g. a bigger budget changes what's
+computationally feasible, which might retro-change the data split
+strategy).
 
 ### Bibliography research (Phase 0)
 
@@ -644,99 +499,21 @@ agent pick up exactly where it stopped.
 ## Execution: Pre-flight walkthrough (before every loop entry)
 
 **Immediately before entering the loop** — both on initial session start
-AND on every resume — explain to the user *what is about to happen* and
-give them a chance to tweak anything. This is the last gate before the
-session runs autonomously.
+AND on every resume — the agent explains to the user *what is about to
+happen* in the loop and gives them a chance to tweak anything. This is
+the last gate before the session runs autonomously.
 
-The walkthrough is a short narrative, not a dry checklist. Something like:
+The walkthrough is a short narrative (not a dry checklist) covering the
+session tag + task, per-approach budget, paradigm categories, artifact
+review + checkpointing, plateau behavior (delegates to
+`co-intelligence:bibliography`), user ideas queue, fail-fast rules, and
+how to stop. The user tweaks any loop-tuning knob in natural language;
+the agent updates `loop-settings.json` and re-prints the affected lines
+until explicit approval.
 
-> "Here's what will happen when I enter the loop:
->
-> - I'll work on **`<session tag>`**: `<one-line task summary>`.
-> - Each approach will get up to **`<budget>`** of compute time. Trials
->   estimated to run longer than **`<bg_threshold>`** will launch in
->   background and I'll monitor their `training_progress.json` while
->   waiting.
-> - I'll rotate through these paradigm categories:
->   **`<category1, category2, ...>`**. After 5 consecutive discards in
->   one category I'll switch; after 10 across the board I'll invent a
->   new one.
-> - Between trials I'll always review the previous approach's
->   `visualization.png`, `training_progress.json`, and loss curves
->   before writing the next one, and I'll save checkpoints every epoch
->   so later trials can warm-start from earlier weights.
-> - After **`<plateau_threshold>`** consecutive discards I'll pause the
->   loop, delegate to `co-intelligence:bibliography` in micro-mode
->   (1 wave, ~5-10 papers), append whatever I find to
->   `bibliography.md`, and use those papers to generate
->   **`<plateau_ideas_count>`** new approach ideas.
-> - `search_every_trial` is currently **`<on|off>`**. [If on: I'll do
->   a quick literature dip before every single approach.]
-> - The user ideas queue has **`<N>` pending** ideas I'll test first.
-> - Fail-fast is on: crashes score at the worst possible value, no
->   synthetic fallbacks, no fabricated visualizations.
-> - I will not stop until you tell me to. Say *'stop'*, *'pause'*,
->   *'that's enough'* — any of those — and I'll delete `.loop-active`
->   and end cleanly.
->
-> **Tweak anything, or proceed?**"
-
-The user can say *"budget to 15m"*, *"plateau threshold to 15"*, *"add
-graph-neural-net to paradigms"*, *"turn off per-trial search"*,
-*"shorten the budget on background launches"*, etc. The agent updates
-`loop-settings.json` (see §Settings persistence below), re-prints the
-affected lines, and asks again. The loop does not start until the user
-gives explicit approval.
-
-**If on resume the user wants to change an experiment-definition item**
-(metric, hold-out split, evaluation harness, data source — things from
-the Clarifying Questions list), the agent MUST warn: *"Changing
-`<item>` invalidates comparisons with every prior approach in this
-session. Options: (a) start a new session, (b) proceed and accept the
-invalidation."* Do not silently mutate the experiment contract.
-
-### Settings persistence
-
-All loop-tuning settings live in a dedicated file next to `results.json`:
-
-```
-$SESSION_DIR/loop-settings.json
-```
-
-This is the single source of truth for how the loop behaves — read by
-the agent (before each iteration when relevant, always at pre-flight)
-and by `eval_and_record.py` (to decide plateau triggers, background
-execution, etc.). `results.json` remains the approaches / scores /
-ideas-queue carrier and does NOT duplicate these settings.
-
-```json
-{
-  "budget_per_approach": "5m",
-  "background_threshold_seconds": 60,
-  "search_on_plateau_threshold": 10,
-  "search_on_plateau_ideas_count": 10,
-  "search_every_trial": false,
-  "paradigm_categories": [
-    "weight tuning", "new model type", "feature engineering",
-    "preprocessing", "architecture change", "loss function",
-    "regularization", "data augmentation", "cross-validation"
-  ],
-  "allow_ensembles": false,
-  "bibliography_on_plateau": true,
-  "bibliography_target_per_plateau": 10
-}
-```
-
-The agent MUST update this file (not scattered top-level keys anywhere
-else) when the user adjusts settings at the pre-flight walkthrough. It
-reads this file on every resume and populates the walkthrough from it.
-`eval_and_record.py` reads it on startup to pick up threshold changes
-without restarting the loop.
-
-Legacy sessions that stored these knobs as top-level keys in
-`results.json` are migrated on first resume: the agent reads the old
-keys, writes `loop-settings.json`, and strips them from `results.json`
-on the next write.
+**Full walkthrough template, accepted tweaks, experiment-definition
+change warning on resume, and the `loop-settings.json` schema + field
+reference: `references/preflight-walkthrough.md`.**
 
 ---
 
