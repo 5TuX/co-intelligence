@@ -114,7 +114,9 @@ CHANGES_SUMMARY=""
 if [ -n "$REMOTE_HEAD" ] && [ "$LOCAL_HEAD" != "$REMOTE_HEAD" ]; then
     COMMITS_BEHIND=$(git -C "$MARKETPLACE_DIR" rev-list --count "HEAD..origin/main" 2>/dev/null || echo 0)
     if [ "$COMMITS_BEHIND" -gt 0 ]; then
-        CHANGES_SUMMARY=$(git -C "$MARKETPLACE_DIR" log --oneline "HEAD..origin/main" 2>/dev/null | head -20)
+        # `|| true` swallows SIGPIPE (141) when git has >20 commits and head -20
+        # closes the pipe early — set -o pipefail would otherwise kill the script.
+        CHANGES_SUMMARY=$(git -C "$MARKETPLACE_DIR" log --oneline "HEAD..origin/main" 2>/dev/null | head -20 || true)
         echo "$LOCAL_HEAD" > "$STATE_FILE"
     fi
 fi
