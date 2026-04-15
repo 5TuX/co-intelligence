@@ -127,24 +127,41 @@ anti-patterns, self-check rules, and escalation strategy.
   explanation of the *idea* behind the approach — what hypothesis is
   being tested, what we expect to learn, why this idea now (as opposed
   to another), and any link to a paper or prior approach it builds on.
-  Required fields: **Idea** (one sentence), **Hypothesis** (what we
-  think will happen and why), **Builds on** (prior approach NNN or
-  paper citation, if any), **What we'll learn** (what this trial
-  resolves regardless of score).
+  Required fields:
+  - **Idea** — one sentence
+  - **Hypothesis** — what we think will happen and why
+  - **Builds on** — prior approach NNN (e.g. "approach 007 weight
+    tuning") or paper citation. **If this trial is based on specific
+    entries from `bibliography.md`, they MUST be cited here by their
+    BibTeX key** (e.g. `[Sur25]`, `[Zha22c]`), one per line, with a
+    one-line note per citation saying how the paper informs the trial.
+    When the trial is pure exploration with no bibliography basis,
+    write "none — exploratory".
+  - **What we'll learn** — what this trial resolves regardless of
+    score
 - ALWAYS write a short `commentary.md` **after** eval completes, on
   the next iteration, as part of reviewing the previous approach's
   artifacts. Commentary.md is a 5-15 line postmortem — what actually
   happened vs. the rationale's hypothesis, what the visualization
   shows (you are multimodal — describe it), what the numbers actually
   say, and what this result implies for the next trials. Required
-  fields: **Result** (keep/discard + score), **Vs. hypothesis** (did
-  reality match the prediction?), **Visualization** (one paragraph
-  describing what the plot shows), **Lessons** (what to try next,
-  what to avoid, what's now unclear). Together, `rationale.md` and
-  `commentary.md` form a reproducibility sidecar: anyone reading the
-  session months later should be able to understand both the idea and
-  the outcome without reverse-engineering the code or re-running the
-  trial.
+  fields:
+  - **Result** — keep/discard + score
+  - **Vs. hypothesis** — did reality match the rationale's prediction?
+  - **Visualization** — one paragraph describing what the plot shows
+  - **Vs. bibliography** — if the rationale cited papers, do the
+    results confirm, contradict, or extend what those papers claimed?
+    Cite them again here by the same BibTeX keys. If the rationale
+    had no citations, write "n/a".
+  - **Lessons** — what to try next, what to avoid, what's now unclear
+
+  Together, `rationale.md` and `commentary.md` form a reproducibility
+  sidecar: anyone reading the session months later should be able to
+  understand both the idea and the outcome without reverse-engineering
+  the code or re-running the trial. The `Builds on` / `Vs. bibliography`
+  cross-links also turn the session into a searchable research
+  narrative — grepping `bibliography.bib` keys across all sidecars
+  finds every trial that touched a given paper.
 - ALWAYS try creative, diverse approaches.
 - ALWAYS check user ideas queue periodically.
 - ALWAYS review artifacts from the previous trial before writing the next
