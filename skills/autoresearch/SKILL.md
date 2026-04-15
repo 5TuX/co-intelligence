@@ -44,53 +44,37 @@ turn-end is blocked and you are forced to write the next approach.
 **Each iteration = up to 4 tool calls in a fixed order. No exceptions.**
 
 ```
-TOOL 1 (Write, conditional): approaches/<PREV>/commentary.md
-                              — postmortem for the approach JUST finished
-                                (skip on iteration 1 — there is no previous)
-
-TOOL 2 (Write): approaches/<NNN>_<name>/rationale.md
-                 — pre-trial hypothesis for the NEW approach
-
-TOOL 3 (Write): approaches/<NNN>_<name>/approach.py
-                 — the actual code for the new approach
-
-TOOL 4 (Bash):  cd <session_dir> && python3 eval_and_record.py approaches/<NNN>_<name>
-                 — runs the trial, scores it, commits, updates reports
+TOOL 1 (Write, skip on iteration 1): approaches/<PREV>/commentary.md
+TOOL 2 (Write):                      approaches/<NNN>_<name>/rationale.md
+TOOL 3 (Write):                      approaches/<NNN>_<name>/approach.py
+TOOL 4 (Bash):                       python3 eval_and_record.py approaches/<NNN>_<name>
 ```
 
-**On iteration 1** (first real approach after session init or after the
-smoke test): skip Tool 1 — there is no previous approach to comment on
-(the smoke test's commentary is written as part of the smoke-test
-approval flow, not inside the loop).
+Commentary is written BEFORE rationale because the lessons from the
+previous trial shape the hypothesis for the next one. On iteration 1
+(first real approach after the smoke test) skip Tool 1 — the smoke
+test's commentary is written during the smoke-test approval flow, not
+inside the loop.
 
-**On every subsequent iteration**: all 4 tool calls fire, in order.
-Commentary.md is written BEFORE rationale.md because the lessons from
-the previous trial shape the hypothesis for the next one.
+For trials estimated ≥ `background_threshold_seconds`: launch Tool 4
+with `run_in_background: true`, monitor `training_progress.json`
+every 30-60s, soft-kill if diverging. Canonical launch command (with
+`tee` for Claude Code shell-indicator visibility):
+`references/live-logging.md` Rule 4.
 
-For long trials (>60s estimated): use `run_in_background: true` on Tool
-4. Monitor `training_progress.json` while waiting. Soft-kill if stalled
-or projected time far exceeds budget. When notified of completion,
-process the result and proceed to the next iteration's commentary.
+`eval_and_record.py` handles EVERYTHING scoring-and-bookkeeping:
+evaluation, scoring, keep/discard, visualization, git commit,
+`progress.png`, `report.md`, `README.md`, `.loop-state`. The agent
+writes ONLY the three sidecars + `approach.py` per iteration.
 
-`eval_and_record.py` handles EVERYTHING scoring-and-bookkeeping-related
-after the approach is written: evaluation, scoring, keep/discard,
-visualization, git commit, progress.png, report.md update, README
-update, .loop-state update.
+**NEVER do any of these as separate tool calls outside Tool 4:** plot
+generation, `git add/commit`, `report.md` / `README.md` / `progress.png`
+updates, matplotlib code. If you catch yourself writing code for any
+of those, STOP — you are creating an exit point.
 
-**NEVER do any of these as separate tool calls outside Tool 4:**
-- Generate or save plots
-- Git add/commit
-- Update report.md, README.md, or progress.png
-- Run matplotlib or any visualization code
-
-The only files the agent writes directly per iteration are the three
-sidecar markdown files (commentary, rationale) and approach.py. Every
-other artifact is produced by `eval_and_record.py`. If you catch
-yourself writing code for any of the forbidden items above outside
-Tool 4, STOP. You are creating an exit point.
-
-Read `references/experiment-loop.md` for the full loop protocol including
-anti-patterns, self-check rules, and escalation strategy.
+Full loop protocol with anti-patterns, runtime estimation, soft-kill
+recovery, and the self-check:
+`references/experiment-loop.md`.
 
 ---
 
@@ -256,65 +240,46 @@ autoresearch -- <intent interpreted from natural language>
 
 ## How arguments are interpreted
 
-**Everything after `/autoresearch` is natural language.** There are no
-flags, no modes, no special syntax. The agent reads whatever the user
-typed and classifies intent into one of three categories:
+**Everything after `/autoresearch` is natural language.** No flags,
+no modes, no slash-syntax. The agent classifies intent into three
+categories:
 
-| User says something like... | Intent | Agent action |
+| User says... | Intent | Agent action |
 |---|---|---|
-| *(nothing)*, "what's running?", "show me my sessions", "list" | **Browse** | Scan `$PLUGIN_DATA/autoresearch/` for existing sessions, print tag/task/best-score for each, ask what to do next |
-| "predict X from Y", "I want to find a better classifier for Z", any description of a task or goal | **New session** | Start the guided planning dialog (see §New Session) |
-| "resume yesterday's work", "continue the forecasting one", "pick up `<tag>`", "keep going on that thing we started Tuesday" | **Resume** | Find the referenced session (by tag, by recency, by content match), verify it, recreate survival files, re-enter the loop (see §Resume) |
+| *(nothing)*, *"list"*, *"what's running?"* | Browse | Run §List Sessions |
+| *"predict X from Y"*, any task description | New session | Run §Setup: New Session |
+| *"resume"* / *"continue"* / *"pick up <tag>"* | Resume | Run §Execution: Resume |
 
-If the agent can't classify the intent confidently — for example the
-user typed something ambiguous like *"autoresearch"* alone while
-multiple sessions exist — it asks **one clarifying question**, then
-proceeds.
-
-**Every parameter that used to be a flag** — per-approach budget,
-session tag, metrics, whether to run the research phase, whether to
-hold out a test set, paradigm categories to prefer, anything — is
-asked during the planning dialog. This keeps the invocation trivial
-and forces the important decisions into a conversation where the
-agent can help the user think them through.
+If the intent is ambiguous, ask **one** clarifying question and
+proceed. Every parameter that used to be a flag (budget, tag,
+metrics, research, hold-out, paradigms) is asked during the
+planning dialog or the pre-flight walkthrough — never on invocation.
 
 ---
 
 ## Stopping the loop
 
-The loop stops when `.loop-active` is removed from the session directory.
-There is no slash command and no auto-stop — the user expresses intent, and
-the agent executes the file removal. Two equivalent mechanisms:
+The loop stops when `.loop-active` is removed from the session
+directory. No slash command, no auto-stop.
 
-1. **Natural-language stop (primary).** When the user says *"stop"*,
-   *"pause"*, *"that's enough"*, *"I'm done"*, or any equivalent, you MUST:
-   1. Run `rm "$SESSION_DIR/.loop-active"` via Bash in the same turn
-   2. Acknowledge the stop in one short sentence
-   3. End the turn
+**When the user says *"stop"* / *"pause"* / *"that's enough"* / any
+equivalent**, you MUST: (1) run `rm "$SESSION_DIR/.loop-active"` via
+Bash in the same turn, (2) acknowledge briefly, (3) end the turn.
+The Stop hook releases the moment `.loop-active` is gone. Until you
+delete it, the hook keeps forcing you to continue — *that is the
+hook doing its job*. You are the bridge between the user's intent
+(language) and the hook's mechanism (file presence). The hook cannot
+read messages; you read them and translate.
 
-   The Stop hook releases the moment `.loop-active` is gone. Until you
-   delete it, the hook will keep forcing you to continue — *that is the
-   hook doing its job*. You are the bridge between the user's intent
-   (language) and the hook's mechanism (file presence). The hook cannot
-   read messages; you read them and translate.
-
-2. **Manual shell (escape hatch).** The user can also run
-   `rm ~/.claude/plugins/data/*/autoresearch/<tag>/.loop-active` in any
-   terminal. Always available, independent of Claude Code state.
-
-The session directory, results, approaches, and report are preserved in
-both cases. Restart by typing `/autoresearch resume <tag>` or
-`/autoresearch continue that forecasting session` or any equivalent
-natural-language phrasing — see §How arguments are interpreted.
-
----
+Users can also `rm` the file directly in any terminal as an escape
+hatch. Session state is preserved in both cases — restart with
+*"resume `<tag>`"* or any equivalent natural-language phrasing.
 
 ## List Sessions (no args)
 
-Scan for `$PLUGIN_DATA/autoresearch/*/results.json`. For each: tag, task,
-approaches tried, best score(s). Suggest resuming one of them in
-natural language (*"want me to resume `<tag>`?"*) or starting a new
-task.
+Scan `$PLUGIN_DATA/autoresearch/*/results.json`. For each: tag, task,
+approaches tried, best score. Suggest resuming one in natural
+language or starting a new task.
 
 ---
 
@@ -356,53 +321,27 @@ retro-affect the plan (e.g. a bigger budget changes what's
 computationally feasible, which might retro-change the data split
 strategy).
 
-### Bibliography research (Phase 0)
+### Bibliography research (Phase 0) — delegate to co-intelligence:bibliography
 
-If the user opts in to bibliography research, **delegate to
-`co-intelligence:bibliography`** in short-form mode instead of doing
-generic web search. Invoke it with:
+When the user opts in at clarifying question 8, **delegate to
+`co-intelligence:bibliography`** in short-form mode (target 15-25
+papers, 1-2 waves). Copy output to `$SESSION_DIR/bibliography.md`
+and `bibliography.bib`. Acceptance gate: `bibliography.md` needs
+≥10 entries (or explicit opt-out with justification in
+`loop-settings.json`). During the loop, plateau triggers delegate
+to the same skill in micro-mode and append to `bibliography.md`.
+See `references/planning-protocol.md` Topic 8 for details.
 
-- Research description: derived from the task framing and scope
-- Target: 15-25 papers (not the default 50-100) — call this a "focused"
-  search and ask it to stop after 1-2 waves
-- Output location: `$SESSION_DIR/bibliography.md` and
-  `$SESSION_DIR/bibliography.bib` (copy from the bibliography skill's
-  session dir)
-- Acceptance gate: the session cannot leave planning until
-  `bibliography.md` has at least 10 entries (or the user explicitly
-  opted out of research during Q&A)
+### Setup outputs — canonical files
 
-During the loop, on every `!! SEARCH_NEEDED` plateau trigger, the agent
-MUST delegate to the same `co-intelligence:bibliography` skill (micro-mode:
-5-10 papers, 1 wave) and **append discovered papers to the existing
-`bibliography.md`**. This is how the bibliography grows during the loop.
-
-Wait for explicit confirmation of the full plan. Then `ExitPlanMode`
-and proceed to initialization.
-
-See `references/common-pitfalls.md` for validation overfitting warnings.
-
----
-
-### Setup outputs (canonical files)
-
-The full setup discussion produces these files in `$SESSION_DIR`. They
-are the single source of truth for the session:
-
-| File | Role | Written when |
-|---|---|---|
-| `experiment-plan.md` | Immutable experiment definition: task, data, metric, harness, scope, constraints, baseline, user ideas | End of clarifying questions, after pre-flight walkthrough confirms loop settings |
-| `loop-settings.json` | Mutable loop-tuning knobs (see §Settings persistence) | After pre-flight walkthrough approval, re-written on any setting change |
-| `bibliography.md` + `bibliography.bib` | Phase 0 bibliography seed (if research was opted in) | At end of Phase 0, before session init commit |
-| `fixed/evaluate.py`, `fixed/data_prep.py`, `fixed/visualize.py` | IMMUTABLE evaluation harness | During session init, from the pseudo-code confirmed during clarifying questions |
-| `eval_and_record.py` | The evaluator runner | During session init, from template |
-| `results.json` | Approaches / scores / ideas queue (empty at init) | During session init |
-| `report.md` | Human-readable report (empty template at init) | During session init |
-| `.autoresearch-directives`, `.claude/CLAUDE.md`, `.loop-active` | Survival files | During session init |
-
-The agent MUST write each of these to its canonical location and MUST
-NOT invent alternative filenames or locations. `references/session-init.md`
-has the full templates.
+Setup writes these to `$SESSION_DIR`, never to alternative locations:
+`experiment-plan.md` (immutable), `loop-settings.json` (mutable),
+`bibliography.md` + `.bib` (appendable), `fixed/evaluate.py` +
+`data_prep.py` + `visualize.py` (immutable), `eval_and_record.py`
+(immutable), `results.json` (mutable), `report.md` (mutable),
+survival files (`.claude/CLAUDE.md`, `.autoresearch-directives`,
+`.loop-active`). Full schema, write timing, and templates:
+`references/session-init.md`.
 
 ### End of setup — smoke-test proposal
 
@@ -440,61 +379,19 @@ approach mechanics, the experiment loop itself, and resume.*
 ## Execution: Loop entry validation (start and resume)
 
 **Before** the pre-flight walkthrough runs — on every loop entry, new
-or resumed — the agent verifies all canonical setup outputs exist and
-are well-defined. This is the gate that catches partial state from
-interrupted setups, manual edits, or missing dependencies.
+or resumed — the agent runs a twelve-check validation that every
+canonical setup output exists and is well-defined:
+`experiment-plan.md`, `loop-settings.json`, all three `fixed/*.py`,
+`eval_and_record.py`, `results.json`, `report.md`, survival files,
+`.loop-active`, bibliography (if opted in), Stop hook, clean git.
 
-### Validation checklist
+If any check fails: list the gap concretely, offer the user targeted
+repair questions or a full setup re-run, and block the loop until
+all checks pass. This makes the skill robust to partial state from
+interrupted setups.
 
-1. **`$SESSION_DIR/experiment-plan.md`** — exists, non-empty, has
-   sections for task, data, metric, harness, scope, constraints.
-2. **`$SESSION_DIR/loop-settings.json`** — exists, valid JSON, has all
-   required keys (see §Settings persistence). Legacy sessions with
-   knobs in `results.json` are auto-migrated.
-3. **`$SESSION_DIR/fixed/evaluate.py`** — exists, matches the harness
-   pseudo-code confirmed during clarifying questions.
-4. **`$SESSION_DIR/fixed/data_prep.py`** and
-   **`fixed/visualize.py`** — exist and are importable.
-5. **`$SESSION_DIR/eval_and_record.py`** — exists and is runnable.
-6. **`$SESSION_DIR/results.json`** — exists and is valid JSON (may
-   have zero approaches on new session).
-7. **`$SESSION_DIR/report.md`** — exists.
-8. **Survival files** — `.autoresearch-directives`, `.claude/CLAUDE.md`.
-   Recreate any missing from `references/loop-enforcement.md` templates.
-9. **`.loop-active`** — either present with the correct session ID or
-   to be freshly written (see `references/session-init.md` for the
-   transcript-lookup technique).
-10. **Bibliography (if Phase 0 was opted in)** — `bibliography.md`
-    exists and has at least 10 entries. If it has fewer, ask the user
-    whether to run (or re-run) `co-intelligence:bibliography` now.
-11. **Stop hook** — `~/.claude/settings.json` contains the
-    autoresearch Stop hook. If missing, warn loudly (see
-    `references/loop-enforcement.md` for the canonical snippet).
-12. **Git repo** — `git status` is clean or has only `.loop-active`
-    dirty. If dirty for other reasons, ask the user to commit, stash,
-    or abort.
-
-### If any validation fails
-
-Do NOT proceed to the pre-flight walkthrough or the loop. Instead:
-
-1. List every failing check concretely (which file is missing, which
-   key is absent, which import fails).
-2. For each gap, offer the user options:
-   - *Fill it in now via targeted questions* (preferred for small gaps
-     like a missing setting)
-   - *Re-run the full setup discussion* (for large gaps like missing
-     `experiment-plan.md`)
-   - *Abort and investigate manually*
-3. For small gaps, ask the relevant clarifying question(s) from
-   §Clarifying Questions or §Pre-flight walkthrough, fix the file(s),
-   and re-run validation.
-4. Only proceed to the pre-flight walkthrough once ALL validation
-   checks pass.
-
-This gate makes the skill robust to partial state and means the user
-can safely interrupt a setup discussion, come back later, and have the
-agent pick up exactly where it stopped.
+**Full checklist, auto-repair options, and failure protocol:
+`references/loop-entry-validation.md`.**
 
 ## Execution: Pre-flight walkthrough (before every loop entry)
 
@@ -519,75 +416,37 @@ reference: `references/preflight-walkthrough.md`.**
 
 ## Execution: Session Initialization
 
-After the pre-flight walkthrough is approved on a new session, create
-the session structure following `references/session-init.md`. Key
-steps:
+After the pre-flight walkthrough is approved, create the session
+directory at the physical path from `loop-settings.json` (with
+discovery symlink if non-default), initialize the git repo, scaffold
+`fixed/` with the immutable harness, generate `eval_and_record.py`
+from template, initialize `results.json` / `report.md` / `README.md`,
+write `loop-settings.json` and `experiment-plan.md`, create survival
+files (deriving `.loop-active` session ID from the transcript filename),
+and git-commit.
 
-1. Create directory `$PLUGIN_DATA/autoresearch/<tag>/` (where
-   `<tag>` was chosen during clarifying questions).
-2. Initialize git repo with the comprehensive `.gitignore` from
-   `references/git-management.md`.
-3. Create `fixed/` containing IMMUTABLE `evaluate.py`, `data_prep.py`,
-   `visualize.py` — generated from the harness pseudo-code confirmed
-   during clarifying questions.
-4. Generate `eval_and_record.py` from the template in
-   `references/session-init.md`.
-5. Initialize `results.json` (empty approaches list, empty ideas queue
-   or seeded from user ideas), `report.md` from
-   `references/report-template.md`, `bibliography.md` (either from
-   Phase 0 research or an empty header).
-6. Write `loop-settings.json` with the values confirmed in the
-   pre-flight walkthrough.
-7. Write `experiment-plan.md` from the clarifying-questions answers.
-8. Create survival files: `.claude/CLAUDE.md`, `.autoresearch-directives`,
-   `.loop-active` (with the current session ID derived via transcript
-   lookup — see `references/session-init.md`).
-9. Git commit: `"init: experiment plan, harness, and loop settings"`.
-
-After this completes, proceed to the smoke-test approach (if the user
-approved it at the end of setup discussion) or directly to the loop.
+**Full step-by-step sequence with `.gitignore`, README template,
+survival file derivation, and `eval_and_record.py` template:
+`references/session-init.md`.**
 
 ## Execution: Smoke-test approach (approach 000)
 
-If the user accepted the smoke-test proposal at the end of the setup
-discussion, the agent writes and runs ONE naive baseline approach
-numbered 000 whose sole purpose is to exercise the full pipeline end
-to end: data loading, training (trivially), prediction, scoring,
-visualization, `training_progress.json` logging, `live.log` streaming,
-git commit, `results.json` update, and `report.md` / `progress.png`
-rendering.
+If the user accepted the smoke-test proposal at end of setup, write
+and run ONE trivial baseline (`approaches/000_naive_baseline/`)
+before the real loop. Purpose: exercise the full pipeline end-to-end
+(data loading, scoring, visualization, logging, git, report) to catch
+broken plumbing BEFORE hours of real trials run on a broken setup.
 
-The baseline should be the dumbest possible predictor that still uses
-the real evaluation contract — e.g. constant mean, median, or last
-value for regression; majority class for classification; random for
-generation. It is explicitly not expected to score well. Its purpose
-is to catch broken logging, broken plots, broken git commits, broken
-checkpointing, or broken eval harness **before** the user commits to
-hours of loop time.
+Sequence: write `rationale.md`, write `approach.py` (constant mean,
+majority class, or equivalent — see `references/session-init.md`
+Step 11 for templates), run `eval_and_record.py`, inspect every
+artifact with the user (visualization.png read aloud, report.md entry,
+live.log tail, git log, score at worst-value-for-direction), write
+`commentary.md`, then narratively transition into the real loop on
+explicit approval. If ANY artifact is missing or malformed, STOP and
+diagnose with the user — do not enter the loop on a broken pipeline.
 
-**Sequence:**
-
-1. Write `approaches/000_naive_baseline/approach.py` — the trivial
-   predictor.
-2. Run `eval_and_record.py approaches/000_naive_baseline` (background
-   if estimated >60s, foreground otherwise).
-3. Once it completes, inspect and show the user:
-   - The generated `visualization.png` (you are multimodal — describe
-     what you see)
-   - The `report.md` entry
-   - `training_progress.json` path + first/last lines
-   - `live.log` tail (last 20 lines or so)
-   - `git log --oneline` (should show one init commit + the 000
-     approach commit)
-   - The score and whether it is at the worst possible value for the
-     metric direction (expected for a naive baseline if the metric
-     rewards skill)
-4. Narratively transition into the loop: *"Pipeline verified
-   end-to-end. Entering the loop now."* and start the first real
-   approach (`001`).
-
-If ANY artifact is missing or malformed at step 3, stop and diagnose
-with the user. Do NOT enter the loop on a broken pipeline.
+**Full templates and sequence: `references/session-init.md` Step 11.**
 
 ---
 
@@ -615,92 +474,58 @@ writing the next approach.
 Periodically check user ideas queue in results.json. Mark ideas as "explored"
 when tested. Append new user ideas mid-experiment.
 
-### Bibliography Tracking
+### Bibliography Tracking and Plateau Search
 
-`bibliography.md` grows in three ways during a session:
+`bibliography.md` grows in three ways: Phase 0 seed (session init),
+per-approach citations (when rationale.md cites a paper, its BibTeX
+key is appended), and **mandatory plateau appends** — on every
+`!! SEARCH_NEEDED` trigger, the agent delegates to
+`co-intelligence:bibliography` in micro-mode, appends discovered
+papers to `bibliography.md`, and generates new approach ideas
+grounded in them (tagged `source: "plateau-search"` in the user
+ideas queue).
 
-1. **Phase 0 seed** — populated at session init by delegating to
-   `co-intelligence:bibliography` (short-form, 15-25 papers, 1-2 waves).
-   Strongly recommended.
-2. **Per-approach citations** — when an approach is based on a paper
-   or resource, the agent creates `approaches/<NNN>_<name>/references.md`
-   AND appends the citation to `bibliography.md`. These are the papers
-   the agent is actually using, not just ones it considered.
-3. **Plateau appends (MANDATORY)** — on every `!! SEARCH_NEEDED`
-   trigger (see §Search Callbacks below), the agent MUST delegate to
-   `co-intelligence:bibliography` in micro-mode (target
-   `bibliography_target_per_plateau`, 1 wave) and append the discovered
-   papers to `bibliography.md` BEFORE generating new approach ideas.
-   This keeps the literature current as the loop explores new
-   directions. Never do a generic web search in place of this — the
-   bibliography skill produces structured, deduplicated, quality-gated
-   entries. Generic web search produces noise.
+Never substitute generic web search for the bibliography delegation
+— the skill produces structured, deduplicated, quality-gated entries;
+web search produces noise.
 
-### Search Callbacks
+`!! SEARCH_SUGGESTED` (per-trial search, off by default) is lighter:
+1-3 paper ideas, no full wave.
 
-`eval_and_record.py` prints `!! SEARCH_NEEDED` when consecutive
-discards reach `search_on_plateau_threshold` (from `loop-settings.json`),
-and `!! SEARCH_SUGGESTED` on every approach if
-`search_every_trial: true`.
-
-On `!! SEARCH_NEEDED`:
-1. Read `loop-settings.json` to get `search_on_plateau_ideas_count` and
-   `bibliography_target_per_plateau`.
-2. Delegate to `co-intelligence:bibliography` with a micro-wave target
-   (`bibliography_target_per_plateau` papers, 1 wave). Feed it the task
-   framing + a short summary of the last N discarded approaches so it
-   can tune the search toward underexplored directions.
-3. Copy the new entries from `$PLUGIN_DATA/bibliography/<slug>/...` into
-   this session's `bibliography.md` (append, don't overwrite).
-4. Generate `search_on_plateau_ideas_count` new approach ideas grounded
-   in the just-discovered papers. Append them to the user ideas queue
-   in `results.json` with a `source: "plateau-search"` tag.
-5. Continue the loop, with the next approach drawing from these fresh
-   ideas first.
-
-On `!! SEARCH_SUGGESTED` (per-trial search, off by default): lighter
-version — 1-3 paper ideas, no full bibliography wave, still appended to
-`bibliography.md` if cited.
+**Full plateau-search protocol, per-trial variant, and the exact
+sequence of BibTeX append → idea generation → loop continuation:
+`references/experiment-loop.md` §Search callbacks.**
 
 ---
 
 ## Execution: Resume
 
-Triggered when the user's natural-language input matches "resume",
-"continue", "pick up", "keep going", etc. (see §How arguments are
-interpreted). The agent identifies the target session by tag, recency,
-or content match — asking one clarifying question if ambiguous.
+Triggered when the user's natural-language input matches *"resume"*,
+*"continue"*, *"pick up"*, *"keep going"*, etc. (see §How arguments
+are interpreted). The agent identifies the target session by tag,
+recency, or content match — asking one clarifying question if
+ambiguous.
 
-On resume, always run §Execution: Loop entry validation first. Then
-the pre-flight walkthrough. Then continue the loop.
+On resume, the flow is always:
 
-1. Read `$SESSION_DIR/results.json`, `loop-settings.json`,
-   `report.md`, and the last 5 approach directories.
-2. Read `.loop-state` for current position (last approach number, best
-   score).
-3. Verify git repo is clean (`git status`). If dirty, ask the user
-   whether to commit, stash, or abort.
-4. **Migrate legacy settings** — if `loop-settings.json` doesn't exist
-   but `results.json` contains top-level `search_on_plateau_threshold`
-   etc., create `loop-settings.json` from those keys and strip them
-   from `results.json` on the next write.
-5. Recreate `.loop-active` if missing, derived from the current
-   session ID (see `references/session-init.md` for the transcript
-   lookup technique).
-6. **Verify Stop hook** — check `~/.claude/settings.json` for the
-   autoresearch Stop hook. If missing, warn:
-   > "WARNING: The autoresearch Stop hook is not configured in
-   > settings.json. Without it, there is no technical barrier preventing
-   > the loop from stopping. Add it via `references/loop-enforcement.md`."
-7. **Recreate missing survival files** — if `.autoresearch-directives`
-   or `.claude/CLAUDE.md` are missing, recreate them from templates in
-   `references/loop-enforcement.md`. These files are non-optional.
-8. Print a short status: N approaches, best score(s), last 5 entries,
-   which paradigm category was most recent.
-9. **Run the pre-flight walkthrough** (§Pre-flight walkthrough above).
-   The user reviews current `loop-settings.json` values, adjusts
-   anything, and approves.
-10. Continue the loop from next approach number.
+1. **Run §Execution: Loop entry validation** — the twelve-check gate
+   that auto-migrates legacy `results.json` settings into
+   `loop-settings.json`, recreates missing survival files, rederives
+   `.loop-active` with the current session ID, and verifies the Stop
+   hook.
+2. **Print a short status** — N approaches, best score(s), last 5
+   entries, most recent paradigm category, any stale state flagged.
+3. **Read the last 2-3 `commentary.md` files** from the most recent
+   approaches — this is how the agent rehydrates its thinking about
+   what worked and what didn't.
+4. **Run the pre-flight walkthrough** (§Execution: Pre-flight
+   walkthrough) so the user can tweak loop settings before the loop
+   restarts.
+5. **Continue the loop** from the next approach number.
+
+Full details of each step (legacy migration, Stop hook verification,
+survival-file recreation): `references/loop-entry-validation.md` and
+`references/loop-enforcement.md`.
 
 ---
 
