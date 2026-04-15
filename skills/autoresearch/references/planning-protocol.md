@@ -16,7 +16,7 @@ Agent workflow:
 
 The loop cannot start until all eleven topics are confirmed AND the
 pre-flight walkthrough is approved. See
-`references/preflight-walkthrough.md` for the post-clarifying step.
+`references/loop-entry.md` for the post-clarifying step.
 
 ---
 
@@ -281,6 +281,10 @@ Edge cases to discuss with the user:
 **Once the user confirms, `fixed/evaluate.py` becomes IMMUTABLE.** The
 agent cannot edit it during the loop. Get it right here.
 
+For the full four-file contract spec (`approach.py` + the three
+`fixed/*.py`), sandbox rules, scores vs metrics, and budget enforcement:
+**`references/evaluation-contract.md`**.
+
 ---
 
 ## Topic 7 — Scope and constraints (deep content)
@@ -460,7 +464,7 @@ physical dir is visible through the symlink.
 ## After all eleven topics
 
 Transition to the pre-flight walkthrough (see
-`references/preflight-walkthrough.md`). Do NOT write
+`references/loop-entry.md`). Do NOT write
 `experiment-plan.md` yet — the walkthrough can surface tweaks that
 retro-affect the plan.
 

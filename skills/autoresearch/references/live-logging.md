@@ -1,9 +1,29 @@
-# Live Progress Logging Convention
+# Live Progress Logging Contract
 
-**EVERY trial MUST conform to this live-progress-logging convention.** It
-enables both the user and Claude to monitor training progress in real
-time via `tail -f`, and it's a prerequisite for background-launch
-monitoring and soft-kill recovery.
+**This is a contract, not a style guide.** `approach.py` MUST emit
+progress output to `live.log`. Trials that don't are marked
+`monitoring_violation` and cannot be kept by the loop ratchet — even
+if their score would otherwise win. See
+`references/evaluation-contract.md` §Monitoring contract for the
+enforcement details.
+
+The contract enables both the user and Claude to monitor trials in
+real time via `tail -f` and Claude Code's shell indicator, and it's
+a prerequisite for background-launch monitoring and soft-kill
+recovery.
+
+## Minimum line counts (enforced)
+
+| Trial runtime | Minimum non-empty lines in `live.log` |
+|---|---|
+| Any duration | 2 lines: 1 start + 1 end |
+| Longer than `monitoring_required_after_seconds` (default 10s, configurable in `loop-settings.json`) | 3+ lines: start + at least 1 mid-progress + end |
+
+`eval_and_record.py` counts lines in `live.log` after the trial
+completes. Below the minimum → `status: "monitoring_violation"`,
+non-zero exit, agent rewrites the same `approach.py` with logging
+added (the trial number stays the same; the fix is to the contract,
+not to the idea).
 
 The convention has five rules. All five are mandatory for every
 approach.
@@ -12,10 +32,10 @@ approach.
 
 ## Rule 1: `_log()` helper in every `approach.py`
 
-Every `approaches/<NNN>_<name>/approach.py` file MUST define a `_log(msg)`
+Every `approaches/<NNN>_<slug>/approach.py` file MUST define a `_log(msg)`
 helper function that:
 
-1. Appends a timestamped line to `approaches/<NNN>_<name>/live.log`
+1. Appends a timestamped line to `approaches/<NNN>_<slug>/live.log`
 2. Prints to stdout with `flush=True` for immediate display
 
 ### Canonical implementation
@@ -95,8 +115,8 @@ makes the log readable at human pace:
 **Canonical launch command:**
 
 ```bash
-timeout <N> stdbuf -oL -eL uv run python -u eval_and_record.py approaches/<NNN>_<name> 2>&1 \
-  | stdbuf -oL tee approaches/<NNN>_<name>/live.log
+timeout <N> stdbuf -oL -eL uv run python -u eval_and_record.py approaches/<NNN>_<slug> 2>&1 \
+  | stdbuf -oL tee approaches/<NNN>_<slug>/live.log
 ```
 
 Key constraints:
@@ -106,7 +126,7 @@ Key constraints:
   process (so `tee` sees lines as they're produced, not in 4KB chunks)
 - `2>&1` — merges stderr into stdout BEFORE `tee`, so stack traces
   land in the log AND in the shell indicator
-- `| tee approaches/<NNN>_<name>/live.log` — forwards every line to
+- `| tee approaches/<NNN>_<slug>/live.log` — forwards every line to
   BOTH `live.log` AND stdout. The file path MUST match the approach
   directory exactly (downstream tooling depends on it).
 - `stdbuf -oL tee` — line-buffers `tee`'s output to stdout so Claude
@@ -122,13 +142,13 @@ emits (and anything it invokes — `approach.py`'s `_log()` calls,
 uncaught stack traces, `eval_and_record.py`'s own markers) streams
 to all three of these at the same time:
 
-1. **`approaches/<NNN>_<name>/live.log`** — persistent, grep-able,
+1. **`approaches/<NNN>_<slug>/live.log`** — persistent, grep-able,
    committed to git, readable by the agent on the next iteration for
    commentary.
 2. **Claude Code's background-shell indicator** — the "N shell" tab
    at the bottom of the Claude Code interface. The user clicks it
    and watches progress live without needing a second terminal.
-3. **A separate terminal with `tail -f approaches/<NNN>_<name>/live.log`** —
+3. **A separate terminal with `tail -f approaches/<NNN>_<slug>/live.log`** —
    for users who prefer watching from outside Claude Code.
 
 All three see the same content at the same time. Progress lines from
@@ -153,8 +173,8 @@ shell-indicator visibility without sacrificing the log file.
   `gstdbuf`).
 - On systems without `stdbuf`, drop it:
   ```bash
-  timeout <N> uv run python -u eval_and_record.py approaches/<NNN>_<name> 2>&1 \
-    | tee approaches/<NNN>_<name>/live.log
+  timeout <N> uv run python -u eval_and_record.py approaches/<NNN>_<slug> 2>&1 \
+    | tee approaches/<NNN>_<slug>/live.log
   ```
   This works in most practical cases because `python -u` already
   line-buffers stdout. The `stdbuf` wrapping is only needed when
@@ -175,7 +195,7 @@ filename.
 ```
 **NNN: [background launch]**
 Monitor progress:
-  tail -f approaches/<NNN>_<name>/live.log
+  tail -f approaches/<NNN>_<slug>/live.log
 <Bash tool call with run_in_background: true>
 ```
 
@@ -214,6 +234,9 @@ iteration then writes `commentary.md` for the approach just finished
 - **Reproducibility:** `live.log` is committed to git alongside the
   approach. Months later, you can see exactly what the trial printed.
 
-These rules are non-negotiable. Violating any of them is grounds for
-immediate rewrite of the offending `approach.py` before the loop
-continues.
+These rules are non-negotiable. Violations are caught by
+`eval_and_record.py`'s post-trial line-count check (see top of this
+file) and produce `monitoring_violation` status — the agent's only
+valid next action is to rewrite the same `approach.py` with proper
+logging. The trial number does NOT advance; the fix is to the
+contract, not to the idea.

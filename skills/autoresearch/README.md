@@ -137,7 +137,7 @@ Once the plan is confirmed, the agent creates a standalone git repo with:
 ```
 THINK  ─►  review results.json, read previous approach's
            visualization.png (Claude is multimodal), hypothesize
-WRITE  ─►  approaches/<NNN>_<name>/approach.py with analysis in docstring
+WRITE  ─►  approaches/<NNN>_<slug>/approach.py with analysis in docstring
 BASH   ─►  eval_and_record.py runs the approach, scores it, decides
            KEEP/DISCARD, commits to git, updates report.md and progress.png
 REPEAT (forever, until you stop it)
@@ -192,7 +192,7 @@ Every approach follows a strict logging convention so you can watch training
 happen in real time:
 
 ```bash
-tail -f ~/.claude/plugins/data/co-intelligence-co-intelligence/autoresearch/<tag>/approaches/v4_NNN_name/live.log
+tail -f ~/.claude/plugins/data/co-intelligence-co-intelligence/autoresearch/<tag>/approaches/<NNN>_<slug>/live.log
 ```
 
 Each approach:
@@ -250,12 +250,12 @@ survives Claude Code restarts, autocompact, and machine reboots.
 
 | What | Where |
 |---|---|
-| Live training output of the current approach | `approaches/<NNN>_<name>/live.log` (`tail -f`) |
-| Structured epoch/loss progress | `approaches/<NNN>_<name>/training_progress.json` |
+| Live training output of the current approach | `approaches/<NNN>_<slug>/live.log` (`tail -f`) |
+| Structured epoch/loss progress | `approaches/<NNN>_<slug>/training_progress.json` |
 | Full history of all trials | `results.json` |
 | Human-readable report | `report.md` (auto-updated after every approach) |
 | Score trajectory plot | `progress.png` (updated after every approach) |
-| Per-approach visualization | `approaches/<NNN>_<name>/visualization.png` |
+| Per-approach visualization | `approaches/<NNN>_<slug>/visualization.png` |
 
 ### Adding ideas mid-experiment
 
@@ -335,8 +335,10 @@ $SESSION_DIR/
 ├── fixed/
 │   ├── evaluate.py             ⬛ IMMUTABLE — the evaluation contract
 │   ├── data_prep.py            ⬛ IMMUTABLE — data loading + splits
-│   └── visualize.py            ⬛ IMMUTABLE — per-approach plot generator
+│   ├── visualize.py            ⬛ IMMUTABLE — per-approach plot generator
+│   └── paths.py                ⬛ IMMUTABLE — artifacts_dir_for() helper
 ├── eval_and_record.py          ⬛ IMMUTABLE — the evaluator runner
+├── update_report.py            ⬛ IMMUTABLE — regenerates Zone A of report.md
 └── references/
     └── INDEX.md                ➕ APPENDABLE — Phase 0 prior-art summary
 ```
@@ -349,57 +351,74 @@ These exist before the real loop starts:
 ```
 $SESSION_DIR/
 ├── results.json                ✏ MUTABLE — approaches list, scores, ideas queue
-├── report.md                   ✏ MUTABLE (auto-regenerated from results.json)
+├── report.md                   ✏ MUTABLE — Zone A scripted, Zone B agent narrative
 ├── progress.png                ✏ MUTABLE (auto-regenerated after each approach)
-├── .gitignore                  ⬛ mostly immutable
+├── .gitignore                  ⬛ single rule: artifacts/
 ├── .claude/
 │   └── CLAUDE.md               ⬛ survival file (rules restated for autocompact)
 ├── .autoresearch-directives    ⬛ survival file (context recovery checkpoint)
 ├── .loop-active                ✏ MUTABLE — contains current session ID;
 │                                            absent when loop is stopped
 ├── .loop-state                 ✏ MUTABLE — last approach number, best score
-└── approaches/
-    └── 000_naive_baseline/     ➕ one directory per approach (smoke test is 000)
-        ├── approach.py         ⬛ immutable once committed
-        ├── scores.json         ⬛ immutable (written by eval_and_record.py)
-        ├── metrics.json        ⬛ immutable
-        ├── visualization.png   ⬛ immutable
-        ├── training_progress.json  ⬛ immutable (streamed during training)
-        ├── live.log            ⬛ immutable (stdout+stderr stream)
-        ├── references.md       ⬛ immutable (papers cited by this approach)
-        └── .gitignore          ⬛ auto-generated (excludes checkpoints/weights)
+├── .narrative-dirty            ✏ MUTABLE — sentinel: Zone A moved, Zone B stale
+├── approaches/                                      ← REPRODUCIBILITY (in git)
+│   └── 000_smoke_test/         ➕ one directory per approach (smoke test is 000)
+│       ├── rationale.md        (mandatory)
+│       ├── approach.py         (mandatory)
+│       ├── commentary.md       (mandatory)
+│       ├── scores.json         (mandatory — written by eval_and_record.py)
+│       ├── metrics.json        (mandatory — written by eval_and_record.py)
+│       ├── live.log            (mandatory — stdout+stderr stream via tee)
+│       ├── visualization.png   (optional — absent = crash signal)
+│       └── training_progress.json  (optional — absent = non-iterative or early crash)
+└── artifacts/                                       ← HEAVY (gitignored)
+    └── 000_smoke_test/         ← paired by name, empty if trial has no heavy output
 ```
 
 ### Phase 3 — created and modified during the loop
 
-Every iteration of the loop writes one new approach directory and
-updates four shared files:
+Every iteration of the loop writes one new approach folder (and
+possibly a paired artifacts folder for heavy files) and updates the
+shared session files:
 
 ```
 $SESSION_DIR/
 ├── results.json                ✏ appended: new approach entry, scores, paradigm tag
-├── report.md                   ✏ regenerated from results.json
+├── report.md                   ✏ Zone A auto-regenerated every trial;
+│                                  Zone B rewritten every N trials + on stop
 ├── progress.png                ✏ regenerated from results.json
 ├── bibliography.md             ➕ appended on plateau search or per-approach citation
 ├── .loop-state                 ✏ updated: last approach number, best score
-└── approaches/
-    ├── 000_naive_baseline/     (smoke test, unchanged)
-    ├── 001_<name>/             ➕ new on iteration 1
-    │   ├── rationale.md        ⬛ written BEFORE eval — idea, hypothesis, what we'll learn
-    │   ├── approach.py         ⬛ the code (analysis lives in the docstring)
-    │   ├── live.log            ⬛ written by eval_and_record.py
-    │   ├── training_progress.json  ⬛ written by training loop
-    │   ├── visualization.png   ⬛ written by fixed/visualize.py
-    │   ├── scores.json         ⬛ written by fixed/evaluate.py
-    │   ├── metrics.json        ⬛ written by fixed/evaluate.py
-    │   ├── commentary.md       ⬛ written AFTER eval, on next iteration — result, vs-hypothesis, lessons
-    │   ├── checkpoints/        (not in git — excluded by per-approach .gitignore)
-    │   │   ├── epoch_01.pt     (reusable by later approaches)
-    │   │   └── epoch_02.pt
-    │   └── references.md       (papers this approach is based on)
-    ├── 002_<name>/             ➕ new on iteration 2
+├── .narrative-dirty            ✏ written when Zone A changes, deleted after Zone B rewrite
+├── approaches/                                      ← REPRODUCIBILITY (in git)
+│   ├── 000_smoke_test/         (smoke test, unchanged)
+│   ├── 001_<slug>/             ➕ new on iteration 1
+│   │   ├── rationale.md        (front-matter parent+source; prose Idea/Hypothesis/Builds on/What we'll learn)
+│   │   ├── approach.py         (the code; heavy files go to artifacts_dir_for(__file__))
+│   │   ├── commentary.md       (front-matter status+summary; prose postmortem written next iteration)
+│   │   ├── scores.json         (written by eval_and_record.py)
+│   │   ├── metrics.json        (written by eval_and_record.py)
+│   │   ├── live.log            (stdout+stderr stream via tee)
+│   │   ├── visualization.png   (optional — absent = crash signal)
+│   │   └── training_progress.json  (optional — absent = non-iterative or early crash)
+│   ├── 002_<slug>/             ➕ new on iteration 2 (same schema)
+│   └── ...
+└── artifacts/                                       ← HEAVY (gitignored)
+    ├── 001_<slug>/
+    │   ├── ckpt_epoch_000.pkl  (reusable by later approaches via glob)
+    │   ├── ckpt_epoch_001.pkl
+    │   └── preprocessed_cache.npz
+    ├── 002_<slug>/
     └── ...
 ```
+
+**Why two trees?** Everything in `approaches/` is committed to git
+and is what you want to keep for reproducibility (code, sidecars,
+scores, plots, logs). Everything in `artifacts/` is session-local
+and potentially huge (model weights, caches, optuna sqlite). When
+the session is done you can `rm -rf artifacts/` to reclaim disk
+without losing the record of the experiments. `approach.py` resolves
+its artifacts directory via `fixed.paths.artifacts_dir_for(__file__)`.
 
 ### Legend
 
@@ -416,14 +435,14 @@ $SESSION_DIR/
 | See the current best approach and trajectory | `report.md` |
 | See the score trajectory visually | `progress.png` |
 | See every approach with its numerical scores | `results.json` (approaches list) |
-| Review a specific trial's code and output | `approaches/<NNN>_<name>/approach.py` + `visualization.png` |
-| Watch a running trial in real time | `tail -f approaches/<NNN>_<name>/live.log` |
-| Check training progress of a running trial | `cat approaches/<NNN>_<name>/training_progress.json` |
+| Review a specific trial's code and output | `approaches/<NNN>_<slug>/approach.py` + `visualization.png` |
+| Watch a running trial in real time | `tail -f approaches/<NNN>_<slug>/live.log` |
+| Check training progress of a running trial | `cat approaches/<NNN>_<slug>/training_progress.json` |
 | Review the original experiment plan | `experiment-plan.md` |
 | See the literature the agent has used | `bibliography.md` + `bibliography.bib` |
 | Check current loop-tuning settings | `loop-settings.json` |
 | Add ideas mid-experiment | Edit the `user_ideas_queue` block in `results.json` |
-| Diff two approaches | `git diff approaches/<NNN>_<name> approaches/<MMM>_<name>` |
+| Diff two approaches | `git diff approaches/<NNN>_<slug> approaches/<MMM>_<slug>` |
 | Check out a specific trial | `git checkout <sha>` — every approach is its own commit |
 
 ---
@@ -521,22 +540,34 @@ Results in `results.json` are preserved.
 - **`SKILL.md`** — the agent-facing contract (rules, modes, loop
   mechanics). Read this if you want to understand how Claude behaves
   inside the loop.
-- **`references/planning-protocol.md`** — full detail on the 8-step
-  planning phase
-- **`references/experiment-loop.md`** — the loop protocol, anti-patterns,
-  escalation strategy
-- **`docs/evaluation-contract.md`** — what "immutable evaluator"
-  means and how to draft one
+- **`references/clarifying-questions.md`** — the 11-topic planning Q&A
+  with brainstorming delegation guardrails
+- **`references/planning-protocol.md`** — deep content per topic
+  (metric choice, hold-out rationale, visualization examples)
+- **`references/loop-entry.md`** — validation gate (12 checks) +
+  pre-flight walkthrough + `loop-settings.json` schema
+- **`references/experiment-loop.md`** — the 4-tool-call loop protocol,
+  anti-patterns, search callbacks, narrative update, escalation
+- **`references/evaluation-contract.md`** — the immutable file set
+  (approach.py + fixed/*.py + eval_and_record.py + update_report.py),
+  sandbox rules with whitelist, two-tree split, approach folder
+  schema, monitoring contract, scores vs metrics, budget enforcement
+- **`references/sidecars.md`** — `rationale.md` and `commentary.md`
+  spec with YAML front-matter (parent, source, status, summary)
+- **`references/report-updates.md`** — Zone A/B split, `update_report.py`
+  contract, marker injection on legacy resume, narrative cadence
+- **`references/live-logging.md`** — `_log()` helper, tee launcher,
+  monitoring contract with minimum line counts
 - **`references/session-init.md`** — directory structure, `fixed/`
-  templates, survival files
+  templates, `eval_and_record.py` + `update_report.py` templates,
+  survival files
 - **`references/loop-enforcement.md`** — the Stop hook mechanism, the
   autocompact survival strategy, the natural-language stopping feature
-- **`references/git-management.md`** — repo hygiene rules (no data files,
-  no secrets, never revert)
-- **`docs/common-pitfalls.md`** — validation overfitting, silent
-  drift, and other failure modes to avoid
-- **`references/report-template.md`** — the shape of the auto-generated
-  report
+- **`references/git-management.md`** — repo hygiene rules (one
+  `.gitignore` rule, never revert, reproducibility kit lives in
+  `approaches/`)
+- **`references/report-template.md`** — the shape of the
+  auto-generated report
 
 ## Credits
 

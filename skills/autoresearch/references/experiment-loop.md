@@ -13,10 +13,10 @@ Each iteration writes three markdown files and runs one Bash command,
 in this exact order:
 
 ```
-Tool 1 (Write, SKIP on iteration 1):  approaches/<PREV>_<name>/commentary.md
-Tool 2 (Write):                       approaches/<NNN>_<name>/rationale.md
-Tool 3 (Write):                       approaches/<NNN>_<name>/approach.py
-Tool 4 (Bash):                        cd <session_dir> && python3 eval_and_record.py approaches/<NNN>_<name>
+Tool 1 (Write, SKIP on iteration 1):  approaches/<PREV>_<slug>/commentary.md
+Tool 2 (Write):                       approaches/<NNN>_<slug>/rationale.md
+Tool 3 (Write):                       approaches/<NNN>_<slug>/approach.py
+Tool 4 (Bash):                        cd <session_dir> && python3 eval_and_record.py approaches/<NNN>_<slug>
                                       (use run_in_background: true if estimated >background_threshold_seconds)
 ```
 
@@ -67,7 +67,7 @@ already engaged with.
 
 ## Step 2 — COMMENTARY (Tool 1: Write)
 
-Write `approaches/<PREV>_<name>/commentary.md` with the five required
+Write `approaches/<PREV>_<slug>/commentary.md` with the five required
 fields: Result, Vs. hypothesis, Vs. bibliography, Visualization,
 Lessons. 5-15 lines. See `references/sidecars.md` for field definitions
 and examples.
@@ -95,7 +95,7 @@ Strategy:
 - Do NOT self-censor ideas that "probably won't beat the best." Try
   them. Data points matter.
 
-Then write `approaches/<NNN>_<name>/rationale.md` with the four
+Then write `approaches/<NNN>_<slug>/rationale.md` with the four
 required fields: Idea, Hypothesis, Builds on (including any BibTeX
 citations from `bibliography.md`), What we'll learn. See
 `references/sidecars.md`.
@@ -123,40 +123,54 @@ Use this estimate to decide launch strategy via
 
 ## Step 4 — APPROACH.PY (Tool 3: Write)
 
-Write `approaches/<NNN>_<name>/approach.py`:
+Write `approaches/<NNN>_<slug>/approach.py`. The `run(data)` contract
+and sandbox rules (no imports from `fixed/`, relative paths only, no
+secrets, etc.) are defined in **`references/evaluation-contract.md`** —
+consult it if unsure what the approach is and isn't allowed to do.
 
 - Implement `run(data)` cleanly. Self-contained, no hardcoded paths.
 - Implementation analysis goes in the **docstring** (different from
   rationale.md — docstring is for code-level API notes, rationale.md
   is for the high-level narrative).
-- Follow the live-logging convention (see `references/live-logging.md`):
-  define `_log()` helper, call it at training start / each epoch /
-  completion / prediction intervals.
+- Follow the live-logging CONTRACT (see `references/live-logging.md`):
+  define `_log()` helper, call it at least at training start and end.
+  For any trial running longer than ~10s, also call `_log()` during
+  training (per epoch or periodic). Silent trials are marked
+  `monitoring_violation` by `eval_and_record.py` and cannot be kept.
 - For iterative training, write `training_progress.json` per epoch so
   background monitoring can see progress.
-- **Checkpoint saving (MANDATORY):** save model checkpoints to disk
-  during training — per-epoch, not just at end. Enables trial recovery
-  and warm-start reuse by later approaches. The per-approach
-  `.gitignore` auto-excludes weights from git but keeps them on disk.
+- **Checkpoint saving (MANDATORY):** save model checkpoints to
+  `artifacts_dir_for(__file__)` — never to the approach folder. The
+  harness enforces this by auto-moving any forbidden file type or
+  oversized file out of `approaches/<NNN>_<slug>/` into
+  `artifacts/<NNN>_<slug>/`, but write to the right place from the
+  start to keep logs clean.
 
   ```python
-  import pickle
-  approach_dir = os.path.dirname(__file__)
+  import pickle, os
+  from fixed.paths import artifacts_dir_for
+
+  adir = artifacts_dir_for(__file__)
   for epoch in range(n_epochs):
       train_one_epoch(model, ...)
-      with open(os.path.join(approach_dir, f"ckpt_epoch_{epoch:03d}.pkl"), "wb") as f:
+      with open(os.path.join(adir, f"ckpt_epoch_{epoch:03d}.pkl"), "wb") as f:
           pickle.dump(model, f)
   ```
 
 - **Checkpoint loading (when reusing architecture):** before training,
   look for prior approaches with compatible architectures and load
-  their latest checkpoint as a warm start.
+  their latest checkpoint as a warm start. Prior checkpoints live in
+  `artifacts/<NNN>_<slug>/`, accessed via the parent artifacts dir
+  derived from the current one.
 
   ```python
   import glob, pickle, os
-  parent = os.path.dirname(os.path.dirname(__file__))
+  from fixed.paths import artifacts_dir_for
+
+  my_adir = artifacts_dir_for(__file__)
+  session_artifacts = os.path.dirname(my_adir)  # artifacts/ at session root
   ckpts = sorted(
-      glob.glob(os.path.join(parent, "*/ckpt_epoch_*.pkl")),
+      glob.glob(os.path.join(session_artifacts, "*/ckpt_epoch_*.pkl")),
       key=os.path.getmtime,
   )
   if ckpts:
@@ -191,8 +205,8 @@ Canonical launch (per `references/live-logging.md` Rule 4) — **uses
 background-shell indicator simultaneously:**
 
 ```bash
-timeout <N> stdbuf -oL -eL uv run python -u eval_and_record.py approaches/<NNN>_<name> 2>&1 \
-  | stdbuf -oL tee approaches/<NNN>_<name>/live.log
+timeout <N> stdbuf -oL -eL uv run python -u eval_and_record.py approaches/<NNN>_<slug> 2>&1 \
+  | stdbuf -oL tee approaches/<NNN>_<slug>/live.log
 ```
 
 - `python -u` + `stdbuf -oL -eL` force line-buffered output
@@ -370,11 +384,13 @@ summary instinct is the #1 way loops die.**
 | Situation | Folder name |
 |---|---|
 | Normal | `003_relu_instead_of_gelu` |
-| Crash | `005_deep_mlp` (status in `scores.json`) |
-| Baseline | `001_baseline` (smoke test is `000_naive_baseline`) |
+| Crash | `005_deep_mlp` (status in `commentary.md` and `scores.json`) |
+| Baseline | `001_baseline` (smoke test is `000_smoke_test`) |
 
-Use `NNN_descriptive_name`. Score is in `scores.json`, not the folder
-name.
+Use `NNN_descriptive_slug`. Zero-padded NNN. No tag prefix (the
+session tag is NOT part of the folder name — it lives once at the
+session level in `results.json["tag"]`). Score is in `scores.json`,
+not the folder name.
 
 ---
 
@@ -398,12 +414,28 @@ Before moving to the next approach, `eval_and_record.py` output must
 NOT contain `!! INCOMPLETE`. If it does, diagnose and fix the missing
 artifact before writing the next rationale. Common fixes:
 
-- **Plots missing:** check if `fixed/visualize.py` has a bug, re-run
+- **Plots missing:** if `visualization.png` is absent on a non-crash
+  trial, `fixed/visualize.py` crashed. Check the traceback in
+  `live.log`. If trial genuinely crashed, absence is expected — the
+  harness does NOT generate stub plots (see
+  `references/evaluation-contract.md` §Approach folder schema).
 - **Scores missing:** check if `fixed/evaluate.py` threw an exception
 - **MISSING_RATIONALE:** you forgot Tool 2 — write rationale.md and
   re-run eval
-- **Training progress missing:** `approach.py` didn't write
-  `training_progress.json`; fix the approach
+- **MONITORING VIOLATION:** `approach.py` produced too few lines in
+  `live.log`. The trial is marked `monitoring_violation` and cannot
+  be kept even if the score is good. Rewrite the SAME `approach.py`
+  with `_log()` calls at start/middle/end (do not advance the trial
+  number — the fix is to the contract, not to the idea). See
+  `references/live-logging.md`.
+- **MOVED TO ARTIFACTS:** you wrote a checkpoint or heavy file
+  directly to the approach folder; the harness moved it to
+  `artifacts/<NNN>_<slug>/`. Use `fixed.paths.artifacts_dir_for(__file__)`
+  in `approach.py` next time so it lands in the right place from
+  the start.
+- **Training progress missing:** if the trial was iterative,
+  `approach.py` didn't write `training_progress.json` — fix the
+  approach. If the trial was one-shot, absence is expected.
 
 Never skip a broken approach. Fix it first.
 
@@ -458,6 +490,35 @@ lighter:
 4. Continue the loop.
 
 Off by default.
+
+### Narrative update (`!! NARRATIVE_DUE`)
+
+Triggers every N trials (`narrative_update_every_n` in
+`loop-settings.json`, default 10) and on the first real trial (001)
+to seed Zone B of `report.md` from the start.
+
+When you see this marker:
+
+1. **Read the last N `commentary.md` files** to reconstruct the
+   pattern. What lineages are alive? What's the gap to the current
+   best? Which paradigms have been exhausted?
+2. **Read the current Zone B prose** in `report.md` (between
+   `<!-- auto:end -->` and end of file) to see what the previous
+   update said.
+3. **Edit Zone B** — rewrite the four narrative sections
+   (`## Synthesis`, `## What works`, `## What doesn't work`,
+   `## Next Steps`) to reflect the new state. Always use the full
+   `<NNN>_<slug>` form (ideally as clickable links) when mentioning
+   specific trials — short `NNN` form is OK in subsequent references
+   within the same paragraph.
+4. **Delete `.narrative-dirty`** from the session root after writing.
+5. **Continue the loop.**
+
+Do NOT touch Zone A (everything between the auto-markers) — that's
+`update_report.py`'s territory and any hand edits are overwritten
+next trial.
+
+Full spec: `references/report-updates.md`.
 
 ---
 

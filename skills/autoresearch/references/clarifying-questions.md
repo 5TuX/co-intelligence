@@ -87,6 +87,23 @@ experiment structure and is not revised later.
   per-segment error histogram, confusion matrix, attention heatmap,
   residual time series.
 
+**Report cadence (companion sub-question):** `report.md` is split
+into a script-owned Zone A (counters, best-score table, experiment
+log, approach tree — refreshed every trial by `update_report.py`)
+and an agent-owned Zone B (Synthesis, What works, What doesn't
+work, Next Steps — rewritten every N trials and on stop).
+
+> "How often should I rewrite the report's narrative sections
+> (Synthesis, What works, What doesn't work, Next Steps)? Default
+> is every 10 trials. I'll also rewrite them one last time when
+> you tell me to stop, so the final report is always current."
+
+Record the answer as `narrative_update_every_n` in
+`loop-settings.json`. The pre-flight walkthrough surfaces this knob
+again as a tweakable setting before every loop start/resume, so the
+user can adjust without editing the file. See
+`references/report-updates.md`.
+
 ### 6. Evaluation harness
 
 Draft `fixed/evaluate.py` as pseudo-code and confirm with the user.
@@ -177,7 +194,7 @@ to the pre-flight walkthrough:
 > loop-tuning knobs (time budget, plateau behavior, paradigm
 > rotation) before I start."
 
-Then run the walkthrough (see `references/preflight-walkthrough.md`).
+Then run the walkthrough (see `references/loop-entry.md` Stage 2).
 Do NOT write `experiment-plan.md` until after the walkthrough
 concludes — the walkthrough can surface tweaks that retro-affect the
 plan (e.g. the user bumps the time budget, which affects what's

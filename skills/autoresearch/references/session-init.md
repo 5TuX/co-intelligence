@@ -27,9 +27,10 @@ $SESSION_DIR/                                    <-- git init here
 ├── experiment-plan.md          ⬛ from planning phase, immutable
 ├── loop-settings.json          ✏ from pre-flight walkthrough, mutable
 ├── eval_and_record.py          ⬛ generated from template below
+├── update_report.py            ⬛ regenerates Zone A of report.md every trial
 ├── final_eval.py               ⬛ generated if test_set_reserved: true
 ├── results.json                ✏ approaches list, user_ideas_queue
-├── report.md                   ✏ living report (regenerated per approach)
+├── report.md                   ✏ living report (Zone A scripted, Zone B agent narrative)
 ├── README.md                   ✏ public-facing session overview
 ├── progress.png                ✏ score trajectory (regenerated per approach)
 ├── best_score.txt              ✏ current best primary score, plain text
@@ -40,42 +41,54 @@ $SESSION_DIR/                                    <-- git init here
 │   └── README.md               ⬛ format guide
 ├── .loop-active                ✏ current session ID (deleted on stop)
 ├── .loop-state                 ✏ last approach #, best score, total
+├── .narrative-dirty            ✏ sentinel: Zone A changed, Zone B stale
 ├── .autoresearch-directives    ⬛ core rules for context recovery
-├── .gitignore                  ⬛ session-wide git exclusions
+├── .gitignore                  ⬛ session-wide git exclusions (one rule: artifacts/)
 ├── .claude/
 │   └── CLAUDE.md               ⬛ survives autocompact
 ├── fixed/
 │   ├── evaluate.py             ⬛ IMMUTABLE evaluation harness
 │   ├── data_prep.py            ⬛ IMMUTABLE data loader
-│   └── visualize.py            ⬛ IMMUTABLE per-approach visualizer
-└── approaches/
-    ├── 000_naive_baseline/     ⬛ smoke test (if opted in)
-    │   ├── rationale.md
-    │   ├── approach.py
-    │   ├── scores.json
-    │   ├── metrics.json
-    │   ├── visualization.png
-    │   ├── training_progress.json
-    │   ├── live.log
-    │   ├── commentary.md       ← written after smoke-test review
-    │   └── .gitignore          ← auto-excludes checkpoints/weights
-    └── 001_<name>/             ⬛ first real loop approach
-        ├── rationale.md         ← Tool 2 of the 4-tool-call iteration
-        ├── approach.py          ← Tool 3
-        ├── scores.json
-        ├── metrics.json
-        ├── visualization.png
-        ├── training_progress.json
-        ├── live.log
-        ├── commentary.md        ← Tool 1 of the NEXT iteration
-        ├── references.md        ← optional long-form paper notes
-        └── .gitignore
+│   ├── visualize.py            ⬛ IMMUTABLE per-approach visualizer
+│   └── paths.py                ⬛ IMMUTABLE artifacts_dir_for() helper
+├── approaches/                                  ← REPRODUCIBILITY (in git)
+│   ├── 000_smoke_test/         ⬛ smoke test (if opted in)
+│   │   ├── rationale.md         ← Tool 2 of the 4-tool-call iteration
+│   │   ├── approach.py          ← Tool 3
+│   │   ├── commentary.md        ← Tool 1 of the NEXT iteration
+│   │   ├── scores.json          (mandatory)
+│   │   ├── metrics.json         (mandatory)
+│   │   ├── live.log             (mandatory)
+│   │   ├── visualization.png    (optional — absent = crash signal)
+│   │   └── training_progress.json  (optional — absent = non-iterative or early crash)
+│   └── 001_<slug>/             ⬛ first real loop approach (same schema)
+│       └── ...
+└── artifacts/                                   ← HEAVY (gitignored)
+    ├── 000_smoke_test/         ← paired by name with approaches/000_smoke_test/
+    │   └── (checkpoints, caches, large model files — empty if trial has none)
+    └── 001_<slug>/
+        ├── ckpt_epoch_000.pkl
+        ├── ckpt_epoch_001.pkl
+        └── preprocessed_cache.npz
 ```
 
 Legend:
 - ⬛ immutable once created
 - ✏ mutable — edited by agent, `eval_and_record.py`, or user
 - ➕ appendable — grows over time (new entries added, never rewritten)
+
+**Two top-level trees per session:**
+
+- `approaches/<NNN>_<slug>/` — the reproducibility package (sidecars,
+  code, scores, plots, logs). Committed to git. Fixed schema (6
+  mandatory + 2 optional files). See
+  `references/evaluation-contract.md` §Approach folder schema.
+- `artifacts/<NNN>_<slug>/` — heavy, session-local, gitignored.
+  Resolved from `approach.py` via `fixed.paths.artifacts_dir_for(__file__)`.
+  Wipe with `rm -rf artifacts/` after the session is done.
+
+The session tag is NOT part of approach folder names — it lives once
+in `results.json["tag"]` and in the session directory name.
 
 ---
 
@@ -134,8 +147,7 @@ the physical dir is reachable through it.
 ## Step 2 — Initialize `loop-settings.json`
 
 Written from the pre-flight walkthrough approved values. Full schema
-and field reference: `references/preflight-walkthrough.md` §Settings
-persistence.
+and field reference: `references/loop-entry.md` §Settings persistence.
 
 ---
 
@@ -226,36 +238,47 @@ topic 8.
 
 ---
 
-## Step 5 — `fixed/visualize.py` contract
+## Step 5 — Materialize the evaluation harness
 
-The user defined what the visualization should show during clarifying
-question 5 (`references/planning-protocol.md` topic 5).
+Create the four immutable `fixed/*.py` files plus the two immutable
+session-root scripts. All six are written once at session init and
+never edited afterward.
 
-```python
-def visualize(result: dict, approach_dir: str, run_fn=None) -> None:
-    """Generate per-approach visualization.
+**Full contract specifications** for every file (`approach.py` +
+`fixed/evaluate.py` + `fixed/data_prep.py` + `fixed/visualize.py` +
+`fixed/paths.py` + `eval_and_record.py` + `update_report.py`),
+sandbox rules with the `fixed.paths` whitelist, two-tree split
+(`approaches/` vs `artifacts/`), approach folder schema, monitoring
+contract, scores vs. metrics, budget enforcement, and the rationale
+for immutability: **`references/evaluation-contract.md`**.
 
-    Args:
-        result: dict returned by evaluate() with scores and additional data
-        approach_dir: path to approach folder (save visualization.png here)
-        run_fn: (optional) the approach's run() function for detailed plots.
-                When None, generate summary plots from result dict only.
-    """
-    # Implementation generated from the plan.
-```
+The script-owned report-update flow (Zone A vs Zone B, NARRATIVE_DUE
+trigger, `.narrative-dirty` sentinel, marker injection on legacy
+resume): **`references/report-updates.md`**.
 
-Choose one of two contract forms at session init:
+Key points for session init specifically:
 
-- `visualize(result, approach_dir)` — if the result dict contains all
-  predictions already
-- `visualize(result, approach_dir, run_fn=...)` — if the visualization
-  needs to call `run_fn` on specific samples for detailed plots
-
-The choice was made during topic 5 of planning; this file honors it.
-
-The fail-fast contract applies: crashes in `visualize()` must be loud
-and leave a crash-honest plot in place (empty, marker, annotation).
-Never fabricate data for failed timesteps.
+- Scaffold the three `fixed/` evaluation files from Topic 6
+  pseudo-code (`evaluate.py`, `data_prep.py`, `visualize.py`).
+- Generate `fixed/paths.py` from the canonical template in
+  `references/evaluation-contract.md` §`fixed/paths.py` contract.
+  This file is generic and identical across sessions — copy verbatim.
+- Choose the `visualize()` signature variant (with or without
+  `run_fn=...`) based on the Topic 5 answer.
+- Generate `eval_and_record.py` (Step 10) — it includes the
+  approach-folder-schema enforcement, the auto-move of forbidden
+  files to `artifacts/`, the monitoring-contract line-count check,
+  the call to `update_report.py` at the end, and the
+  `!! NARRATIVE_DUE` emission every N trials.
+- Generate `update_report.py` per the `references/report-updates.md`
+  contract — reads `results.json` + per-approach `scores.json` +
+  rationale/commentary front-matter, rewrites Zone A of `report.md`
+  between `<!-- auto:begin -->` and `<!-- auto:end -->` markers,
+  writes `.narrative-dirty` whenever Zone A changes, restores from
+  `report.md.bak` on exception.
+- Commit all six as part of the init commit. Do not leave any as
+  TODO stubs — the smoke test runs immediately after and will fail
+  loudly if any harness file is incomplete.
 
 ---
 
@@ -266,30 +289,19 @@ cd "$SESSION_DIR"
 git init
 
 cat > .gitignore << 'EOF'
-# Data files (user should never commit raw data)
-data/
-*.csv
-*.tsv
-*.npy
-*.npz
-*.pkl
-*.pickle
-*.h5
-*.hdf5
-*.pt
-*.pth
-*.bin
-*.parquet
-*.arrow
-*.feather
-*.sqlite
-*.db
-
-# Large artifacts
+# Heavy session-local artifacts (checkpoints, weights, caches)
+# resolved from approach.py via fixed.paths.artifacts_dir_for(__file__).
+# This is the ONE rule that handles all heavy files — the approach
+# folder schema (eval_and_record.py) auto-moves forbidden file types
+# out of approaches/ into artifacts/, so we never need per-approach
+# .gitignore files.
 artifacts/
 
-# Logs at session root (per-approach live.log is tracked)
-run.log
+# Raw input data (user should never commit raw data)
+data/
+
+# Backup files written by update_report.py for rollback safety
+report.md.bak
 
 # Python
 __pycache__/
@@ -307,6 +319,7 @@ credentials.*
 # Loop state (ephemeral, not published)
 .loop-active
 .loop-state
+.narrative-dirty
 
 # OS
 .DS_Store
@@ -353,9 +366,68 @@ the Stop hook releases. Restart by saying
 *"resume `<tag>`"* or any equivalent natural-language phrasing.
 ```
 
-The `**Approaches tried:**` and `**Best score:**` lines are
-auto-updated by `eval_and_record.py` using regex replacement. Do not
-change their format.
+The README header is informational; it is NOT auto-updated in the
+new design (Zone A lives in `report.md`, not `README.md`). The
+`Approaches tried` counter is populated on demand by the agent if
+they want a short status card.
+
+### report.md template — with zone markers
+
+Create `report.md` at session root with the zone markers in place
+from day one. `update_report.py` will own everything between the
+markers; the agent owns everything after `<!-- auto:end -->`.
+
+```bash
+cat > report.md << 'EOF'
+# Autoresearch — <task title>
+
+<!-- auto:begin -->
+**Tag:** <tag> | **Started:** <YYYY-MM-DD> | **Approaches tried:** 0 | **Last updated:** <now>
+
+**Current best:** (none yet)
+
+## Best scores by metric
+
+| Metric | Direction | Best Score | Best Approach |
+|---|---|---|---|
+
+## Experiment Log
+
+| # | Name | Status | <metrics...> | Δ_best | Δ_parent | Notes |
+|---|------|--------|--------------|--------|----------|-------|
+
+## Approach Tree
+
+(populated as the loop runs)
+
+## User Ideas Status
+
+| Idea | Status | Approach(es) |
+|------|--------|--------------|
+<!-- auto:end -->
+
+## Synthesis
+
+(will be populated starting at approach 001 and refreshed every N trials per loop-settings.narrative_update_every_n)
+
+## What works
+
+(will be populated starting at approach 001)
+
+## What doesn't work
+
+(will be populated starting at approach 001)
+
+## Next Steps
+
+(will be populated starting at approach 001)
+EOF
+```
+
+The script refreshes Zone A every trial. The agent seeds Zone B at
+approach 001 and refreshes it on the `!! NARRATIVE_DUE` cadence and
+on stop. See `references/report-updates.md` for the Zone B cadence
+contract.
 
 ---
 
@@ -537,15 +609,22 @@ handles EVERYTHING scoring-and-bookkeeping-related after `approach.py`
 is written:
 
 - Evaluates the approach against `fixed/evaluate.py`
+- Enforces the approach folder schema (auto-moves forbidden files
+  to `artifacts/`, see `references/evaluation-contract.md`)
+- Enforces the monitoring contract (line-count check on `live.log`,
+  marks silent trials `monitoring_violation`)
 - Writes `scores.json` and `metrics.json`
 - Calls `fixed/visualize.py` to generate `visualization.png`
+  (failure is non-fatal; no stub generated)
 - Decides keep/discard using `min_improvement` from `results.json`
-- Git-commits the approach
+- Git-commits the approach (approach folder only — `artifacts/`
+  is gitignored at the session root)
 - Regenerates `progress.png`
-- Updates `report.md` and `README.md`
+- Calls `update_report.py` to refresh Zone A of `report.md`
 - Updates `.loop-state`
 - Prints one-line result and trigger markers (SEARCH_NEEDED,
-  INCOMPLETE, MISSING_RATIONALE, RESEARCH_INCOMPLETE)
+  NARRATIVE_DUE, INCOMPLETE, MISSING_RATIONALE, RESEARCH_INCOMPLETE,
+  MONITORING VIOLATION)
 
 The agent's per-iteration contract is:
 Write commentary.md → Write rationale.md → Write approach.py → Bash
@@ -655,15 +734,55 @@ except Exception as e:
     traceback.print_exc()
     print(f"CRASH: {e}")
 
-# --- AUTO-GITIGNORE (guaranteed per-approach artifact exclusion) ---
-_gitignore_path = os.path.join(APPROACH_DIR, ".gitignore")
-if not os.path.exists(_gitignore_path):
-    with open(_gitignore_path, "w") as _gf:
-        _gf.write("# Auto-generated by eval_and_record.py\n"
-                  "*.pkl\n*.pickle\n*.pt\n*.pth\n*.bin\n*.safetensors\n"
-                  "*.joblib\n*.h5\n*.hdf5\n*.onnx\n"
-                  "__pycache__/\n*.pyc\n"
-                  "checkpoints/\nweights/\nembeddings/\nckpt_epoch_*.pkl\n")
+# --- APPROACH FOLDER SCHEMA ENFORCEMENT ---
+# Auto-move any forbidden file type or oversized file out of the
+# approach folder into the paired artifacts/ folder. The approach
+# folder stays clean without per-approach .gitignore files.
+_approach_name = os.path.basename(APPROACH_DIR)
+_artifacts_dir = os.path.join(SESSION_DIR, "artifacts", _approach_name)
+os.makedirs(_artifacts_dir, exist_ok=True)
+
+_forbidden_exts = {".pkl", ".pickle", ".pt", ".pth", ".bin", ".safetensors",
+                   ".joblib", ".h5", ".hdf5", ".onnx", ".ckpt", ".npz",
+                   ".sqlite", ".db"}
+_size_limit_mb = float(settings.get("approach_file_size_limit_mb", 1.0))
+_size_limit_bytes = int(_size_limit_mb * 1024 * 1024)
+
+for _entry in os.listdir(APPROACH_DIR):
+    _src = os.path.join(APPROACH_DIR, _entry)
+    if os.path.isdir(_src):
+        # Subdirectories are not allowed — move wholesale
+        import shutil as _sh
+        _dst = os.path.join(_artifacts_dir, _entry)
+        _sh.move(_src, _dst)
+        print(f"MOVED TO ARTIFACTS: {_entry}/ (subdirectory)")
+        continue
+    _ext = os.path.splitext(_entry)[1].lower()
+    _size = os.path.getsize(_src)
+    if _ext in _forbidden_exts or _size > _size_limit_bytes:
+        import shutil as _sh
+        _dst = os.path.join(_artifacts_dir, _entry)
+        _sh.move(_src, _dst)
+        reason = "forbidden ext" if _ext in _forbidden_exts else f"size {_size/1024/1024:.1f}MB"
+        print(f"MOVED TO ARTIFACTS: {_entry} ({reason})")
+
+# --- MONITORING CONTRACT ENFORCEMENT ---
+# approach.py must emit progress output. Silent trials are marked
+# monitoring_violation and cannot be kept. See evaluation-contract.md
+# §Monitoring contract.
+_live_log_path = os.path.join(APPROACH_DIR, "live.log")
+_live_lines = 0
+if os.path.exists(_live_log_path):
+    with open(_live_log_path) as _f:
+        _live_lines = sum(1 for _ln in _f if _ln.strip())
+_monitoring_threshold = float(settings.get("monitoring_required_after_seconds", 10))
+_required_lines = 3 if elapsed > _monitoring_threshold else 2
+monitoring_violation = (not crashed) and _live_lines < _required_lines
+if monitoring_violation:
+    print(f"MONITORING VIOLATION: approach.py produced {_live_lines} lines in live.log "
+          f"(required: ≥{_required_lines}). Background trials cannot be observed "
+          f"without progress output. Fix approach.py to call _log() at start / during / "
+          f"end before continuing. See references/live-logging.md.")
 
 # --- SCORES (objectives - used for keep/discard) ---
 scores = {obj: result.get(obj, 0) for obj in OBJECTIVES} if not crashed else None
@@ -679,11 +798,21 @@ best = float(open(best_file).read().strip()) if os.path.exists(best_file) else (
 MIN_IMPROVEMENT = float(results.get("min_improvement", 0.0))
 if crashed:
     kept = False
+elif monitoring_violation:
+    # A silent winner is still a broken winner — cannot be kept
+    kept = False
 elif HIGHER.get(PRIMARY_METRIC, True):
     kept = (primary_score - best) >= MIN_IMPROVEMENT and primary_score > best
 else:
     kept = (best - primary_score) >= MIN_IMPROVEMENT and primary_score < best
-status = "keep" if kept else ("crash" if crashed else "discard")
+if crashed:
+    status = "crash"
+elif monitoring_violation:
+    status = "monitoring_violation"
+elif kept:
+    status = "keep"
+else:
+    status = "discard"
 
 # --- WRITE SCORES + METRICS ---
 with open(os.path.join(APPROACH_DIR, "scores.json"), "w") as f:
@@ -772,44 +901,15 @@ try:
 except Exception:
     pass
 
-# --- UPDATE REPORT.MD (append to experiment log) ---
+# --- UPDATE REPORT.MD (delegate to update_report.py) ---
+# update_report.py owns Zone A (counters, best-score table,
+# experiment log, approach tree) and leaves Zone B (narrative) alone.
+# Failure is non-fatal — prints REPORT WARN and moves on. See
+# references/report-updates.md.
 try:
-    report_path = "report.md"
-    if os.path.exists(report_path):
-        report = open(report_path).read()
-        best_now = float(open(best_file).read().strip()) if os.path.exists(best_file) else primary_score
-        delta = f"+{primary_score - best:.4f}" if kept else ("crash" if crashed else f"{primary_score - best:.4f}")
-        log_line = f"| {approach_id:03d} | {approach_name} | {status} | {primary_score:.4f} | {delta} | |"
-        if "| # |" in report or "| --- |" in report:
-            report = report.rstrip() + "\n" + log_line + "\n"
-        import re
-        total = len(results['approaches'])
-        report = re.sub(r'\*\*Approaches tried:\*\* \d+',
-                        f'**Approaches tried:** {total}', report)
-        report = re.sub(r'\*\*Last updated:\*\* [^\n]+',
-                        f'**Last updated:** {time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())}',
-                        report)
-        with open(report_path, "w") as f:
-            f.write(report)
-except Exception:
-    pass
-
-# --- UPDATE README.MD ---
-try:
-    readme_path = "README.md"
-    if os.path.exists(readme_path):
-        readme = open(readme_path).read()
-        total = len(results['approaches'])
-        best_now = float(open(best_file).read().strip()) if os.path.exists(best_file) else 0
-        import re
-        readme = re.sub(r'\*\*Approaches tried:\*\* \d+',
-                        f'**Approaches tried:** {total}', readme)
-        readme = re.sub(r'\*\*Best score:\*\* [\d.]+',
-                        f'**Best score:** {best_now:.4f}', readme)
-        with open(readme_path, "w") as f:
-            f.write(readme)
-except Exception:
-    pass
+    subprocess.run(["python3", "update_report.py"], check=False, timeout=30)
+except Exception as _re:
+    print(f"REPORT WARN: {_re}")
 
 # --- UPDATE .loop-state ---
 total = len(results['approaches'])
@@ -860,6 +960,18 @@ if consecutive_discards >= plateau_threshold:
 if settings.get('search_every_trial', False):
     print("!! SEARCH_SUGGESTED")
 
+# --- NARRATIVE_DUE emission ---
+# Every N trials the agent must rewrite Zone B of report.md (Synthesis,
+# What works, What doesn't work, Next Steps). See report-updates.md.
+_narr_n = int(settings.get('narrative_update_every_n', 10))
+_total_approaches = len([a for a in results['approaches']
+                         if not a['name'].startswith('000_')])
+if _narr_n > 0 and _total_approaches > 0 and _total_approaches % _narr_n == 0:
+    print(f"!! NARRATIVE_DUE ({_total_approaches} approaches since last update). "
+          f"Rewrite Zone B of report.md (Synthesis, What works, What doesn't work, "
+          f"Next Steps). Use full <NNN>_<slug> trial names with clickable links. "
+          f"After updating, delete .narrative-dirty. See references/report-updates.md.")
+
 # --- RUNTIME STATS ---
 runtimes = [a['runtime_seconds'] for a in results['approaches']
             if a.get('runtime_seconds') and a['status'] != 'crash']
@@ -872,11 +984,16 @@ if runtimes:
 # --- PERSISTENT DIRECTIVES (survives context compaction) ---
 # These print EVERY trial so the agent always sees them, even after
 # context compression removes the original SKILL.md instructions.
-print(f"NEXT: Write commentary.md for {approach_name} (fields: Result, Vs. hypothesis, Visualization, Vs. bibliography, Lessons).")
-print(f"NEXT: Read {APPROACH_DIR}/visualization.png before writing the next rationale.")
-print(f"NEXT: Write rationale.md for the next approach (fields: Idea, Hypothesis, Builds on, What we'll learn). Cite bibliography.md entries by BibTeX key.")
-print("NEXT: Check prior approaches for reusable checkpoints. Load if architecture matches.")
-print("NEXT: Approaches MUST save model checkpoints during training. .gitignore auto-created.")
+print(f"NEXT: Write commentary.md for {approach_name} (front-matter status+summary; prose Result, Vs. hypothesis, Visualization, Vs. bibliography, Lessons).")
+_viz_path = os.path.join(APPROACH_DIR, 'visualization.png')
+if os.path.exists(_viz_path):
+    print(f"NEXT: Read {_viz_path} before writing the next rationale.")
+else:
+    print(f"NEXT: {_viz_path} is ABSENT — trial crashed before plotting, describe what broke in commentary.md.")
+print(f"NEXT: Write rationale.md for the next approach (front-matter parent+source; prose Idea, Hypothesis, Builds on, What we'll learn). Cite bibliography.md entries by BibTeX key.")
+print("NEXT: Check prior approaches for reusable checkpoints via fixed.paths.artifacts_dir_for. Load if architecture matches.")
+print("NEXT: Save heavy files (checkpoints, weights, caches) to artifacts_dir_for(__file__). NEVER to the approach folder — the harness will auto-move them.")
+print("NEXT: Call _log() at start and end of approach.py; add progress lines in the middle for any trial >10s. Silent trials are marked monitoring_violation.")
 print("NEXT: Estimate runtime. For >background_threshold_seconds use run_in_background + monitor training_progress.json.")
 ```
 
@@ -901,13 +1018,337 @@ config.
 
 ---
 
+## Step 10b — `update_report.py`
+
+Generate alongside `eval_and_record.py`. Owns Zone A of `report.md`
+(counters, best-score table, experiment log, approach tree, user
+ideas status) and leaves Zone B (Synthesis, What works, What doesn't
+work, Next Steps) untouched. Called from `eval_and_record.py` at the
+end of every trial. Failure is non-fatal (prints `REPORT WARN` and
+exits 0).
+
+**Full Zone A/B contract, markers, column schema, and marker
+injection on legacy resume:** `references/report-updates.md`.
+
+```python
+#!/usr/bin/env python3
+"""Regenerate Zone A of report.md from results.json + sidecars.
+IMMUTABLE. Called by eval_and_record.py after every trial.
+
+Reads:
+- results.json (canonical NNN sequence, metric keys, tag)
+- approaches/*/scores.json (metric values, status)
+- approaches/*/commentary.md front-matter (summary, status)
+- approaches/*/rationale.md front-matter (parent, source, addresses_user_idea)
+
+Writes:
+- report.md Zone A between <!-- auto:begin --> and <!-- auto:end -->
+- .narrative-dirty sentinel (when Zone A changes and narrative is stale)
+"""
+import json, os, re, sys, shutil, time
+from datetime import datetime
+
+SESSION_DIR = os.path.dirname(os.path.abspath(__file__))
+os.chdir(SESSION_DIR)
+
+REPORT = "report.md"
+BACKUP = "report.md.bak"
+BEGIN = "<!-- auto:begin -->"
+END = "<!-- auto:end -->"
+
+
+def load_fm(path):
+    """Extract YAML-ish front-matter from a markdown file. Returns dict."""
+    if not os.path.exists(path):
+        return {}
+    with open(path) as f:
+        text = f.read()
+    m = re.match(r'^---\n(.*?)\n---\n', text, re.DOTALL)
+    if not m:
+        return {}
+    fm = {}
+    for line in m.group(1).splitlines():
+        if ":" not in line:
+            continue
+        k, _, v = line.partition(":")
+        v = v.strip()
+        if v.lower() in ("null", "~", ""):
+            v = None
+        elif v.startswith('"') and v.endswith('"'):
+            v = v[1:-1]
+        fm[k.strip()] = v
+    return fm
+
+
+def approach_link(name):
+    return f"[{name}](approaches/{name}/)"
+
+
+def render_zone_a(results, settings, approaches_data):
+    tag = results.get("tag", "")
+    started = results.get("started", "")
+    total = len(approaches_data)
+    objectives = results.get("objectives", [results.get("primary_metric", "score")])
+    primary = results.get("primary_metric", objectives[0] if objectives else "score")
+    higher = results.get("higher_is_better", {})
+
+    # Current best
+    scored = [a for a in approaches_data
+              if a["scores"] and a["status"] not in ("crash", "monitoring_violation")]
+    def score_of(a): return a["scores"].get(primary, float("inf"))
+    if scored:
+        if higher.get(primary, True):
+            best_row = max(scored, key=score_of)
+        else:
+            best_row = min(scored, key=score_of)
+    else:
+        best_row = None
+
+    now = datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ")
+
+    lines = [BEGIN]
+    lines.append(f"**Tag:** {tag} | **Started:** {started} | "
+                 f"**Approaches tried:** {total} | **Last updated:** {now}")
+    lines.append("")
+    if best_row:
+        lines.append(f"**Current best:** {approach_link(best_row['name'])} — "
+                     f"{primary}: {score_of(best_row):.4f}")
+    else:
+        lines.append("**Current best:** (none yet)")
+    lines.append("")
+
+    # Best-score table
+    lines.append("## Best scores by metric")
+    lines.append("")
+    lines.append("| Metric | Direction | Best Score | Best Approach |")
+    lines.append("|---|---|---|---|")
+    for obj in objectives:
+        direction = "higher" if higher.get(obj, True) else "lower"
+        best_for_obj = None
+        if scored:
+            def s_obj(a): return a["scores"].get(obj, float("inf"))
+            best_for_obj = (max if higher.get(obj, True) else min)(scored, key=s_obj)
+        if best_for_obj:
+            mark = " (PRIMARY)" if obj == primary else ""
+            lines.append(f"| {obj}{mark} | {direction} | "
+                         f"{best_for_obj['scores'].get(obj, float('nan')):.4f} | "
+                         f"{approach_link(best_for_obj['name'])} |")
+        else:
+            lines.append(f"| {obj} | {direction} | — | — |")
+    lines.append("")
+
+    # Experiment Log
+    lines.append("## Experiment Log")
+    lines.append("")
+    header = "| # | Name | Status |"
+    sep = "|---|------|--------|"
+    for obj in objectives:
+        header += f" {obj} |"
+        sep += "---|"
+    header += " Δ_best | Δ_parent | Notes |"
+    sep += "--------|----------|-------|"
+    lines.append(header)
+    lines.append(sep)
+
+    running_best = None
+    name_to_score = {a["name"]: score_of(a) for a in approaches_data if a["scores"]}
+    for a in approaches_data:
+        nnn = a["name"].split("_")[0]
+        status_glyph = ""
+        if (a["status"] not in ("crash",)
+                and not os.path.exists(os.path.join("approaches", a["name"], "visualization.png"))):
+            status_glyph = "⚠ "
+        status_str = status_glyph + a["status"]
+        row = f"| {nnn} | {approach_link(a['name'])} | {status_str} |"
+        if a["status"] == "crash":
+            for _ in objectives:
+                row += " inf |"
+            row += " crash | — | "
+        else:
+            for obj in objectives:
+                v = a["scores"].get(obj, float("nan")) if a["scores"] else float("nan")
+                row += f" {v:.4f} |"
+            # delta vs global best before this trial
+            this_score = score_of(a)
+            if running_best is None:
+                d_best = "—"
+            else:
+                diff = this_score - running_best
+                d_best = f"{diff:+.4f}"
+            # delta vs parent
+            parent = a.get("parent")
+            if not parent or parent not in name_to_score:
+                d_parent = "—"
+            else:
+                pdiff = this_score - name_to_score[parent]
+                d_parent = f"{pdiff:+.4f}"
+            row += f" {d_best} | {d_parent} | "
+            # Update running best
+            if running_best is None:
+                running_best = this_score
+            elif higher.get(primary, True):
+                running_best = max(running_best, this_score)
+            else:
+                running_best = min(running_best, this_score)
+        row += f"{a.get('summary','')} |"
+        lines.append(row)
+    lines.append("")
+
+    # Approach Tree
+    lines.append("## Approach Tree")
+    lines.append("")
+    children_of = {}
+    roots = []
+    by_name = {a["name"]: a for a in approaches_data}
+    for a in approaches_data:
+        parent = a.get("parent")
+        if parent and parent in by_name:
+            children_of.setdefault(parent, []).append(a["name"])
+        else:
+            roots.append(a["name"])
+
+    def render_node(name, depth):
+        a = by_name[name]
+        score_str = ""
+        if a["scores"] and a["status"] not in ("crash", "monitoring_violation"):
+            s = a["scores"].get(primary)
+            if s is not None:
+                score_str = f", {s:.4f}"
+        src = f"  ← source: {a.get('source')}" if (a.get("source") and depth == 0) else ""
+        lines.append(f"{'  ' * depth}- {approach_link(name)} ({a['status']}{score_str}){src}")
+        for child in children_of.get(name, []):
+            render_node(child, depth + 1)
+
+    for root in roots:
+        render_node(root, 0)
+    if not roots:
+        lines.append("(no approaches yet)")
+    lines.append("")
+
+    # User ideas status
+    user_ideas = results.get("user_ideas_queue", [])
+    if user_ideas:
+        lines.append("## User Ideas Status")
+        lines.append("")
+        lines.append("| Idea | Status | Approach(es) |")
+        lines.append("|------|--------|--------------|")
+        for idea in user_ideas:
+            slug = idea.get("slug", idea.get("text", ""))
+            text = idea.get("text", slug)
+            hits = [a["name"] for a in approaches_data if a.get("addresses_user_idea") == slug]
+            status = "tested" if hits else "pending"
+            hits_col = ", ".join(approach_link(n) for n in hits) if hits else "—"
+            lines.append(f"| {text} | {status} | {hits_col} |")
+        lines.append("")
+
+    lines.append(END)
+    return "\n".join(lines)
+
+
+def main():
+    if not os.path.exists("results.json"):
+        print("REPORT WARN: results.json missing, skipping")
+        return 0
+    with open("results.json") as f:
+        results = json.load(f)
+    settings = {}
+    if os.path.exists("loop-settings.json"):
+        with open("loop-settings.json") as f:
+            settings = json.load(f)
+
+    # Gather per-approach data: scores + front-matter
+    approaches_data = []
+    seen_names = set()
+    for entry in results.get("approaches", []):
+        name = entry["name"]
+        if name in seen_names:
+            print(f"REPORT WARN: duplicate name {name} in results.json")
+            continue
+        seen_names.add(name)
+        adir = os.path.join("approaches", name)
+        scores = None
+        scores_path = os.path.join(adir, "scores.json")
+        if os.path.exists(scores_path):
+            with open(scores_path) as f:
+                scores_doc = json.load(f)
+                scores = scores_doc.get("scores")
+        rat_fm = load_fm(os.path.join(adir, "rationale.md"))
+        com_fm = load_fm(os.path.join(adir, "commentary.md"))
+        approaches_data.append({
+            "name": name,
+            "status": com_fm.get("status") or entry.get("status") or "unknown",
+            "scores": scores,
+            "summary": com_fm.get("summary", ""),
+            "parent": rat_fm.get("parent"),
+            "source": rat_fm.get("source"),
+            "addresses_user_idea": rat_fm.get("addresses_user_idea"),
+        })
+
+    # Sanity check: NNN/slug collisions
+    by_nnn = {}
+    for a in approaches_data:
+        nnn = a["name"].split("_")[0]
+        if nnn in by_nnn and by_nnn[nnn] != a["name"]:
+            print(f"REPORT WARN: NNN collision — {nnn} used by both "
+                  f"{by_nnn[nnn]} and {a['name']}. Refusing to update Zone A.")
+            return 0
+        by_nnn[nnn] = a["name"]
+
+    # Backup current report
+    if not os.path.exists(REPORT):
+        print("REPORT WARN: report.md missing, skipping")
+        return 0
+    shutil.copy(REPORT, BACKUP)
+
+    try:
+        with open(REPORT) as f:
+            current = f.read()
+        new_zone_a = render_zone_a(results, settings, approaches_data)
+        if BEGIN in current and END in current:
+            new_report = re.sub(
+                re.escape(BEGIN) + r".*?" + re.escape(END),
+                new_zone_a,
+                current,
+                count=1,
+                flags=re.DOTALL,
+            )
+        else:
+            print("REPORT WARN: markers missing — run marker injection on resume. "
+                  "See references/report-updates.md §Marker injection.")
+            return 0
+
+        if new_report != current:
+            with open(REPORT, "w") as f:
+                f.write(new_report)
+            # Zone A changed — mark narrative as stale
+            with open(".narrative-dirty", "w") as f:
+                f.write(time.strftime("%Y-%m-%dT%H:%M:%SZ\n", time.gmtime()))
+    except Exception as e:
+        shutil.copy(BACKUP, REPORT)
+        print(f"REPORT WARN: rollback after {e}", file=sys.stderr)
+        return 0
+
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())
+```
+
+Copy verbatim. The template is fully generic — it reads metric names
+and directions from `results.json["objectives"]` and
+`results.json["higher_is_better"]`, so no per-session customization is
+needed.
+
+---
+
 ## Step 11 — Smoke-test approach (approach 000)
 
 If the user accepted the smoke-test proposal at the end of the setup
 discussion, write one naive baseline approach numbered `000` whose
 sole purpose is to exercise the full pipeline end-to-end.
 
-### Template for `approaches/000_naive_baseline/approach.py`
+### Template for `approaches/000_smoke_test/approach.py`
 
 ```python
 """Naive baseline — smoke test.
@@ -953,10 +1394,16 @@ def run(data):
     return preds
 ```
 
-### Template for `approaches/000_naive_baseline/rationale.md`
+### Template for `approaches/000_smoke_test/rationale.md`
 
 ```markdown
-# Rationale — 000_naive_baseline
+---
+approach: 000_smoke_test
+parent: null
+source: smoke_test
+---
+
+# Rationale — 000_smoke_test
 
 - **Idea:** Predict the training-set mean for every validation sample.
 - **Hypothesis:** Score will be at (or near) the worst possible value
@@ -972,17 +1419,17 @@ def run(data):
 
 ### Sequence
 
-1. Write `approaches/000_naive_baseline/rationale.md` (template above)
-2. Write `approaches/000_naive_baseline/approach.py` (template above,
+1. Write `approaches/000_smoke_test/rationale.md` (template above)
+2. Write `approaches/000_smoke_test/approach.py` (template above,
    adapted to the task's data contract)
-3. Run `eval_and_record.py approaches/000_naive_baseline`
+3. Run `eval_and_record.py approaches/000_smoke_test`
 4. Inspect the artifacts:
    - `visualization.png` — describe what you see (multimodal read)
    - `scores.json` — confirm score is at worst value for direction
    - `training_progress.json` and `live.log` — confirm they exist
    - `git log --oneline` — confirm one init commit + one 000 commit
    - `report.md` — confirm the 000 entry rendered correctly
-5. Write `approaches/000_naive_baseline/commentary.md` (this is the
+5. Write `approaches/000_smoke_test/commentary.md` (this is the
    postmortem the user reviews during the smoke-test confirmation
    gate)
 6. Show everything to the user:

@@ -44,15 +44,17 @@ turn-end is blocked and you are forced to write the next approach.
 **Each iteration = up to 4 tool calls in a fixed order. No exceptions.**
 
 ```
-TOOL 1 (Write, skip on iteration 1): approaches/<PREV>/commentary.md
-TOOL 2 (Write):                      approaches/<NNN>_<name>/rationale.md
-TOOL 3 (Write):                      approaches/<NNN>_<name>/approach.py
-TOOL 4 (Bash):                       python3 eval_and_record.py approaches/<NNN>_<name>
+TOOL 1 (Write, skip on iteration 1): approaches/<PREV>_<slug>/commentary.md
+TOOL 2 (Write):                      approaches/<NNN>_<slug>/rationale.md
+TOOL 3 (Write):                      approaches/<NNN>_<slug>/approach.py
+TOOL 4 (Bash):                       python3 eval_and_record.py approaches/<NNN>_<slug>
 ```
 
-Commentary is written BEFORE rationale because the lessons from the
-previous trial shape the hypothesis for the next one. On iteration 1
-(first real approach after the smoke test) skip Tool 1 — the smoke
+Approach folder names are `<NNN>_<slug>` — NO tag prefix. The session
+tag lives once in `results.json["tag"]` and in the session directory
+name. Commentary is written BEFORE rationale because the lessons from
+the previous trial shape the hypothesis for the next one. On iteration
+1 (first real approach after the smoke test) skip Tool 1 — the smoke
 test's commentary is written during the smoke-test approval flow, not
 inside the loop.
 
@@ -63,14 +65,20 @@ every 30-60s, soft-kill if diverging. Canonical launch command (with
 `references/live-logging.md` Rule 4.
 
 `eval_and_record.py` handles EVERYTHING scoring-and-bookkeeping:
-evaluation, scoring, keep/discard, visualization, git commit,
-`progress.png`, `report.md`, `README.md`, `.loop-state`. The agent
-writes ONLY the three sidecars + `approach.py` per iteration.
+evaluation, approach-folder-schema enforcement (auto-moves forbidden
+files to `artifacts/`), monitoring-contract check, scoring,
+keep/discard, visualization, git commit, `progress.png`, a call to
+`update_report.py` (which rewrites Zone A of `report.md`),
+`.loop-state`. The agent writes ONLY the three sidecars +
+`approach.py` per iteration — plus an occasional Zone B narrative
+rewrite when `!! NARRATIVE_DUE` fires.
 
 **NEVER do any of these as separate tool calls outside Tool 4:** plot
-generation, `git add/commit`, `report.md` / `README.md` / `progress.png`
+generation, `git add/commit`, Zone A `report.md` edits, `progress.png`
 updates, matplotlib code. If you catch yourself writing code for any
-of those, STOP — you are creating an exit point.
+of those, STOP — you are creating an exit point. (Zone B narrative
+edits on `!! NARRATIVE_DUE` or stop ARE a legitimate separate Edit
+call; that's the one exception.)
 
 Full loop protocol with anti-patterns, runtime estimation, soft-kill
 recovery, and the self-check:
@@ -82,7 +90,18 @@ recovery, and the self-check:
 
 ### NEVER rules
 
-- Do NOT modify `fixed/evaluate.py` or `fixed/data_prep.py` after session starts.
+- Do NOT modify anything in `fixed/` after session starts
+  (`evaluate.py`, `data_prep.py`, `visualize.py`, `paths.py`) or
+  `eval_and_record.py` or `update_report.py`. These are immutable.
+- Do NOT import from `fixed/` outside the whitelist
+  (`fixed.paths.artifacts_dir_for`, `fixed.data_prep.get_data` via
+  the harness).
+- Do NOT write heavy files (checkpoints, weights, caches) to the
+  approach folder. Use `artifacts_dir_for(__file__)`. The harness
+  auto-moves violations but keep the logs clean.
+- Do NOT hand-edit Zone A of `report.md` (content between
+  `<!-- auto:begin -->` and `<!-- auto:end -->`). That's
+  `update_report.py`'s territory and your edits will be overwritten.
 - Do NOT stop the loop. See PRIME DIRECTIVE.
 - Do NOT ask "should I keep going?" or write progress summaries in message text.
 - Do NOT end a message with text as the last content block. Last block MUST be tool_use.
@@ -90,15 +109,22 @@ recovery, and the self-check:
 - Do NOT use these words during the loop: "converging", "plateau", "exhaustive",
   "well-optimized", "structural bottleneck", "key findings", "key learnings",
   "confirmed optimal".
-- Do NOT generate plots, commit, or update reports as separate tool calls.
-- Do NOT write bare `except Exception: pass/continue` in `fixed/evaluate.py`
-  or `fixed/visualize.py`. Crashes must be loud and recorded, not skipped.
+- Do NOT generate plots, commit, or hand-edit Zone A of the report as
+  separate tool calls. (Zone B narrative edits on NARRATIVE_DUE or
+  stop ARE allowed.)
+- Do NOT write bare `except Exception: pass/continue` in `fixed/evaluate.py`,
+  `fixed/visualize.py`, or `update_report.py`. Crashes must be loud
+  and recorded, not skipped.
 - Do NOT fall back to synthetic predictions (median/mean/zero/last value)
   when a model raises. A crashed approach scores at the worst possible value
   for the primary metric direction, not a neutral middle.
 - Do NOT fabricate visualization data for failed timesteps. Render the crash
-  honestly (empty, marker, annotation). See `references/loop-enforcement.md`
-  "Forbidden patterns" for the full fail-fast contract.
+  honestly (empty, marker, annotation) or let `visualization.png` be
+  absent (absence is itself the honest signal). See
+  `references/loop-enforcement.md` "Forbidden patterns" for the full
+  fail-fast contract.
+- Do NOT include a session tag prefix in approach folder names. Use
+  `<NNN>_<slug>` form only.
 
 ### ALWAYS rules
 
@@ -107,12 +133,14 @@ recovery, and the self-check:
 - ALWAYS immediately start the next iteration after recording results.
 - ALWAYS put analysis in the approach.py docstring, not in message text.
 - ALWAYS write a short `rationale.md` alongside every `approach.py`
-  **before** running eval (5-15 lines, required fields: Idea,
-  Hypothesis, Builds on, What we'll learn).
+  **before** running eval (5-15 lines, YAML front-matter with
+  `parent:` required + optional `source:` and `addresses_user_idea:`;
+  prose fields Idea, Hypothesis, Builds on, What we'll learn).
 - ALWAYS write a short `commentary.md` **after** eval completes, at
   the start of the next iteration, as part of reviewing the previous
-  approach's artifacts (5-15 lines, required fields: Result,
-  Vs. hypothesis, Visualization, Vs. bibliography, Lessons).
+  approach's artifacts (5-15 lines, YAML front-matter with `status:`
+  and `summary:`; prose fields Result, Vs. hypothesis, Visualization,
+  Vs. bibliography, Lessons).
 - If the rationale cites papers from `bibliography.md`, it MUST use
   BibTeX keys (e.g. `[Sur25]`) and the commentary MUST reassess them.
 - **Full spec with field definitions, examples, crash handling, and
@@ -129,9 +157,21 @@ recovery, and the self-check:
   estimated >60s. Monitor `training_progress.json` while waiting.
 - ALWAYS check eval output for `!! SEARCH_NEEDED` or `!! SEARCH_SUGGESTED`
   markers and perform web research before writing the next approach.
-- ALWAYS save model checkpoints during training (after each epoch/model, not
-  just at end). When reusing architecture, load prior checkpoints. The framework
-  auto-generates `.gitignore` per approach - you save checkpoints, it handles exclusion.
+- ALWAYS save model checkpoints during training (after each
+  epoch/model, not just at end). Write to
+  `artifacts_dir_for(__file__)` (from `fixed.paths`) — the session
+  root `.gitignore` excludes `artifacts/` so weights never reach git.
+  When reusing architecture, glob prior checkpoints from
+  `session_root/artifacts/*/ckpt_*.pkl`.
+- ALWAYS rewrite Zone B of `report.md` (Synthesis, What works, What
+  doesn't work, Next Steps) when `!! NARRATIVE_DUE` is emitted by
+  `eval_and_record.py`, and one final time when the user asks to
+  stop (before deleting `.loop-active`). Delete `.narrative-dirty`
+  after each Zone B rewrite. See `references/report-updates.md`.
+- ALWAYS emit progress from `approach.py` via `_log()` at start and
+  end, plus mid-trial lines for any trial running longer than
+  `monitoring_required_after_seconds` (default 10s). Silent trials
+  are marked `monitoring_violation` and cannot be kept.
 - ALWAYS use thinking mode to estimate runtime (including fixed costs like
   data loading and visualization). Use this to choose foreground vs background
   execution. Monitor background trials via training_progress.json. Soft-kill
@@ -142,10 +182,19 @@ recovery, and the self-check:
 
 ---
 
-## Live Progress Logging Convention
+## Live Progress Logging Contract
 
-Every trial conforms to a strict live-progress-logging convention so
-that trial output is visible in **three** places simultaneously —
+**Not a style guide — a contract.** `approach.py` MUST emit progress
+output. `eval_and_record.py` counts non-empty lines in `live.log`
+post-trial and marks silent trials `monitoring_violation`, which
+cannot be kept. Rewrite the SAME approach with `_log()` calls; don't
+advance the trial number.
+
+Minimum lines: 2 for any duration (start + end), 3+ if runtime
+exceeds `monitoring_required_after_seconds` (default 10s,
+configurable).
+
+Trial output is visible in **three** places simultaneously —
 `tail -f` in a separate terminal, Claude Code's background-shell
 "N shell" indicator, and the committed `live.log` file — with
 progress and ETA continuously displayed. The five rules:
@@ -160,8 +209,8 @@ progress and ETA continuously displayed. The five rules:
 4. Eval launches use **`tee`** so output streams to both `live.log`
    and stdout simultaneously:
    ```
-   timeout <N> stdbuf -oL -eL uv run python -u eval_and_record.py approaches/<NNN>_<name> 2>&1 \
-     | stdbuf -oL tee approaches/<NNN>_<name>/live.log
+   timeout <N> stdbuf -oL -eL uv run python -u eval_and_record.py approaches/<NNN>_<slug> 2>&1 \
+     | stdbuf -oL tee approaches/<NNN>_<slug>/live.log
    ```
    Claude Code's background-shell indicator captures stdout, so the
    user can watch progress live by clicking the "N shell" tab — no
@@ -263,8 +312,17 @@ The loop stops when `.loop-active` is removed from the session
 directory. No slash command, no auto-stop.
 
 **When the user says *"stop"* / *"pause"* / *"that's enough"* / any
-equivalent**, you MUST: (1) run `rm "$SESSION_DIR/.loop-active"` via
-Bash in the same turn, (2) acknowledge briefly, (3) end the turn.
+equivalent**, you MUST, in this exact order in a single turn:
+
+1. **Rewrite Zone B of `report.md`** — Synthesis, What works, What
+   doesn't work, Next Steps — so the final report the user actually
+   reads is current. Use full `<NNN>_<slug>` trial names with
+   clickable links. This is non-negotiable even if the last Zone B
+   update was recent; the final pass is what the user keeps.
+2. **Delete `.narrative-dirty`** if it exists.
+3. **Delete `.loop-active`** via Bash.
+4. Acknowledge briefly and end the turn.
+
 The Stop hook releases the moment `.loop-active` is gone. Until you
 delete it, the hook keeps forcing you to continue — *that is the
 hook doing its job*. You are the bridge between the user's intent
@@ -312,8 +370,8 @@ continuous conversation:
 2. **Pre-flight walkthrough** — the agent explains *what will happen*
    in the loop (budget, plateau, paradigm rotation, sidecars, stopping)
    and the user tweaks any loop-tuning knob in natural language. **Full
-   template and `loop-settings.json` schema:
-   `references/preflight-walkthrough.md`.**
+   template and `loop-settings.json` schema: `references/loop-entry.md`
+   Stage 2.**
 
 Write `experiment-plan.md` and `loop-settings.json` only after BOTH
 phases are confirmed. The walkthrough can surface tweaks that
@@ -376,41 +434,35 @@ approach mechanics, the experiment loop itself, and resume.*
 
 ---
 
-## Execution: Loop entry validation (start and resume)
+## Execution: Loop entry (start and resume)
 
-**Before** the pre-flight walkthrough runs — on every loop entry, new
-or resumed — the agent runs a twelve-check validation that every
-canonical setup output exists and is well-defined:
-`experiment-plan.md`, `loop-settings.json`, all three `fixed/*.py`,
-`eval_and_record.py`, `results.json`, `report.md`, survival files,
-`.loop-active`, bibliography (if opted in), Stop hook, clean git.
+Every loop entry — new or resumed — runs in three stages:
 
-If any check fails: list the gap concretely, offer the user targeted
-repair questions or a full setup re-run, and block the loop until
-all checks pass. This makes the skill robust to partial state from
-interrupted setups.
+1. **Validation gate** — twelve-check that every canonical setup
+   output exists and is well-defined: `experiment-plan.md`,
+   `loop-settings.json`, all three `fixed/*.py`, `eval_and_record.py`,
+   `results.json`, `report.md`, survival files, `.loop-active`,
+   bibliography (if opted in), Stop hook, clean git. If any check
+   fails: list the gap concretely, offer the user targeted repair
+   questions or a full setup re-run, and block the loop until all
+   checks pass.
 
-**Full checklist, auto-repair options, and failure protocol:
-`references/loop-entry-validation.md`.**
+2. **Pre-flight walkthrough** — a short narrative (not a dry
+   checklist) covering the session tag + task, per-approach budget,
+   paradigm categories, artifact review + checkpointing, plateau
+   behavior (delegates to `co-intelligence:bibliography`), user ideas
+   queue, fail-fast rules, and how to stop. The user tweaks any
+   loop-tuning knob in natural language; the agent updates
+   `loop-settings.json` and re-prints the affected lines until
+   explicit approval.
 
-## Execution: Pre-flight walkthrough (before every loop entry)
+3. **Enter the loop** — only after the walkthrough is approved with
+   no pending tweaks.
 
-**Immediately before entering the loop** — both on initial session start
-AND on every resume — the agent explains to the user *what is about to
-happen* in the loop and gives them a chance to tweak anything. This is
-the last gate before the session runs autonomously.
-
-The walkthrough is a short narrative (not a dry checklist) covering the
-session tag + task, per-approach budget, paradigm categories, artifact
-review + checkpointing, plateau behavior (delegates to
-`co-intelligence:bibliography`), user ideas queue, fail-fast rules, and
-how to stop. The user tweaks any loop-tuning knob in natural language;
-the agent updates `loop-settings.json` and re-prints the affected lines
-until explicit approval.
-
-**Full walkthrough template, accepted tweaks, experiment-definition
-change warning on resume, and the `loop-settings.json` schema + field
-reference: `references/preflight-walkthrough.md`.**
+**Full validation checklist, walkthrough template, accepted tweaks,
+experiment-definition change warning on resume, and the
+`loop-settings.json` schema + field reference:
+`references/loop-entry.md`.**
 
 ---
 
@@ -432,7 +484,7 @@ survival file derivation, and `eval_and_record.py` template:
 ## Execution: Smoke-test approach (approach 000)
 
 If the user accepted the smoke-test proposal at end of setup, write
-and run ONE trivial baseline (`approaches/000_naive_baseline/`)
+and run ONE trivial baseline (`approaches/000_smoke_test/`)
 before the real loop. Purpose: exercise the full pipeline end-to-end
 (data loading, scoring, visualization, logging, git, report) to catch
 broken plumbing BEFORE hours of real trials run on a broken setup.
@@ -457,8 +509,8 @@ Read `references/experiment-loop.md` for the full protocol.
 ```
 LOOP FOREVER:
   THINK: Review results.json, hypothesize (no tool call)
-  WRITE: approaches/<NNN>_<name>/approach.py
-  BASH:  cd <session_dir> && python3 eval_and_record.py approaches/<NNN>_<name>
+  WRITE: approaches/<NNN>_<slug>/approach.py
+  BASH:  cd <session_dir> && python3 eval_and_record.py approaches/<NNN>_<slug>
   GOTO THINK
 ```
 
@@ -518,21 +570,33 @@ On resume, the flow is always:
 3. **Read the last 2-3 `commentary.md` files** from the most recent
    approaches — this is how the agent rehydrates its thinking about
    what worked and what didn't.
-4. **Run the pre-flight walkthrough** (§Execution: Pre-flight
-   walkthrough) so the user can tweak loop settings before the loop
-   restarts.
+4. **Run the loop entry sequence** (§Execution: Loop entry) — the
+   twelve-check validation followed by the pre-flight walkthrough so
+   the user can tweak loop settings before the loop restarts.
 5. **Continue the loop** from the next approach number.
 
 Full details of each step (legacy migration, Stop hook verification,
-survival-file recreation): `references/loop-entry-validation.md` and
+survival-file recreation): `references/loop-entry.md` and
 `references/loop-enforcement.md`.
 
 ---
 
 ## Report and Git
 
-- **Report format:** See `references/report-template.md`
-- **Git rules:** See `references/git-management.md` (no data files, no secrets, never revert)
+- **Report update contract (Zone A script + Zone B narrative):**
+  See `references/report-updates.md`
+- **Approach folder schema (6 mandatory + 2 optional files,
+  forbidden extensions auto-moved to `artifacts/`):** See
+  `references/evaluation-contract.md` §Approach folder schema
+- **Two-tree split (`approaches/` vs `artifacts/`,
+  `fixed.paths.artifacts_dir_for`):** See
+  `references/evaluation-contract.md` §Two-tree split
+- **Monitoring contract (≥2 lines, ≥3 for long trials,
+  `monitoring_violation` status):** See
+  `references/evaluation-contract.md` §Monitoring contract
+- **Git rules:** See `references/git-management.md` (one .gitignore
+  rule: `artifacts/`; never revert; full reproducibility kit in
+  `approaches/`)
 - **Sources:** See `references/session-init.md` header for upstream repos
 
 ## Self-Refinement

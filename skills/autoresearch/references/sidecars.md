@@ -11,7 +11,18 @@ code or re-running it.
 | `rationale.md` | BEFORE eval, in the same iteration as `approach.py` | Agent | The pre-trial hypothesis — why this trial, what we expect, what we'll learn |
 | `commentary.md` | AFTER eval, at the start of the NEXT iteration | Agent | The post-trial postmortem — what happened, vs. hypothesis, lessons |
 
-Both live in `approaches/<NNN>_<name>/` alongside `approach.py`.
+Both live in `approaches/<NNN>_<slug>/` alongside `approach.py`. The
+session tag is NOT part of the approach folder name — it lives once at
+the session level, in `results.json["tag"]` and in the session
+directory name. Folders are `001_naive_baseline/`, `081_smooth_nophase/`
+— never `<tag>_001_naive_baseline/`.
+
+The approach folder holds **only the reproducibility package** —
+sidecars, code, scores, metrics, visualization, logs. Heavy artifacts
+(model checkpoints, cached preprocessed data, optuna sqlite, etc.)
+live in the parallel `artifacts/<NNN>_<slug>/` tree, resolved via
+`fixed.paths.artifacts_dir_for(__file__)`. See
+`references/evaluation-contract.md` §Two-tree split for the rules.
 
 ---
 
@@ -21,7 +32,40 @@ Written as part of Tool 2 in the Core Loop Contract's 4-tool-call
 sequence (between writing `commentary.md` for the previous trial and
 writing the new `approach.py`).
 
-5-15 lines, markdown, with these four required fields:
+5-15 lines, markdown, with a YAML front-matter block (script-readable)
+followed by four required prose sections (human-readable).
+
+### YAML front-matter
+
+```yaml
+---
+approach: 081_smooth_nophase
+parent: 079_tabpfn_smooth          # required: NNN_slug of parent, or null
+source: null                        # optional: when parent is null
+                                    #   one of: user_queue, plateau_search,
+                                    #   bibliography:<bibtex_key>, exploratory
+addresses_user_idea: null           # optional: slug of a user-queue idea
+                                    #   (must match an entry in results.json)
+---
+```
+
+**`parent:` is required.** It is either:
+
+- A single `NNN_slug` string (most common — iterating on one prior trial)
+- A list `[NNN_slug, NNN_slug]` (merging two lines of work)
+- `null` — for fresh ideas not derived from a prior trial. When `null`,
+  `source:` MUST be set to indicate where the idea came from.
+
+The script (`update_report.py`) reads `parent:` to render the
+Approach Tree and to compute the `Δ_parent` column in the Experiment
+Log. Typos that name a non-existent NNN are flagged loudly.
+
+For **legacy sessions** that predate this schema, parent fields are
+absent. The validation gate offers a one-time opt-in heuristic
+backfill (default: leave them parentless and start tracking from the
+next new trial). See `references/loop-entry.md` §Legacy migration.
+
+### Required prose sections
 
 ### Idea
 
@@ -82,7 +126,27 @@ Written as Tool 1 of the NEXT iteration (after the agent has inspected
 `visualization.png`, `scores.json`, `metrics.json`,
 `training_progress.json`, and `live.log` from the just-finished trial).
 
-5-15 lines, markdown, with these five required fields:
+5-15 lines, markdown, with a YAML front-matter block (script-readable)
+followed by five required prose sections (human-readable).
+
+### YAML front-matter
+
+```yaml
+---
+approach: 081_smooth_nophase
+status: keep                        # required: keep | discard | crash | monitoring_violation
+summary: "smoothing without phase term — new global best, 0.8505"
+                                    # required: one-line note for the report's Notes column
+                                    # keep under 80 chars
+---
+```
+
+`status:` is the canonical keep/discard/crash decision. The script
+trusts this field over heuristics. `summary:` is what the
+`update_report.py` script writes into the Experiment Log's `Notes`
+column.
+
+### Required prose sections
 
 ### Result
 
@@ -174,13 +238,14 @@ On a **crashed** trial:
 
 - Rationale.md is still written (the agent had a hypothesis even if
   the code failed). Required fields unchanged.
-- Commentary.md is still written, but `Result` says
+- Commentary.md is still written. Front-matter `status: crash`,
+  `summary:` describes the crash in one line. Prose: `Result` says
   `CRASH — <one-line error>`, `Vs. hypothesis` says
-  `n/a — trial crashed before evaluation`, `Visualization` describes
-  what the `visualization.png` shows (which may be the crash-honest
-  render per the fail-fast contract), `Vs. bibliography` follows the
-  normal rules, and `Lessons` is often the most useful field — what
-  the crash reveals about the approach.
+  `n/a — trial crashed before evaluation`, `Visualization` notes that
+  `visualization.png` is absent (which is the honest crash signal —
+  the harness does not generate stub plots), `Vs. bibliography`
+  follows the normal rules, and `Lessons` is often the most useful
+  field — what the crash reveals about the approach.
 
 On the **smoke test** (approach 000):
 
@@ -196,10 +261,20 @@ On the **smoke test** (approach 000):
 
 ## Location and git
 
-Both files live at `approaches/<NNN>_<name>/rationale.md` and
-`approaches/<NNN>_<name>/commentary.md`. They are committed to git as
-part of the approach's commit (alongside `approach.py`, `scores.json`,
-`metrics.json`, `visualization.png`, `live.log`, `training_progress.json`).
+Both files live at `approaches/<NNN>_<slug>/rationale.md` and
+`approaches/<NNN>_<slug>/commentary.md`.
+
+The full approach folder schema is fixed: 6 mandatory files
+(`rationale.md`, `approach.py`, `commentary.md`, `scores.json`,
+`metrics.json`, `live.log`) and 2 optional signal-bearing files
+(`visualization.png`, `training_progress.json`). Absence of either
+optional file is itself a signal — see
+`references/evaluation-contract.md` §Approach folder schema for the
+full rules.
+
+All approach folder files are committed to git. Heavy artifacts
+(checkpoints, weights, caches) live in `artifacts/<NNN>_<slug>/`,
+which is gitignored at the session root.
 
 `eval_and_record.py` expects `rationale.md` to exist BEFORE it runs —
 if missing, it prints `!! MISSING_RATIONALE` and refuses to evaluate.
