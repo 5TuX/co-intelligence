@@ -18,10 +18,6 @@ evaluates it, commits the result, and immediately writes the next one.
 Over hours or days it produces dozens to hundreds of diverse attempts,
 a living report, and a fully reproducible git history of every trial.
 
-The core bet: **a rich log of 200 diverse attempts beats 20 cautious
-incremental tweaks**. Weak ideas explored now often recombine into
-breakthroughs later.
-
 ---
 
 ## Mental model
@@ -51,32 +47,32 @@ agent can stay focused on generating ideas.
 ## Quickstart
 
 ```
-/autoresearch "predict next-day closing price from OHLCV history" --budget=10m
+/autoresearch predict next-day closing price from OHLCV history
 ```
 
 That starts a guided planning dialog. The agent asks questions about your
-data, metric, hold-out strategy, and constraints, drafts an experiment plan,
-asks you to confirm, initializes a git repo in
-`~/.claude/plugins/data/co-intelligence-co-intelligence/autoresearch/<tag>/`,
-and enters the loop.
+task, data, metric, hold-out strategy, and constraints; optionally runs a
+Phase 0 bibliography search; drafts an experiment plan; walks you through
+what will happen when the loop starts (time budget, plateau behavior,
+paradigm rotation — all adjustable in the walkthrough); runs **one naive
+smoke-test approach** to prove the pipeline works end to end; and only
+then enters the never-stop loop.
 
-**Invocation patterns:**
+**There are no flags.** The entire interface is natural language —
+everything from invocation through stopping.
 
-| Pattern | Mode |
+| What you type | What happens |
 |---|---|
-| `/autoresearch "<task description>"` | New session (guided planning) |
-| `/autoresearch --resume=<tag>` | Resume an existing session |
-| `/autoresearch` (no args) | List existing sessions |
+| `/autoresearch predict X from Y` (new task) | Starts a new session with guided planning |
+| `/autoresearch resume yesterday's forecasting work` | Finds and resumes the matching session |
+| `/autoresearch what's running?` | Lists existing sessions |
+| `/autoresearch` (alone) | Lists sessions + asks what to do next |
+| *"stop"* / *"pause"* / *"that's enough"* (mid-loop) | Stops cleanly |
 
-**Flags (new session only):**
-
-| Flag | Default | Purpose |
-|---|---|---|
-| `--budget=<duration>` | `5m` | Per-approach time cap. `none` for compute-free tasks. |
-| `--tag=<name>` | `YYYY-MM-DD` | Session name (becomes the session directory name) |
-| `--objectives=<m1,m2,...>` | — | Metrics to track (primary is first) |
-| `--no-research` | off | Skip the enforced Phase 0 research phase (requires justification) |
-| `--no-holdout` | off | Skip the enforced hold-out test set (requires justification) |
+All parameters that used to be flags — per-approach budget, session tag,
+metrics, whether to run research, hold-out strategy, plateau thresholds —
+are asked during the planning dialog or the pre-flight walkthrough where
+the agent can help you think them through.
 
 ---
 
@@ -86,30 +82,40 @@ and enters the loop.
 
 Eight steps, walked through conversationally:
 
-0. **Phase 0 — Research (enforced by default).** Before any approach runs,
-   the agent seeds the session with prior art: asks you for papers/repos
-   you already know, does independent web + GitHub + library-doc research,
-   and writes `references/INDEX.md` with at least 3 entries. Opt out with
-   `--no-research` + justification. *Why:* evidence from the v2
-   post-mortem shows agents otherwise spend hundreds of trials reinventing
-   known-bad ideas.
 1. **Task framing.** Prediction? Generation? Optimization? What's the
    input/output contract?
-2. **Data.** Source, format, size, split strategy, leakage risks, hold-out
-   test set (enforced — opt out with `--no-holdout`).
-3. **Metrics and visualization.** Primary metric, direction, anti-gaming
+2. **Data.** Source, format, size, split strategy, leakage risks.
+3. **Hold-out test set.** Do you want one? Strongly recommended. If you
+   decline, the agent asks why and records the justification.
+4. **Metrics and visualization.** Primary metric, direction, anti-gaming
    guards, per-approach visualization design.
-4. **Evaluation contract.** Draft `fixed/evaluate.py` as pseudo-code,
+5. **Evaluation contract.** Draft `fixed/evaluate.py` as pseudo-code,
    confirm. Once confirmed it becomes **IMMUTABLE** — the agent cannot
    edit it during the loop.
-5. **Scope and constraints.** What the agent is allowed to modify, complexity
+6. **Scope and constraints.** What the agent is allowed to modify, complexity
    limits, forbidden imports, etc.
-6. **Search callbacks.** When to trigger mid-loop web research.
-   Defaults: after 10 discards in a row, search for 10 new ideas.
-7. **Baseline, hypotheses, user ideas.** Seed the queue with your starting
+7. **Bibliography research (Phase 0).** Do you want the agent to seed the
+   session with prior art before any trial runs? Strongly recommended.
+   When enabled, the agent delegates to `co-intelligence:bibliography` in
+   short-form mode (15-25 papers, 1-2 waves) and the result lives in
+   `bibliography.md`. *Why:* evidence from the v2 post-mortem shows agents
+   otherwise spend hundreds of trials reinventing known-bad ideas.
+8. **Baseline, hypotheses, user ideas.** Seed the queue with your starting
    ideas — the agent will test them first and mark them explored.
-8. **Produce experiment plan.** Written to `experiment-plan.md`, confirmed
-   before the repo is initialized.
+9. **Session tag** and **storage location.** What should we call this
+   session, and where should its data live? Default location is
+   `~/.claude/plugins/data/co-intelligence-co-intelligence/autoresearch/<tag>/`
+   but you can pick any directory with write access.
+
+After these nine topics are settled, the agent walks you through the
+**pre-flight walkthrough** — a narrative summary of what will happen
+when the loop starts (time budget, plateau behavior, paradigm rotation,
+live logging) where you can tweak any loop-tuning knob before the first
+real trial runs.
+
+Finally, the agent proposes a **naive smoke-test trial** to verify the
+pipeline works end-to-end before committing to hours of loop time.
+Accepting it is strongly recommended.
 
 ### 2. Session initialization
 
@@ -223,14 +229,18 @@ exclude large artifacts from git while keeping them on disk for reuse.
 ### Resume across sessions
 
 ```
-/autoresearch --resume=<tag>
+/autoresearch resume <tag>
+/autoresearch continue yesterday's forecasting work
+/autoresearch pick up the one I started Tuesday
 ```
 
-Resumes from the last recorded position. The agent reads `results.json`,
-`.loop-state`, the last 5 approach summaries, recreates missing survival
-files (`.loop-active`, `.autoresearch-directives`), verifies the Stop hook
-is installed, and continues. Session state survives Claude Code restarts,
-autocompact, and machine reboots.
+All natural language — the agent interprets what you mean and finds the
+matching session by tag, recency, or task description. On resume, the
+agent validates all canonical setup outputs (see §Session directory
+below), recreates missing survival files, verifies the Stop hook is
+installed, walks you through the current loop settings (with a chance
+to tweak), and continues from the next approach number. Session state
+survives Claude Code restarts, autocompact, and machine reboots.
 
 ---
 
@@ -280,7 +290,8 @@ Useful if the agent is mid-trial and you want to intervene without waiting
 for the next turn boundary.
 
 **Either way**, the session directory, results, approaches, checkpoints,
-and report are all preserved. Restart with `/autoresearch --resume=<tag>`.
+and report are all preserved. Restart by saying *"resume `<tag>`"* or
+*"continue yesterday's work"* — the agent interprets the intent.
 
 ### How stopping actually works (one-paragraph mental model)
 
@@ -295,7 +306,7 @@ mechanism.
 
 ---
 
-## Outputs — reading the results
+## Session directory — where everything lives
 
 Every session is a standalone git repo at:
 
@@ -303,25 +314,116 @@ Every session is a standalone git repo at:
 ~/.claude/plugins/data/co-intelligence-co-intelligence/autoresearch/<tag>/
 ```
 
-Key files:
+Files are created in three distinct phases — **setup**, **init+smoke**,
+and **loop** — and some files are immutable after creation while others
+grow or change over time. Understanding which is which is essential if
+you want to tweak, debug, or rerun anything.
 
-- **`report.md`** — human-readable narrative: task, best approach so far,
-  per-paradigm summary, recent trials. Always up to date.
-- **`results.json`** — machine-readable source of truth. Every approach,
-  every score, every paradigm tag, every discard reason. This is what
-  `report.md` is derived from.
-- **`progress.png`** — score trajectory across all trials.
-- **`approaches/<NNN>_<name>/`** — one directory per trial:
-  - `approach.py` — the code (with analysis in the docstring)
-  - `visualization.png` — per-approach plot
-  - `scores.json`, `metrics.json` — numerical results
-  - `training_progress.json` — epoch-level training history
-  - `live.log` — full stdout/stderr of the trial
-  - `references.md` — cited papers/repos (if any)
-- **`bibliography.md`** — session-level aggregation of all citations.
-- **`experiment-plan.md`** — the original plan (never edited after init).
-- **`git log`** — every approach is a commit. You can always diff two
-  approaches or check out a specific trial.
+### Phase 1 — created during setup (before any trial runs)
+
+These files are written at the end of the setup discussion, before the
+smoke test or the loop:
+
+```
+$SESSION_DIR/
+├── experiment-plan.md          ⬛ IMMUTABLE after confirmation
+│                                  task, data, metric, harness, scope, constraints
+├── loop-settings.json          ✏ MUTABLE — tweak at every pre-flight walkthrough
+│                                  budget, plateau thresholds, paradigm list, etc.
+├── bibliography.md             ➕ APPENDABLE — grows during loop (plateau searches)
+├── bibliography.bib            ➕ APPENDABLE — BibTeX form of bibliography.md
+├── fixed/
+│   ├── evaluate.py             ⬛ IMMUTABLE — the evaluation contract
+│   ├── data_prep.py            ⬛ IMMUTABLE — data loading + splits
+│   └── visualize.py            ⬛ IMMUTABLE — per-approach plot generator
+├── eval_and_record.py          ⬛ IMMUTABLE — the evaluator runner
+└── references/
+    └── INDEX.md                ➕ APPENDABLE — Phase 0 prior-art summary
+```
+
+### Phase 2 — created at session init + smoke test
+
+Written immediately after the setup discussion approves proceeding.
+These exist before the real loop starts:
+
+```
+$SESSION_DIR/
+├── results.json                ✏ MUTABLE — approaches list, scores, ideas queue
+├── report.md                   ✏ MUTABLE (auto-regenerated from results.json)
+├── progress.png                ✏ MUTABLE (auto-regenerated after each approach)
+├── .gitignore                  ⬛ mostly immutable
+├── .claude/
+│   └── CLAUDE.md               ⬛ survival file (rules restated for autocompact)
+├── .autoresearch-directives    ⬛ survival file (context recovery checkpoint)
+├── .loop-active                ✏ MUTABLE — contains current session ID;
+│                                            absent when loop is stopped
+├── .loop-state                 ✏ MUTABLE — last approach number, best score
+└── approaches/
+    └── 000_naive_baseline/     ➕ one directory per approach (smoke test is 000)
+        ├── approach.py         ⬛ immutable once committed
+        ├── scores.json         ⬛ immutable (written by eval_and_record.py)
+        ├── metrics.json        ⬛ immutable
+        ├── visualization.png   ⬛ immutable
+        ├── training_progress.json  ⬛ immutable (streamed during training)
+        ├── live.log            ⬛ immutable (stdout+stderr stream)
+        ├── references.md       ⬛ immutable (papers cited by this approach)
+        └── .gitignore          ⬛ auto-generated (excludes checkpoints/weights)
+```
+
+### Phase 3 — created and modified during the loop
+
+Every iteration of the loop writes one new approach directory and
+updates four shared files:
+
+```
+$SESSION_DIR/
+├── results.json                ✏ appended: new approach entry, scores, paradigm tag
+├── report.md                   ✏ regenerated from results.json
+├── progress.png                ✏ regenerated from results.json
+├── bibliography.md             ➕ appended on plateau search or per-approach citation
+├── .loop-state                 ✏ updated: last approach number, best score
+└── approaches/
+    ├── 000_naive_baseline/     (smoke test, unchanged)
+    ├── 001_<name>/             ➕ new on iteration 1
+    │   ├── approach.py         (the code; analysis lives in the docstring)
+    │   ├── rationale.md        (reproducibility sidecar — idea, hypothesis, what we'll learn)
+    │   ├── live.log
+    │   ├── training_progress.json
+    │   ├── visualization.png
+    │   ├── scores.json
+    │   ├── metrics.json
+    │   ├── checkpoints/        (not in git — excluded by per-approach .gitignore)
+    │   │   ├── epoch_01.pt     (reusable by later approaches)
+    │   │   └── epoch_02.pt
+    │   └── references.md       (papers this approach is based on)
+    ├── 002_<name>/             ➕ new on iteration 2
+    └── ...
+```
+
+### Legend
+
+| Symbol | Meaning |
+|---|---|
+| ⬛ | Immutable — created once, never edited |
+| ✏ | Mutable — edited by the agent, `eval_and_record.py`, or you |
+| ➕ | Appendable — grows over time (new entries added, never rewritten) |
+
+### What to read when
+
+| If you want to... | Read |
+|---|---|
+| See the current best approach and trajectory | `report.md` |
+| See the score trajectory visually | `progress.png` |
+| See every approach with its numerical scores | `results.json` (approaches list) |
+| Review a specific trial's code and output | `approaches/<NNN>_<name>/approach.py` + `visualization.png` |
+| Watch a running trial in real time | `tail -f approaches/<NNN>_<name>/live.log` |
+| Check training progress of a running trial | `cat approaches/<NNN>_<name>/training_progress.json` |
+| Review the original experiment plan | `experiment-plan.md` |
+| See the literature the agent has used | `bibliography.md` + `bibliography.bib` |
+| Check current loop-tuning settings | `loop-settings.json` |
+| Add ideas mid-experiment | Edit the `user_ideas_queue` block in `results.json` |
+| Diff two approaches | `git diff approaches/<NNN>_<name> approaches/<MMM>_<name>` |
+| Check out a specific trial | `git checkout <sha>` — every approach is its own commit |
 
 ---
 

@@ -10,10 +10,12 @@ Before asking questions, verify:
 - [ ] Python/uv available (if compute experiments)
 - [ ] `autoresearch/` dir exists or can be created in CWD
 
-## Phase 0 - Research (ENFORCED BY DEFAULT)
+## Phase 0 - Research (strongly recommended, offered as a clarifying question)
 
-Before any approach can run, seed the session with prior art. This defaults to
-ON. Opt out only with `--no-research` + a one-line justification.
+Before any approach can run, seed the session with prior art. The agent
+asks during clarifying questions whether to run Phase 0. It is strongly
+recommended for any task that isn't a pure toy demo; the agent should
+argue for it when the user hesitates.
 
 **Why this exists:** HN/SkyPilot evidence and our own v2 postmortem both show
 the same failure mode: agents skip the library and spend hundreds of trials
@@ -23,35 +25,31 @@ reinventing known-bad ideas. A 30-minute research phase saves days of loop time.
 
 1. Ask the user: "Point me at any papers, blog posts, benchmarks, prior code,
    or forks you already know about for this task. I'll read them and summarize."
-2. Do independent research: web search for state-of-the-art, GitHub code
-   search for existing implementations, library docs via Context7.
-3. Write `references/INDEX.md` in the session dir with at least N entries
-   (N = `research_min_entries`, default 3, configurable at init). Each entry:
-
-   ```markdown
-   ## R<NNN> - <short title>
-
-   - **Source:** <URL or citation>
-   - **Type:** paper | blog | repo | docs | book | personal_note
-   - **Key insight:** <one to three sentences, what the source actually says>
-   - **Applicable to:** <which initial hypothesis or approach category this informs>
-   - **Read on:** <YYYY-MM-DD>
-   ```
+2. **Delegate to `co-intelligence:bibliography`** in short-form mode
+   (target 15-25 papers, 1-2 waves). Feed it the task framing and any
+   user-provided seed papers. It returns a ranked bibliography in
+   `$PLUGIN_DATA/bibliography/<slug>/`.
+3. Copy the bibliography results into the session directory as
+   `$SESSION_DIR/bibliography.md` and `$SESSION_DIR/bibliography.bib`.
+   Also write a short `$SESSION_DIR/references/INDEX.md` summarizing
+   the key insights per paper (one paragraph each). Target: at least 10
+   entries in `bibliography.md`.
 4. Summarize findings to the user and ask: "Anything missing? Anything wrong?"
    Revise. This is the only place agent-only research enters the loop; from
    here on the agent reads its own INDEX.md before writing new approaches.
 
 **Enforcement:**
 
-- Session init writes `research_phase_required: true` into `results.json` by
-  default, `false` when `--no-research` is passed.
+- Session init writes `research_phase_required: true` into
+  `loop-settings.json` if the user opted in, `false` if the user opted
+  out during clarifying questions.
 - `eval_and_record.py` refuses to run the first approach if
-  `research_phase_required: true` AND `references/INDEX.md` has fewer than
-  `research_min_entries` entries. It prints:
-  `!! RESEARCH_INCOMPLETE: <n>/<N> references, read sources before continuing`.
-- `--no-research` opt-out requires a justification string recorded in
-  `results.json` as `research_phase_skip_reason` (e.g., "pure toy
-  demo, no prior art applies").
+  `research_phase_required: true` AND `$SESSION_DIR/bibliography.md` has
+  fewer than 10 entries. It prints:
+  `!! RESEARCH_INCOMPLETE: <n>/10 entries, run bibliography search before continuing`.
+- If the user opts out during clarifying questions, the agent asks why
+  and records the justification string in `loop-settings.json` as
+  `research_phase_skip_reason` (e.g., "pure toy demo, no prior art applies").
 
 **What does NOT count as research:**
 
@@ -123,9 +121,9 @@ Ask:
 - "Confirm default: reserve a hold-out test set? [Y/n]"
 - If yes: "What size? (For time series: how many trailing months/days. For
   non-temporal: what fraction or absolute count.)"
-- If no: "`--no-holdout` requires a one-line justification. Why is a hold-out
-  test set not applicable here?" Record as `test_set_skip_reason` in
-  results.json.
+- If no: "Opting out requires a one-line justification — why is a hold-out
+  test set not applicable here?" Record the answer as
+  `test_set_skip_reason` in `loop-settings.json`.
 
 Valid opt-out reasons:
 - Pure toy/demo with no generalization claim.
@@ -279,20 +277,22 @@ the agent's own ideation.
 
 ## Step 7 - Produce Experiment Plan
 
-Write `$PLUGIN_DATA/autoresearch/<tag>/experiment-plan.md` with all collected info.
+Write `$SESSION_DIR/experiment-plan.md` with all collected info.
 Template:
 
 ```markdown
 # Experiment Plan: <task>
 
-> Run `/autoresearch --resume=<tag>` to continue.
-> The loop runs until you interrupt it.
+> To continue: type `/autoresearch resume <tag>` or
+> `/autoresearch continue that session` or any equivalent natural-language
+> phrasing. The loop runs until you interrupt it.
 
 **Goal:** <one sentence>
 **Task type:** prediction | generation | optimization
 **Tag:** <tag>
-**Budget per approach:** <duration>
-**Total budget:** <duration or "forever">
+**Storage location:** <session directory path>
+**Budget per approach:** recorded in `loop-settings.json`
+**Total budget:** <duration or "until stopped">
 
 ## Input/Output Contract
 - **Input:** <type, shape, example>

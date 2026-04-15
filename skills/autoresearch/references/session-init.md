@@ -90,7 +90,9 @@ in eval_and_record.py reads this field from results.json at runtime.
 
 Create `references/` and write the format guide and an empty index. The
 loop will refuse to run the first approach until `references/INDEX.md` has
-at least `research_min_entries` entries (unless `--no-research` was passed).
+at least `research_min_entries` entries (unless the user opted out of
+Phase 0 research during clarifying questions — recorded as
+`research_phase_required: false` in `loop-settings.json`).
 
 ```bash
 mkdir -p references
@@ -438,7 +440,8 @@ HIGHER = config["higher_is_better"]
 
 # --- RESEARCH PHASE GATE (Phase 0 enforcement) ---
 # Blocks the first approach until references/INDEX.md has enough entries.
-# Disabled by --no-research (sets research_phase_required = false at init).
+# Disabled when the user opted out during clarifying questions
+# (research_phase_required = false in loop-settings.json).
 if config.get("research_phase_required", False) and len(config.get("approaches", [])) == 0:
     _idx_path = os.path.join(SESSION_DIR, "references", "INDEX.md")
     _min_entries = int(config.get("research_min_entries", 3))
@@ -449,7 +452,8 @@ if config.get("research_phase_required", False) and len(config.get("approaches",
     if _count < _min_entries:
         print(f"!! RESEARCH_INCOMPLETE: {_count}/{_min_entries} references in references/INDEX.md")
         print("   Populate references/INDEX.md with prior art (papers, repos, docs) before running approaches.")
-        print("   Opt-out: recreate the session with --no-research and a justification.")
+        print("   Opt-out: run the bibliography skill via 'co-intelligence:bibliography' or")
+        print("   edit loop-settings.json to set research_phase_required: false with a justification.")
         sys.exit(2)
 
 # --- TEST-SET LEAKAGE GUARD ---

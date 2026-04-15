@@ -206,7 +206,8 @@ There are two equivalent ways to remove the file:
 
 Both do the same thing: they remove the file the Stop hook gates on. The
 session directory, results, approaches, and report are all preserved.
-Restart with `--resume=<tag>`.
+Restart by saying *"resume <tag>"* or *"continue that session"* —
+natural language only.
 
 **The hook does not read message text.** The agent-driven path works
 because the agent has been trained to translate natural-language stop
