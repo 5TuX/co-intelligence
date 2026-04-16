@@ -124,6 +124,21 @@ fi
 PLUGIN_NAME="${KEY%%@*}"
 CACHE_BASE="$HOME/.claude/plugins/cache/$MARKETPLACE_NAME/$PLUGIN_NAME"
 
+# --- Detect marketplace -> cache drift (catches no-version-bump publishes) ---
+CACHE_DIRTY=0
+if [ "$COMMITS_BEHIND" -eq 0 ]; then
+    CACHE_SAMPLE=""
+    for dir in "$CACHE_BASE"/*/; do
+        [ -d "$dir" ] && CACHE_SAMPLE="$dir" && break
+    done
+    if [ -n "$CACHE_SAMPLE" ]; then
+        CACHE_DIFF=$(diff -rq --exclude='.git' "$MARKETPLACE_DIR" "$CACHE_SAMPLE" 2>/dev/null || true)
+        if [ -n "$CACHE_DIFF" ]; then
+            CACHE_DIRTY=1
+        fi
+    fi
+fi
+
 # --- Output ---
 echo ""
 echo "INSTALLED=$INSTALLED"
@@ -134,6 +149,8 @@ if [ "$INSTALLED" != "$LATEST" ]; then
     echo "STATUS=update-available"
 elif [ "$COMMITS_BEHIND" -gt 0 ]; then
     echo "STATUS=files-changed"
+elif [ "$CACHE_DIRTY" -eq 1 ]; then
+    echo "STATUS=cache-stale"
 else
     echo "STATUS=up-to-date"
 fi
@@ -195,5 +212,20 @@ if [ "${2:-}" = "apply-update" ]; then
         git -C "$MARKETPLACE_DIR" log --oneline "${SUMMARY_FROM}..${SUMMARY_TO}"
         echo ""
         git -C "$MARKETPLACE_DIR" diff --stat "$SUMMARY_FROM" "$SUMMARY_TO"
+    fi
+
+    # Hint to clean old cache versions if more than 3 exist
+    CACHE_COUNT=0
+    CACHE_OLD=""
+    for dir in "$CACHE_BASE"/*/; do
+        [ -d "$dir" ] || continue
+        CACHE_COUNT=$((CACHE_COUNT + 1))
+        ver=$(basename "$dir")
+        if [ "$ver" != "$LATEST" ]; then
+            CACHE_OLD="${CACHE_OLD}${ver} "
+        fi
+    done
+    if [ "$CACHE_COUNT" -gt 3 ]; then
+        echo "CACHE_CLEANUP_HINT=$((CACHE_COUNT - 1)) old versions: ${CACHE_OLD% }"
     fi
 fi
