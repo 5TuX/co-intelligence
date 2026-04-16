@@ -6,11 +6,13 @@ A Claude Code plugin for human-AI collaborative work. Inspired by [Ethan Mollick
 
 | Skill | Command | What it does |
 |-------|---------|-------------|
-| **autoresearch** | `/co-intelligence:autoresearch` | Autonomous iterative research loop adapted from Karpathy's autoresearch - design experiments, run a never-stop loop, log everything |
-| **career** | `/co-intelligence:career` | AI-powered job search with learning loop, ethical filtering, multi-user support, and note capture |
-| **skillsmith** | `/co-intelligence:skillsmith` | Create, refine, and delete Claude Code skills |
-| **report** | `/co-intelligence:report` | Technical report writing with Quarto ODT/PDF output and BibTeX citations |
 | **agent** | `/co-intelligence:agent` | Multi-agent chat channel coordination |
+| **autoresearch** | `/co-intelligence:autoresearch` | Autonomous iterative research loop adapted from Karpathy's autoresearch - design experiments, run a never-stop loop, log everything |
+| **bibliography** | `/co-intelligence:bibliography` | Deep scientific literature search - build comprehensive bibliographies (50-100 papers) from a natural-language description, with abstracts, citation metrics, and BibTeX |
+| **career** | `/co-intelligence:career` | AI-powered job search with learning loop, ethical filtering, multi-user support, and note capture |
+| **plugin** | `/co-intelligence:plugin` | Plugin lifecycle management - create plugins from local skills, publish changes to GitHub, pull updates |
+| **report** | `/co-intelligence:report` | Technical report writing with Quarto ODT/PDF output and BibTeX citations |
+| **skillsmith** | `/co-intelligence:skillsmith` | Create, refine, and delete Claude Code skills |
 
 ## Getting Started
 
