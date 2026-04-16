@@ -7,7 +7,6 @@ description: >
   Triggers on: "bibliography", "find papers", "literature search",
   "literature review", "related work", "build a bibliography",
   "academic search", "paper discovery".
-argument-hint: '"<raw description of your research>" | status | resume'
 ---
 
 # Bibliography - Deep Scientific Literature Search

@@ -1,7 +1,6 @@
 ---
 name: autoresearch
 description: Use when running autonomous iterative research on any well-defined task. Adapts Karpathy's autoresearch workflow - guides the user to design the experiment, then an AI agent tests approaches in a sandbox forever, logs everything (even failures), and never stops until the user says so.
-argument-hint: 'describe a task, list sessions, or resume an existing one — all natural language'
 ---
 
 # Autoresearch

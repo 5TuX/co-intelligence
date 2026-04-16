@@ -51,7 +51,7 @@ For each skill, read its SKILL.md frontmatter and create `commands/<skill>.md`:
 ```
 ---
 description: <shortened description, under 200 chars>
-argument-hint: <copied from SKILL.md if present>
+argument-hint: <skill's argument syntax, e.g. "<name> [options]" — this is the only place it's defined>
 ---
 
 Invoke the `<plugin-name>:<skill>` skill with $ARGUMENTS.

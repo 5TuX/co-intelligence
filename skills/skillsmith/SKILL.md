@@ -1,7 +1,6 @@
 ---
 name: skillsmith
 description: Use when the user asks to create, modify, edit, update, refine, fix, improve, delete, or audit any Claude Code skill or SKILL.md file - including plugin skills. Also use when the user says "make a skill", "change this skill", "add a mode to skill X", "modify plugin-update to do Y", "edit the co-intelligence skill", or mentions skill quality. MUST be used for all skill modifications - never edit SKILL.md files directly without this skill. With no argument, refines local skills only (~/.claude/skills/). When a specific skill name is given, works for both local and plugin skills.
-argument-hint: "<name> [<changes>] | new <name> | delete <name> | tidy-only | (empty = all)"
 ---
 
 # Skillsmith
@@ -87,7 +86,7 @@ If useful references are found, include a `## References` section in the generat
 ### 3. Scaffold
 Create `~/.claude/skills/<name>/SKILL.md` with:
 - Frontmatter: `name`, `description` (start with "Use when...", trigger-focused, no workflow summary, under 500 chars, third person)
-- `argument-hint` if the skill takes arguments
+- If the skill takes arguments, add `argument-hint` to the **command file** (`commands/<name>.md`), not SKILL.md — only command files control the UI hint
 - Skeleton sections: overview, argument parsing (if needed), instructions, rules
 
 ### 4. Delegate to superpowers:writing-skills

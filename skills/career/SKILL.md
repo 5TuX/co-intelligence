@@ -1,7 +1,6 @@
 ---
 name: career
 description: Use when the user asks for a career refresh, job search, CV analysis, skill gap review, or wants to capture a learning note. Proactively offer note mode when something notable happens during a work session.
-argument-hint: "[user1,user2] | clean [user] | note [user] <content> | new-user | update-user <user>"
 ---
 
 # Career — Search, Discovery & Notes (Multi-User)

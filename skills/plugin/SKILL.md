@@ -6,7 +6,6 @@ description: >
   or pull the latest version of an installed plugin. Triggers on: "publish
   plugin", "update plugin", "create plugin", "pluginify", "push my plugin",
   "check for updates", "plugin publish", "plugin update", "plugin create".
-argument-hint: "create <name> <skills> | publish [<name>] [-y] | update [<plugin@marketplace>]"
 ---
 
 # Plugin Lifecycle
