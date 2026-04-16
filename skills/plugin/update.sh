@@ -139,10 +139,23 @@ if [ "$COMMITS_BEHIND" -eq 0 ]; then
     fi
 fi
 
+# --- Marketplace version (local clone) ---
+MARKETPLACE_VER=$(jq -r '.version // empty' "$MARKETPLACE_DIR/.claude-plugin/plugin.json" 2>/dev/null | tr -d '\r') || true
+MARKETPLACE_VER="${MARKETPLACE_VER:-unknown}"
+
+# --- Cache versions (directory names) ---
+CACHE_VERS="-"
+if [ -d "$CACHE_BASE" ]; then
+    CACHE_VERS=$(ls "$CACHE_BASE" 2>/dev/null | sort -V | tr '\n' ',' | sed 's/,$//')
+    CACHE_VERS="${CACHE_VERS:-empty}"
+fi
+
 # --- Output ---
 echo ""
 echo "INSTALLED=$INSTALLED"
 echo "LATEST=$LATEST"
+echo "MARKETPLACE=$MARKETPLACE_VER"
+echo "CACHE=$CACHE_VERS"
 echo "COMMITS_BEHIND=$COMMITS_BEHIND"
 
 if [ "$INSTALLED" != "$LATEST" ]; then
