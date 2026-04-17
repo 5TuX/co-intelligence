@@ -1,6 +1,9 @@
 # User-specific local config (legacy, now in PLUGIN_DATA)
 config.local.yaml
 
+# Per-user data — lives in $CLAUDE_PLUGIN_DATA, must never be committed
+data/
+
 # Python
 __pycache__/
 *.pyc
