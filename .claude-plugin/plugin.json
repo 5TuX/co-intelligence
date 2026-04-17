@@ -1,6 +1,6 @@
 {
   "name": "co-intelligence",
-  "description": "Self-refining skills for human-AI collaborative work: autoresearch, bibliography, career, plugin lifecycle, reports, skill authoring, multi-agent chat",
+  "description": "Self-refining skills for human-AI collaborative work: autoresearch, bibliography, career, plugin lifecycle, reports, skill authoring",
   "version": "2.6.6",
   "author": {
     "name": "Dimitris Klockenbring",

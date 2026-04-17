@@ -1,7 +1,7 @@
 {
   "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
   "name": "co-intelligence",
-  "description": "Self-refining skills for human-AI collaborative work: autoresearch, bibliography, career, plugin lifecycle, reports, skill authoring, multi-agent chat",
+  "description": "Self-refining skills for human-AI collaborative work: autoresearch, bibliography, career, plugin lifecycle, reports, skill authoring",
   "owner": {
     "name": "Dimitris Klockenbring",
     "email": "klockenbring@users.noreply.github.com"
@@ -13,7 +13,7 @@
     {
       "name": "co-intelligence",
       "source": "./",
-      "description": "Self-refining skills for human-AI collaborative work: autoresearch, bibliography, career, plugin lifecycle, reports, skill authoring, multi-agent chat",
+      "description": "Self-refining skills for human-AI collaborative work: autoresearch, bibliography, career, plugin lifecycle, reports, skill authoring",
       "version": "2.6.6",
       "author": {
         "name": "Dimitris Klockenbring",
