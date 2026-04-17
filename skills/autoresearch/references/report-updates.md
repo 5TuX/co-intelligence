@@ -122,7 +122,7 @@ and emits one row per metric. No hardcoding.
 ```markdown
 | # | Name | Status | <metric_1> | <metric_2> | ... | Δ_best | Δ_parent | Notes |
 |---|------|--------|-----------|-----------|-----|--------|----------|-------|
-| 001 | [001_naive_baseline](approaches/001_naive_baseline/) | keep | 1.0688 | ... | — | — | seed |
+| 001 | [001_ridge_tuned](approaches/001_ridge_tuned/) | keep | 1.0688 | ... | — | — | seed |
 | 002 | [002_persistence](approaches/002_persistence/) | discard | 1.1374 | ... | +0.0686 | +0.0686 | |
 | 003 | [003_ema_05](approaches/003_ema_05/) | discard | 1.0647 | ... | -0.0042 | -0.0042 | |
 ```
@@ -148,7 +148,7 @@ files. Format:
 ```markdown
 ## Approach Tree
 
-- [001_naive_baseline](approaches/001_naive_baseline/) (keep, 1.0688)
+- [001_ridge_tuned](approaches/001_ridge_tuned/) (keep, 1.0688)
   - [002_persistence](approaches/002_persistence/) (discard)
   - [004_ema_03](approaches/004_ema_03/) (keep, 1.0037)
     - [005_ema_02](approaches/005_ema_02/) (keep, 0.9900)
@@ -169,7 +169,7 @@ the script flags it as an orphan and lists it under `## Orphan Branches`.
 ```markdown
 | Idea | Status | Approach(es) |
 |------|--------|--------------|
-| Naive baseline = mean of last 4 | tested | [001_naive_baseline](...), [010_median_last4](...) |
+| Ridge on raw features | tested | [001_ridge_tuned](...), [010_median_last4](...) |
 | Seasonal naive s=2 | pending | — |
 ```
 

@@ -381,9 +381,11 @@ queue; metric-gaming ones do not.
 
 ### Questions to ask
 
-1. **Simplest baseline** — random predictor, mean, majority class,
-   off-the-shelf model. This is what the smoke test will run as
-   approach 000.
+1. **Starting point** — what should approach 001 be? Options: reproduce
+   prior work's best solution, off-the-shelf model, known good
+   architecture, or a creative first hypothesis. (The smoke test
+   runs a trivial predictor as approach 000 to verify plumbing — it
+   is not a baseline.)
 2. **Known good starting point** — if the user has prior work to
    build on
 3. **Top 3-5 hypotheses to try first**, ordered by expected impact.
@@ -538,7 +540,7 @@ at session init>
 
 ## Initial hypotheses queue
 
-1. [ ] `001_baseline` — <hypothesis>
+1. [ ] `001_<name>` — <first real approach>
 2. [ ] `002_<name>` — <hypothesis>
 3. [ ] ...
 

@@ -25,8 +25,8 @@ The living report (`report.md`) is updated after every approach.
 Approaches are organized hierarchically. Tweaks and variants are nested
 under their parent approach.
 
-### 1. baseline (keep, 0.723)
-Starting point, no modifications.
+### 1. ridge_tuned (keep, 0.723)
+Ridge regression on raw features — first real hypothesis.
 
 ### 2. feature_scaling (discard, 0.718)
 Standard scaling on all features. Slightly worse.
@@ -50,7 +50,7 @@ XGBoost with tuned hyperparameters. Strong but below attention approach.
 
 | # | Name | Status | Score(s) | Delta | Notes |
 |---|------|--------|----------|-------|-------|
-| 001 | baseline | keep | 0.723 | -- | starting point |
+| 001 | ridge_tuned | keep | 0.723 | -- | first hypothesis |
 | 002 | feature_scaling | discard | 0.718 | -0.005 | standard scaling hurt |
 | 003 | attention_pooling | keep | 0.891 | +0.168 | breakthrough |
 | 003a | attention_pooling_v2 | keep | 0.903 | +0.012 | layer norm helps |

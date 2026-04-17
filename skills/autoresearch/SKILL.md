@@ -54,7 +54,7 @@ tag lives once in `results.json["tag"]` and in the session directory
 name. Commentary is written BEFORE rationale because the lessons from
 the previous trial shape the hypothesis for the next one. On iteration
 1 (first real approach after the smoke test) skip Tool 1 — the smoke
-test's commentary is written during the smoke-test approval flow, not
+test's commentary is written during the smoke-test sequence, not
 inside the loop.
 
 For trials estimated ≥ `background_threshold_seconds`: launch Tool 4
@@ -483,19 +483,19 @@ survival file derivation, and `eval_and_record.py` template:
 ## Execution: Smoke-test approach (approach 000)
 
 If the user accepted the smoke-test proposal at end of setup, write
-and run ONE trivial baseline (`approaches/000_smoke_test/`)
-before the real loop. Purpose: exercise the full pipeline end-to-end
-(data loading, scoring, visualization, logging, git, report) to catch
-broken plumbing BEFORE hours of real trials run on a broken setup.
+and run ONE trivial approach (`approaches/000_smoke_test/`) before
+the real loop. Purpose: exercise the full pipeline end-to-end (data
+loading, scoring, visualization, logging, git, report) to catch
+broken plumbing. This is NOT a baseline — it's a plumbing check.
+Approach 001 is the first real trial (prior work reproduction,
+creative hypothesis, or whatever the user's strategy calls for).
 
 Sequence: write `rationale.md`, write `approach.py` (constant mean,
 majority class, or equivalent — see `references/session-init.md`
-Step 11 for templates), run `eval_and_record.py`, inspect every
-artifact with the user (visualization.png read aloud, report.md entry,
-live.log tail, git log, score at worst-value-for-direction), write
-`commentary.md`, then narratively transition into the real loop on
-explicit approval. If ANY artifact is missing or malformed, STOP and
-diagnose with the user — do not enter the loop on a broken pipeline.
+Step 11 for templates), run `eval_and_record.py`, inspect artifacts,
+write `commentary.md`, then transition into the loop. If ANY artifact
+is missing or malformed, STOP and diagnose with the user — do not
+enter the loop on a broken pipeline.
 
 **Full templates and sequence: `references/session-init.md` Step 11.**
 

@@ -14,8 +14,8 @@ code or re-running it.
 Both live in `approaches/<NNN>_<slug>/` alongside `approach.py`. The
 session tag is NOT part of the approach folder name — it lives once at
 the session level, in `results.json["tag"]` and in the session
-directory name. Folders are `001_naive_baseline/`, `081_smooth_nophase/`
-— never `<tag>_001_naive_baseline/`.
+directory name. Folders are `001_ridge_tuned/`, `081_smooth_nophase/`
+— never `<tag>_001_ridge_tuned/`.
 
 The approach folder holds **only the reproducibility package** —
 sidecars, code, scores, metrics, visualization, logs. Heavy artifacts
@@ -249,9 +249,9 @@ On a **crashed** trial:
 
 On the **smoke test** (approach 000):
 
-- Rationale.md says *"Idea: naive baseline; Hypothesis: score will be
+- Rationale.md says *"Idea: trivial predictor; Hypothesis: score will be
   at the worst possible value for the metric direction; Builds on:
-  none — exploratory; What we'll learn: whether the pipeline works
+  none — plumbing check; What we'll learn: whether the pipeline works
   end-to-end."*
 - Commentary.md is the first artifact review the user sees at the
   end-of-setup smoke-test confirmation. Its `Visualization` field is

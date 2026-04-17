@@ -52,7 +52,7 @@ $SESSION_DIR/                                    <-- git init here
 │   ├── visualize.py            ⬛ IMMUTABLE per-approach visualizer
 │   └── paths.py                ⬛ IMMUTABLE artifacts_dir_for() helper
 ├── approaches/                                  ← REPRODUCIBILITY (in git)
-│   ├── 000_smoke_test/         ⬛ smoke test (if opted in)
+│   ├── 000_smoke_test/         ⬛ smoke test (plumbing check)
 │   │   ├── rationale.md         ← Tool 2 of the 4-tool-call iteration
 │   │   ├── approach.py          ← Tool 3
 │   │   ├── commentary.md        ← Tool 1 of the NEXT iteration
@@ -1345,19 +1345,20 @@ needed.
 ## Step 11 — Smoke-test approach (approach 000)
 
 If the user accepted the smoke-test proposal at the end of the setup
-discussion, write one naive baseline approach numbered `000` whose
-sole purpose is to exercise the full pipeline end-to-end.
+discussion, write one smoke-test approach numbered `000` whose
+sole purpose is to exercise the full pipeline end-to-end (plumbing
+check, not a baseline).
 
 ### Template for `approaches/000_smoke_test/approach.py`
 
 ```python
-"""Naive baseline — smoke test.
+"""Smoke test — plumbing check.
 
-This approach is intentionally trivial. Its purpose is to exercise
-the full pipeline (data loading, training, prediction, scoring,
-visualization, logging, git commit, report rendering) BEFORE the real
-loop starts. Expected to score at the worst possible value for the
-metric direction if the metric rewards skill.
+This approach is intentionally trivial. Its sole purpose is to
+exercise the full pipeline (data loading, training, prediction,
+scoring, visualization, logging, git commit, report rendering) and
+catch broken plumbing BEFORE real approaches run. It is NOT a
+baseline — approach 001 is the first real trial.
 
 See SKILL.md §Execution: Smoke-test approach.
 """
@@ -1407,9 +1408,8 @@ source: smoke_test
 
 - **Idea:** Predict the training-set mean for every validation sample.
 - **Hypothesis:** Score will be at (or near) the worst possible value
-  for the metric direction. This trial's purpose is to prove the
-  pipeline works, not to achieve a useful score.
-- **Builds on:** none — exploratory (smoke test).
+  for the metric direction. This trial verifies plumbing, not performance.
+- **Builds on:** none — plumbing check.
 - **What we'll learn:** Whether the data loader, evaluation harness,
   visualization, logging, git commit, and report rendering all work
   end-to-end. A clean run here means we can trust the plumbing for

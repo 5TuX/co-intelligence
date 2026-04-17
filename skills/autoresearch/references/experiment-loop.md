@@ -23,7 +23,7 @@ Tool 4 (Bash):                        cd <session_dir> && python3 eval_and_recor
 **On iteration 1** (first real approach after the smoke test): skip
 Tool 1 — there is no previous approach in the loop to comment on
 (the smoke test's commentary was written during the smoke-test
-approval gate at end of setup).
+sequence at end of setup).
 
 **On every subsequent iteration**: all 4 tool calls fire, in order.
 Commentary.md is written BEFORE rationale.md because the lessons
@@ -385,7 +385,7 @@ summary instinct is the #1 way loops die.**
 |---|---|
 | Normal | `003_relu_instead_of_gelu` |
 | Crash | `005_deep_mlp` (status in `commentary.md` and `scores.json`) |
-| Baseline | `001_baseline` (smoke test is `000_smoke_test`) |
+| Smoke test | `000_smoke_test` (plumbing check; 001+ are real approaches) |
 
 Use `NNN_descriptive_slug`. Zero-padded NNN. No tag prefix (the
 session tag is NOT part of the folder name — it lives once at the
