@@ -135,6 +135,32 @@ Key constraints:
 - Background launches: pass `run_in_background: true` on the Bash
   tool call
 
+### NEVER pipe background commands through filters
+
+**CRITICAL:** When using `run_in_background: true`, the ONLY pipe
+allowed is `tee`. Do NOT append `| tail`, `| head`, `| grep`, or
+any other filter after `tee`. Filters buffer their output until the
+command completes, which means Claude Code's background-shell
+indicator shows **empty output** for the entire run — the user sees
+nothing when they click the "N shell" tab.
+
+```bash
+# WRONG — shell indicator shows empty output until command finishes
+timeout 600 stdbuf -oL -eL uv run python -u eval_and_record.py approaches/005_foo 2>&1 \
+  | stdbuf -oL tee approaches/005_foo/live.log | tail -40
+
+# WRONG — same problem, different filter
+... | tee approaches/005_foo/live.log | grep -v DEBUG
+
+# CORRECT — tee is the terminal pipe, nothing after it
+timeout 600 stdbuf -oL -eL uv run python -u eval_and_record.py approaches/005_foo 2>&1 \
+  | stdbuf -oL tee approaches/005_foo/live.log
+```
+
+If you need to filter output after the fact, read `live.log` with
+the Read tool or `tail` it separately — never inline with the
+launch command.
+
 ### Effect: three simultaneous streams
 
 When `eval_and_record.py` runs under this launch, every line it

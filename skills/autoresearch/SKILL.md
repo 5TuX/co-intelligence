@@ -320,7 +320,12 @@ equivalent**, you MUST, in this exact order in a single turn:
    update was recent; the final pass is what the user keeps.
 2. **Delete `.narrative-dirty`** if it exists.
 3. **Delete `.loop-active`** via Bash.
-4. Acknowledge briefly and end the turn.
+4. **Write `.loop-stopped`** via Bash — a sentinel file that prevents
+   any pending ScheduleWakeup from restarting the loop.
+5. **Do NOT call ScheduleWakeup.** Any previously-scheduled wakeup
+   cannot be cancelled, but you control whether the loop resumes
+   when that wakeup fires (see below).
+6. Acknowledge briefly and end the turn.
 
 The Stop hook releases the moment `.loop-active` is gone. Until you
 delete it, the hook keeps forcing you to continue — *that is the
@@ -331,6 +336,36 @@ read messages; you read them and translate.
 Users can also `rm` the file directly in any terminal as an escape
 hatch. Session state is preserved in both cases — restart with
 *"resume `<tag>`"* or any equivalent natural-language phrasing.
+
+### ScheduleWakeup and pending wakeups
+
+When the loop uses `/loop` dynamic pacing with `ScheduleWakeup`,
+a scheduled wakeup may fire AFTER the user has asked to stop. The
+`ScheduleWakeup` API has no cancellation mechanism — once scheduled,
+it will fire. This creates a race condition: the user says "stop",
+you acknowledge and delete `.loop-active`, but 60-270 seconds later
+the wakeup fires and the prompt says "resume the loop."
+
+**Defense: the `.loop-stopped` sentinel.**
+
+On every wakeup that triggers a loop resume, the agent MUST check
+for `.loop-stopped` in the session directory BEFORE doing anything
+else. If the file exists, the user explicitly stopped the loop and
+the wakeup is stale:
+
+1. Acknowledge: "Loop was stopped by user. Ignoring scheduled wakeup."
+2. Do NOT call ScheduleWakeup again.
+3. Do NOT write any approach files.
+4. End the turn.
+
+On resume (when user explicitly says "resume"): delete `.loop-stopped`
+as part of the resume validation gate, then proceed normally.
+
+**The `.loop-stopped` file contains a timestamp and reason:**
+
+```bash
+echo "$(date -Iseconds) stopped by user request" > "$SESSION_DIR/.loop-stopped"
+```
 
 ## List Sessions (no args)
 

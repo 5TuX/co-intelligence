@@ -102,6 +102,13 @@ with a user prompt.
    `.loop-active` empty — the Stop hook requires a non-empty session
    ID to match.
 
+   **On resume:** if `.loop-stopped` exists (written by the stop
+   sequence to guard against stale ScheduleWakeup firings), delete
+   it now — the user's explicit "resume" overrides the stop sentinel.
+   ```bash
+   rm -f "$SESSION_DIR/.loop-stopped"
+   ```
+
 10. **Bibliography (if Phase 0 was opted in)** — `bibliography.md`
     exists and has at least 10 entries (count `## ` headings or
     `@article` / `@inproceedings` BibTeX entries, whichever the file

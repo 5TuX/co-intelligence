@@ -99,8 +99,11 @@ You are running an autonomous research loop. Core rules:
 ## Never stop
 
 - NEVER STOP. Only the user stops the loop. If they say "stop" /
-  "pause" / "that's enough", run `rm .loop-active` in the same turn,
+  "pause" / "that's enough", run `rm .loop-active` AND write
+  `.loop-stopped` in the same turn, do NOT call ScheduleWakeup,
   acknowledge briefly, end.
+- If a ScheduleWakeup fires and `.loop-stopped` exists, the loop was
+  already stopped. Acknowledge and end — do NOT resume.
 - NEVER pause to ask "should I keep going?" or write progress summaries.
 - Message format after Bash: `**NNN: KEEP/DISCARD** (score). [Next idea.]`
   followed by the next tool call. Two lines max.
@@ -213,7 +216,7 @@ sectioned framing.
 cat > "$SESSION_DIR/.autoresearch-directives" << 'EOF'
 # Autoresearch core directives — read this if you lost context
 
-1. NEVER STOP. Only the user stops the loop. Say "stop" → `rm .loop-active`.
+1. NEVER STOP. Only the user stops the loop. Say "stop" → `rm .loop-active` + write `.loop-stopped`. If wakeup fires and `.loop-stopped` exists → ignore, end turn.
 2. Each iteration: Write commentary.md (previous), rationale.md (new),
    approach.py (new), Bash eval_and_record.py. Skip commentary on iteration 1.
 3. Cite bibliography.md entries by BibTeX key in rationale.md Builds on
@@ -325,3 +328,28 @@ because the agent has been trained to translate natural-language stop
 requests into the `rm` operation *before* attempting to end its turn.
 This is a feature, not a workaround: the user stops the loop
 conversationally while enforcement stays purely file-based.
+
+### ScheduleWakeup race condition
+
+When the loop uses `/loop` dynamic pacing, `ScheduleWakeup` schedules
+a future wakeup that cannot be cancelled. If the user stops the loop
+between scheduling and firing, the wakeup delivers the "resume" prompt
+to an agent that should NOT resume.
+
+**Mitigation: `.loop-stopped` sentinel file.**
+
+The stop sequence (§Stopping the loop in SKILL.md) writes
+`.loop-stopped` after deleting `.loop-active`. On any wakeup that
+receives a loop-resume prompt, the agent MUST:
+
+1. Check for `.loop-stopped` in the session directory.
+2. If present: acknowledge "Loop was stopped by user. Ignoring
+   scheduled wakeup." Do NOT call ScheduleWakeup. Do NOT write
+   approaches. End the turn.
+3. If absent AND `.loop-active` exists: proceed with the loop normally.
+4. If absent AND `.loop-active` also absent: the loop was stopped by
+   manual `rm`. Same behavior as (2).
+
+On explicit resume by the user: delete `.loop-stopped` during the
+resume validation gate (§Execution: Loop entry), recreate
+`.loop-active`, and proceed.
