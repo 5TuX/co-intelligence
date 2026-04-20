@@ -37,4 +37,17 @@ function read() {
     return { ...readPluginDefault(), ...readUserConfig() };
 }
 
-module.exports = { userConfigPath, read };
+function write(partial) {
+    if (partial === null || typeof partial !== 'object' || Array.isArray(partial)) {
+        throw new Error('write(partial): partial must be a non-null object');
+    }
+    const p = userConfigPath();
+    fs.mkdirSync(path.dirname(p), { recursive: true });
+    const existing = readUserConfig();
+    const merged = { ...existing, ...partial };
+    const tmp = p + '.tmp';
+    fs.writeFileSync(tmp, JSON.stringify(merged, null, 2) + '\n');
+    fs.renameSync(tmp, p);
+}
+
+module.exports = { userConfigPath, read, write };

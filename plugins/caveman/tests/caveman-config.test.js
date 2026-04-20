@@ -136,3 +136,32 @@ test('read: malformed user config returns plugin default', () => {
         });
     });
 });
+
+test('write: creates config dir if missing (first-write)', () => {
+    withTmpUserConfig(null, (configFile) => {
+        fs.rmSync(path.dirname(configFile), { recursive: true, force: true });
+        config.write({ off: true });
+        assert.ok(fs.existsSync(configFile), 'config file created');
+        assert.deepStrictEqual(
+            JSON.parse(fs.readFileSync(configFile, 'utf8')),
+            { off: true }
+        );
+    });
+});
+
+test('write: merges into existing config, preserving other keys', () => {
+    withTmpUserConfig('{"defaultLevel":"lite","off":false}', () => {
+        config.write({ off: true });
+        const cfg = config.read();
+        assert.strictEqual(cfg.defaultLevel, 'lite');
+        assert.strictEqual(cfg.off, true);
+        assert.strictEqual(cfg.remindEveryTurn, true);
+    });
+});
+
+test('write: rejects non-object partial', () => {
+    withTmpUserConfig(null, () => {
+        assert.throws(() => config.write('oops'), /object/i);
+        assert.throws(() => config.write(null), /object/i);
+    });
+});
