@@ -1,6 +1,6 @@
 {
     "name": "caveman",
-    "version": "0.2.0",
+    "version": "1.6.0-5tux.0",
     "description": "Ultra-compressed caveman-style responses (~75% token reduction).",
     "author": {
         "name": "Julius Brussee"
