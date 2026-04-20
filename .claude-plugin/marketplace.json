@@ -10,21 +10,11 @@
         {
             "name": "autoresearch",
             "source": "./plugins/autoresearch",
-            "description": "An implementation of Karpathy's autoresearch framework.",
-            "version": "2.0.0",
-            "author": { "name": "5TuX" },
-            "keywords": ["autoresearch", "research", "karpathy", "self-refinement"],
             "category": "workflow"
         },
         {
             "name": "caveman",
             "source": "./plugins/caveman",
-            "description": "Ultra-compressed caveman-style responses (~75% token reduction).",
-            "version": "0.1.0",
-            "author": {
-                "name": "5TuX"
-            },
-            "keywords": ["tokens", "compression", "brevity", "caveman"],
             "category": "productivity"
         }
     ]

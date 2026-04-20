@@ -1,5 +1,12 @@
 {
     "name": "caveman",
+    "version": "0.1.0",
+    "description": "Ultra-compressed caveman-style responses (~75% token reduction).",
+    "author": {
+        "name": "5TuX"
+    },
+    "keywords": ["tokens", "compression", "brevity", "caveman"],
+    "license": "MIT",
     "skills": ["./skills/caveman"],
     "hooks": {
         "SessionStart": [
