@@ -1,6 +1,6 @@
 {
     "name": "caveman",
-    "version": "1.6.0-5tux.1",
+    "version": "1.6.0-5tux.2",
     "description": "Ultra-compressed caveman-style responses (~75% token reduction).",
     "author": {
         "name": "Julius Brussee"
@@ -20,7 +20,7 @@
                 "hooks": [
                     {
                         "type": "command",
-                        "command": "echo 'Respond in caveman ultra mode by default. See caveman skill for rules and intensity levels.'"
+                        "command": "node -e \"require(process.env.CLAUDE_PLUGIN_ROOT + '/scripts/hook-session-start.js')\""
                     }
                 ]
             }
@@ -30,7 +30,7 @@
                 "hooks": [
                     {
                         "type": "command",
-                        "command": "echo 'keep talk caveman'"
+                        "command": "node -e \"require(process.env.CLAUDE_PLUGIN_ROOT + '/scripts/hook-user-prompt.js')\""
                     }
                 ]
             }
