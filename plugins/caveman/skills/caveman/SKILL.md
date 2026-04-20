@@ -47,3 +47,16 @@ Example — destructive op:
 ## Boundaries
 
 Code/commits/PRs: write normal. "stop caveman" or "normal mode": revert. Level persist until changed or session end.
+
+## Persistent on/off (agent-driven)
+
+The plugin ships a user config at `$APPDATA/caveman/config.json` (Windows) or `$XDG_CONFIG_HOME/caveman/config.json` (POSIX, falling back to `~/.config/caveman/config.json`). The user can change persistent state by asking.
+
+Classify user intent into one of four classes:
+
+1. **Persistent off** — user wants caveman disabled across sessions (e.g. "caveman off permanently", "disable caveman forever", "kill caveman for good"). Run via Bash: `node "$CLAUDE_PLUGIN_ROOT/scripts/set-config.js" off=true`. Confirm the change.
+2. **Persistent on** — user wants caveman re-enabled (e.g. "caveman on", "resume caveman", "enable caveman permanently"). Run: `node "$CLAUDE_PLUGIN_ROOT/scripts/set-config.js" off=false`. Confirm.
+3. **Session-only stop** — user wants caveman to stop this session only (e.g. "stop caveman", "normal mode", "pause caveman" without a permanence keyword). Stop responding in caveman for the rest of this session. Do not write the config. Mention: "say 'caveman off permanently' to stop across sessions."
+4. **Ambiguous** — intent unclear. Ask one clarifying question before acting.
+
+When you invoke `set-config.js`, read stdout/stderr to confirm success before reporting to the user. If the command exits non-zero, surface the error.
