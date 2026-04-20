@@ -1,6 +1,6 @@
 {
     "name": "caveman",
-    "version": "1.6.0-5tux.0",
+    "version": "1.6.0-5tux.1",
     "description": "Ultra-compressed caveman-style responses (~75% token reduction).",
     "author": {
         "name": "Julius Brussee"
@@ -21,6 +21,16 @@
                     {
                         "type": "command",
                         "command": "echo 'Respond in caveman ultra mode by default. See caveman skill for rules and intensity levels.'"
+                    }
+                ]
+            }
+        ],
+        "UserPromptSubmit": [
+            {
+                "hooks": [
+                    {
+                        "type": "command",
+                        "command": "echo 'keep talk caveman'"
                     }
                 ]
             }

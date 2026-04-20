@@ -9,7 +9,7 @@
 - Claude Code only — dropped Codex, Cursor, Windsurf, Cline, Copilot, Gemini CLI install paths and their rule/instruction files.
 - Kept only the core `caveman` skill. Removed `caveman-commit`, `caveman-review`, `caveman-help`, and `compress` skills.
 - Removed benchmarks, evals, tests, docs, statusline helper, hooks installer scripts, single-file `caveman.skill` distribution, `AGENTS.md` / `GEMINI.md` / `CLAUDE.md` multi-agent configs, and release assets.
-- Replaced upstream auto-activation machinery with a single Claude Code `SessionStart` hook in `.claude-plugin/plugin.json` that prints `Respond in caveman ultra mode by default.`
+- Replaced upstream auto-activation machinery with two Claude Code hooks in `.claude-plugin/plugin.json`: a `SessionStart` hook setting ultra as the default intensity, and a `UserPromptSubmit` hook injecting `keep talk caveman` each turn to prevent drift.
 - `skills/caveman/SKILL.md` was trimmed (66 → 49 lines) for this marketplace.
 
 ## To sync
