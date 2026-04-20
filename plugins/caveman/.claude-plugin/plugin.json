@@ -1,6 +1,6 @@
 {
     "name": "caveman",
-    "version": "0.1.0",
+    "version": "0.2.0",
     "description": "Ultra-compressed caveman-style responses (~75% token reduction).",
     "author": {
         "name": "5TuX"
@@ -14,7 +14,7 @@
                 "hooks": [
                     {
                         "type": "command",
-                        "command": "echo 'Respond in caveman style by default. See caveman skill for rules and intensity levels.'"
+                        "command": "echo 'Respond in caveman ultra mode by default. See caveman skill for rules and intensity levels.'"
                     }
                 ]
             }
