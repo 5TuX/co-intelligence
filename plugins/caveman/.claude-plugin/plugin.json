@@ -3,10 +3,20 @@
     "version": "0.2.0",
     "description": "Ultra-compressed caveman-style responses (~75% token reduction).",
     "author": {
-        "name": "5TuX"
+        "name": "Julius Brussee"
     },
+    "contributors": [
+        {
+            "name": "5TuX"
+        }
+    ],
     "keywords": ["tokens", "compression", "brevity", "caveman"],
     "license": "MIT",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/5TuX/co-intelligence.git",
+        "directory": "plugins/caveman"
+    },
     "skills": ["./skills/caveman"],
     "hooks": {
         "SessionStart": [
