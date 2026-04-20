@@ -6,10 +6,6 @@
         "name": "5TuX"
     },
     "keywords": ["autoresearch", "research", "karpathy", "self-refinement"],
-    "repository": {
-        "type": "git",
-        "url": "https://github.com/5TuX/co-intelligence.git",
-        "directory": "plugins/autoresearch"
-    },
+    "repository": "https://github.com/5TuX/co-intelligence.git",
     "skills": ["./skills/autoresearch"]
 }
