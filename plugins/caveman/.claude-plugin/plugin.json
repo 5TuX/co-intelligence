@@ -1,0 +1,16 @@
+{
+    "name": "caveman",
+    "skills": ["./skills/caveman"],
+    "hooks": {
+        "SessionStart": [
+            {
+                "hooks": [
+                    {
+                        "type": "command",
+                        "command": "echo 'Respond in caveman style by default. See caveman skill for rules and intensity levels.'"
+                    }
+                ]
+            }
+        ]
+    }
+}
