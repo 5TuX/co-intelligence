@@ -1,0 +1,21 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(bash scripts/check-consistency.sh)",
+      "Bash(scripts/check-consistency.sh)",
+      "Bash(git config core.hooksPath .githooks)"
+    ]
+  },
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo 'co-intelligence repo — run scripts/check-consistency.sh before committing README, plugin.json, or marketplace.json changes.'"
+          }
+        ]
+      }
+    ]
+  }
+}
