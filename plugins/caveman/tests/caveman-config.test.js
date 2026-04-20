@@ -2,6 +2,7 @@ const { test } = require('node:test');
 const assert = require('node:assert');
 const path = require('node:path');
 const os = require('node:os');
+const fs = require('node:fs');
 
 const config = require('../scripts/caveman-config.js');
 
@@ -66,4 +67,72 @@ test('userConfigPath: POSIX falls back to ~/.config when XDG unset', () => {
         Object.defineProperty(process, 'platform', { value: prev.platform });
         if (prev.XDG !== undefined) process.env.XDG_CONFIG_HOME = prev.XDG;
     }
+});
+
+function withTmpUserConfig(contents, fn) {
+    const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'caveman-test-'));
+    const configPath = path.join(tmpDir, 'config.json');
+    if (contents !== null) fs.writeFileSync(configPath, contents);
+    const prev = process.env.XDG_CONFIG_HOME;
+    process.env.XDG_CONFIG_HOME = tmpDir;
+    // caveman-config reads userConfigPath as <XDG>/caveman/config.json — write there
+    const finalDir = path.join(tmpDir, 'caveman');
+    fs.mkdirSync(finalDir, { recursive: true });
+    if (contents !== null) {
+        fs.renameSync(configPath, path.join(finalDir, 'config.json'));
+    }
+    try {
+        return fn(path.join(finalDir, 'config.json'));
+    } finally {
+        if (prev !== undefined) process.env.XDG_CONFIG_HOME = prev;
+        else delete process.env.XDG_CONFIG_HOME;
+        fs.rmSync(tmpDir, { recursive: true, force: true });
+    }
+}
+
+test('read: missing user config returns plugin default', () => {
+    withTmpUserConfig(null, () => {
+        const cfg = config.read();
+        assert.deepStrictEqual(cfg, {
+            defaultLevel: 'full',
+            remindEveryTurn: true,
+            off: false,
+        });
+    });
+});
+
+test('read: partial user config merged over default', () => {
+    withTmpUserConfig('{"defaultLevel":"lite"}', () => {
+        const cfg = config.read();
+        assert.deepStrictEqual(cfg, {
+            defaultLevel: 'lite',
+            remindEveryTurn: true,
+            off: false,
+        });
+    });
+});
+
+test('read: full user override returns user values', () => {
+    withTmpUserConfig(
+        '{"defaultLevel":"ultra","remindEveryTurn":false,"off":true}',
+        () => {
+            const cfg = config.read();
+            assert.deepStrictEqual(cfg, {
+                defaultLevel: 'ultra',
+                remindEveryTurn: false,
+                off: true,
+            });
+        }
+    );
+});
+
+test('read: malformed user config returns plugin default', () => {
+    withTmpUserConfig('not json {{{', () => {
+        const cfg = config.read();
+        assert.deepStrictEqual(cfg, {
+            defaultLevel: 'full',
+            remindEveryTurn: true,
+            off: false,
+        });
+    });
 });

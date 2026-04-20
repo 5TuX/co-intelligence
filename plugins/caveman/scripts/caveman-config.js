@@ -1,5 +1,8 @@
 const path = require('node:path');
 const os = require('node:os');
+const fs = require('node:fs');
+
+const PLUGIN_DEFAULT_PATH = path.join(__dirname, '..', 'config.default.json');
 
 function userConfigPath() {
     if (process.platform === 'win32') {
@@ -10,4 +13,28 @@ function userConfigPath() {
     return path.join(base, 'caveman', 'config.json');
 }
 
-module.exports = { userConfigPath };
+function readPluginDefault() {
+    try {
+        return JSON.parse(fs.readFileSync(PLUGIN_DEFAULT_PATH, 'utf8'));
+    } catch (err) {
+        process.stderr.write(`caveman: plugin default unreadable (${err.message}), using fallback\n`);
+        return { defaultLevel: 'full', remindEveryTurn: true, off: false };
+    }
+}
+
+function readUserConfig() {
+    const p = userConfigPath();
+    if (!fs.existsSync(p)) return {};
+    try {
+        return JSON.parse(fs.readFileSync(p, 'utf8'));
+    } catch (err) {
+        process.stderr.write(`caveman: user config malformed (${err.message}), ignoring\n`);
+        return {};
+    }
+}
+
+function read() {
+    return { ...readPluginDefault(), ...readUserConfig() };
+}
+
+module.exports = { userConfigPath, read };
