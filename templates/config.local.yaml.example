@@ -1,8 +1,0 @@
-# User-specific configuration - copy to config.local.yaml and fill in your values.
-# config.local.yaml is gitignored and never committed.
-
-# Your user handle (directory name under career_data_dir)
-career_user: your-handle
-
-# Where career user data lives (outside the skills directory)
-career_data_dir: ~/Documents/_me/references/career
