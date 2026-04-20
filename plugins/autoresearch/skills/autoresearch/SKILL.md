@@ -1,6 +1,6 @@
 ---
 name: autoresearch
-description: Use when the user wants to investigate a question through iterative code experiments — write code, run it, analyze results, refine the hypothesis, and repeat. Karpathy-style autoresearch: empirical and code-driven.
+description: Use when investigating a question via iterative code experiments: write, run, analyze, refine hypothesis, repeat. Karpathy-style empirical autoresearch.
 ---
 
 # Autoresearch
