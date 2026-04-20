@@ -39,6 +39,23 @@ This is a simplified Claude Code port. It ships only the core skill — upstream
 
 The SessionStart hook activates caveman ultra mode on every new session automatically.
 
+### Configuration
+
+The plugin ships defaults in `config.default.json`. User overrides persist across plugin updates at:
+
+- **Linux / macOS:** `$XDG_CONFIG_HOME/caveman/config.json` (falls back to `~/.config/caveman/config.json`)
+- **Windows:** `%APPDATA%\caveman\config.json` (falls back to `%USERPROFILE%\.config\caveman\config.json`)
+
+Keys:
+
+| Key               | Values                | Default  | Effect                                                     |
+|-------------------|-----------------------|----------|------------------------------------------------------------|
+| `defaultLevel`    | `lite`, `full`, `ultra` | `full`   | Level announced at session start.                          |
+| `remindEveryTurn` | `true`, `false`       | `true`   | Whether the per-turn `keep talk caveman` reminder fires.   |
+| `off`             | `true`, `false`       | `false`  | When `true`, both hooks are silent — caveman is disabled.  |
+
+Ask the agent to change persistent settings in natural language (e.g. "disable caveman permanently", "caveman on"). The agent calls `scripts/set-config.js` to write the user config.
+
 ## Usage
 
 Trigger with any of:
@@ -56,9 +73,9 @@ Stop with: "stop caveman" or "normal mode".
 |------------------|------------------|--------------------------------------------------------------------|
 | Lite             | `/caveman lite`  | Drop filler, keep grammar. Professional but no fluff.              |
 | Full             | `/caveman full`  | Drop articles, fragments, full grunt.                              |
-| Ultra *(default)* | `/caveman ultra` | Maximum compression. Telegraphic. Abbreviate everything.           |
+| Ultra            | `/caveman ultra` | Maximum compression. Telegraphic. Abbreviate everything.           |
 
-Ultra is the default in this marketplace — the SessionStart hook enforces it every new session. Switch to `lite`/`full` per session as needed. Level persists until changed or session ends.
+The shipped default is `full`. The SessionStart hook reads the user config and announces the active level at session start — change `defaultLevel` in the user config (see **Configuration** above) to persist a different default across sessions. Switch ad-hoc within a session with the triggers below; the change is session-scoped only.
 
 ## Upstream sync
 
