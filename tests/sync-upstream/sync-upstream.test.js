@@ -101,3 +101,31 @@ test('--bump on up-to-date pin is a no-op sha-wise', () => {
     const after = JSON.parse(readFileSync(lockPath, 'utf8'));
     assert.equal(after.pinned_sha, readSha('c3'));
 });
+
+test('missing lock file produces useful error', () => {
+    const r = spawnSync('node', [SCRIPT, 'no-such-plugin'], {
+        encoding: 'utf8',
+        cwd: join(fixtureDir, 'plugin-root'),
+    });
+    assert.notEqual(r.status, 0);
+    assert.match(r.stderr, /plugin dir not found/i);
+});
+
+test('lock with invalid JSON produces useful error', () => {
+    const lockPath = join(fixtureDir, 'plugin-root', 'plugins', 'fake-plugin', 'upstream.lock.json');
+    const backup = readFileSync(lockPath, 'utf8');
+    writeFileSync(lockPath, '{ not json');
+    try {
+        const r = runSync(['fake-plugin']);
+        assert.notEqual(r.status, 0);
+        assert.match(r.stderr, /invalid JSON/i);
+    } finally {
+        writeFileSync(lockPath, backup);
+    }
+});
+
+test('unknown flag exits non-zero', () => {
+    const r = runSync(['fake-plugin', '--bogus']);
+    assert.notEqual(r.status, 0);
+    assert.match(r.stderr, /unknown flag/i);
+});
