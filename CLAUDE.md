@@ -51,7 +51,7 @@ Both adapted plugin READMEs (`caveman`, `superpowers`) use the same section orde
 4. What's different from upstream
 5. Install
 6. Usage (plugin-specific subsections nest here)
-7. Upstream sync (pointer to UPSTREAM.md)
+7. Upstream sync (pointer to upstream.lock.json and scripts/sync-upstream.js)
 8. License
 
 Plugin-specific sections are added only where they carry real content. Do not pad for symmetry.
