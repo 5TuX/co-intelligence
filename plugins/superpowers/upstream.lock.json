@@ -17,6 +17,14 @@
     "package.json",
     "package-lock.json",
     "README.md",
-    "LICENSE"
+    "LICENSE",
+    "CLAUDE.md",
+    ".codex/**",
+    ".cursor-plugin/**",
+    ".opencode/**",
+    ".version-bump.json",
+    "AGENTS.md",
+    ".gitattributes",
+    ".gitignore"
   ]
 }

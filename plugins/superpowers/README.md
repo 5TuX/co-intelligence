@@ -7,7 +7,7 @@ Agentic skills framework for Claude Code — TDD, debugging, collaboration patte
 Adapted from [obra/superpowers](https://github.com/obra/superpowers) (MIT) by [Jesse Vincent](https://blog.fsck.com) and [Prime Radiant](https://primeradiant.com). Maintained in the `co-intelligence` marketplace by 5TuX.
 
 - Upstream version: `v5.0.7`
-- Marketplace version: `5.0.7-5tux.1`
+- Marketplace version: `5.0.7-5tux.2`
 
 See [`LICENSE`](LICENSE) for the original copyright notice. If Superpowers has helped your work, consider [sponsoring Jesse's open-source work](https://github.com/sponsors/obra).
 
@@ -16,7 +16,6 @@ See [`LICENSE`](LICENSE) for the original copyright notice. If Superpowers has h
 - **14 skills** under `skills/` — brainstorming, writing-plans, executing-plans, subagent-driven-development, dispatching-parallel-agents, using-git-worktrees, finishing-a-development-branch, test-driven-development, systematic-debugging, verification-before-completion, requesting-code-review, receiving-code-review, writing-skills, using-superpowers.
 - **`code-reviewer` agent** (`agents/code-reviewer.md`) — two-stage review agent invoked between implementation tasks.
 - **Hooks** (`hooks/`) — session-start and cross-editor hook config, byte-identical to upstream.
-- **`CLAUDE.md`** — upstream's contributor philosophy (retained for reference; its PR rules apply to `obra/superpowers`, not to this fork).
 
 ## What's different from upstream
 
@@ -24,11 +23,11 @@ See [`LICENSE`](LICENSE) for the original copyright notice. If Superpowers has h
 
 - Claude Code only — dropped Codex, Cursor, OpenCode, Copilot CLI, and Gemini CLI install paths.
 - Removed repo-level scaffolding not used by the plugin bundle: `commands/`, `docs/`, `tests/`, `scripts/`, `CHANGELOG.md`, `CODE_OF_CONDUCT.md`, `RELEASE-NOTES.md`, `gemini-extension.json`, `GEMINI.md`, `package.json`.
+- Do not ship upstream's `CLAUDE.md` (contributor guidelines for `obra/superpowers` — its PR-rejection rules don't apply to this fork).
 
 ### Additions
 
 - `.claude-plugin/plugin.json` with the marketplace version anchor.
-- `CLAUDE.md` is retained from upstream for reference — note its PR rules apply to `obra/superpowers`, not to this fork.
 
 Skills, agents, and hooks are byte-identical to upstream `v5.0.7`.
 
