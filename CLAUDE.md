@@ -74,6 +74,14 @@ These apply to any commit touching `plugins/caveman/` or `plugins/superpowers/`.
 - **R2 — tests required.** Run the plugin's existing tests before committing behavior changes (e.g. `node --test plugins/caveman/tests/` if present). If the plugin has no tests, say so explicitly in the commit message. Advisory — not mechanically enforced.
 - **R3 — sync workflow.** Upstream syncs use `sync-upstream.js <plugin>` (report) → manual port → README update → tests → `sync-upstream.js <plugin> --bump`. Lock file shape validated by `check-consistency.sh`.
 
+## Python execution
+
+This repo does not use pinned python envs, requirements.txt, or pip. All python scripts in plugins run via `uv run --with <pkg> [--with <pkg>] python3 …`. Rationale: skills ship as zero-install bundles — `uv` resolves deps on first invocation and caches them. Consumers of the plugin only need `uv` (which they likely already have for other tools).
+
+- Do **not** commit `requirements.txt`, `pyproject.toml`, or `venv/` into plugin directories.
+- Do **not** suggest `pip install` or `python -m venv` in any SKILL.md.
+- Each plugin SKILL.md that invokes python MUST state the `uv run --with …` invocation explicitly so the agent can copy/paste it.
+
 ## Setup after clone
 
 ```bash

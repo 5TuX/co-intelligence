@@ -16,6 +16,24 @@
     "LICENSE",
     "CHANGELOG.md",
     "package.json",
-    "package-lock.json"
+    "package-lock.json",
+    "caveman-compress/**",
+    "skills/compress/**",
+    "skills/caveman-commit/**",
+    "skills/caveman-review/**",
+    "skills/caveman-help/**",
+    "commands/**",
+    "hooks/**",
+    "rules/**",
+    ".codex/**",
+    ".cursor/**",
+    ".clinerules/**",
+    ".windsurf/**",
+    ".agents/**",
+    "plugins/**",
+    "tests/**",
+    "caveman.skill",
+    "CONTRIBUTING.md",
+    "CLAUDE.original.md"
   ]
 }

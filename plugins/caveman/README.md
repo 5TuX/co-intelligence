@@ -9,13 +9,14 @@ Ultra-compressed response mode for Claude Code. Cuts ~75% of output tokens while
 Adapted from [JuliusBrussee/caveman](https://github.com/JuliusBrussee/caveman) (MIT) by Julius Brussee. Maintained in the `co-intelligence` marketplace by 5TuX.
 
 - Upstream version: `v1.6.0`
-- Marketplace version: `1.6.0-5tux.4`
+- Marketplace version: `1.6.0-5tux.5`
 
 See [`LICENSE`](LICENSE) for the original copyright notice.
 
 ## What's included
 
 - **`caveman` skill** (`skills/caveman/SKILL.md`) — the core compression rules with `lite`, `full`, and `ultra` intensity levels.
+- **`caveman-compress` skill** (`skills/caveman-compress/SKILL.md`) — compresses memory files (CLAUDE.md, todos) from natural English to caveman-speak to reduce input-token cost per session. Runs via `uv run --with <deps> python3 -m scripts <file>`.
 - **SessionStart hook** (`.claude-plugin/plugin.json`) — auto-activates caveman ultra mode at the start of every Claude Code session.
 
 Quick illustration (upstream example):
@@ -31,7 +32,7 @@ Same fix. 75% less word. Brain still big.
 ### Simplifications
 
 - Claude Code only — dropped Codex, Cursor, Windsurf, Cline, Copilot, and Gemini CLI install paths along with their rule/instruction files.
-- Kept only the core `caveman` skill. Removed `caveman-commit`, `caveman-review`, `caveman-help`, and `compress`.
+- Kept `caveman` and `caveman-compress`. Removed `caveman-commit`, `caveman-review`, and `caveman-help`.
 - Removed benchmarks, evals, tests, docs, statusline helper, hooks installer scripts, single-file `caveman.skill` distribution, `AGENTS.md` / `GEMINI.md` / `CLAUDE.md` multi-agent configs, and release assets.
 - `skills/caveman/SKILL.md` was trimmed (66 → 49 lines) for this marketplace.
 
@@ -40,6 +41,7 @@ Same fix. 75% less word. Brain still big.
 - Two Claude Code hooks in `.claude-plugin/plugin.json` backed by node scripts under `scripts/`: `SessionStart` announces the active level from config; `UserPromptSubmit` emits a per-turn drift reminder gated by config.
 - Persistent user config merged over shipped `config.default.json` (`%APPDATA%\caveman\config.json` on Windows, `~/.config/caveman/config.json` on POSIX). Controls default level, reminder toggle, and permanent off state.
 - Agent-driven off-switch intent detection (see `skills/caveman/SKILL.md`) writes via `scripts/set-config.js`.
+- `caveman-compress` skill ported from upstream's `caveman-compress/` directory (renamed from `compress` upstream — upstream did the rename in v1.6.0). Python scripts are byte-identical to upstream; only the invocation path uses `uv run --with ...` rather than a pre-installed env, per this repo's python convention.
 
 ## Install
 
