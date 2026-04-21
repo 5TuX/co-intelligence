@@ -52,11 +52,21 @@ Code/commits/PRs: write normal. "stop caveman" or "normal mode": revert. Level p
 
 The plugin ships a user config at `$APPDATA/caveman/config.json` (Windows) or `$XDG_CONFIG_HOME/caveman/config.json` (POSIX, falling back to `~/.config/caveman/config.json`). The user can change persistent state by asking.
 
+The SessionStart hook writes the absolute `pluginRoot` into that config each session, so the skill can locate `set-config.js` without depending on `$CLAUDE_PLUGIN_ROOT` (which refers to *some* plugin — not necessarily caveman — when the skill is invoked from the main agent).
+
+Invoke `set-config.js` via this cross-platform node one-liner (works on Linux, macOS, Windows/git-bash). Substitute the `KEY=VALUE` arguments per the class below:
+
+```bash
+node -e "const fs=require('fs'),p=require('path'),os=require('os'),cp=require('child_process');const b=process.platform==='win32'?(process.env.APPDATA||p.join(process.env.USERPROFILE||os.homedir(),'.config')):(process.env.XDG_CONFIG_HOME||p.join(os.homedir(),'.config'));const c=JSON.parse(fs.readFileSync(p.join(b,'caveman','config.json'),'utf8'));if(!c.pluginRoot)throw new Error('pluginRoot missing — restart Claude Code so SessionStart hook can populate it');cp.execFileSync('node',[p.join(c.pluginRoot,'scripts/set-config.js'),...process.argv.slice(1)],{stdio:'inherit'});" KEY=VALUE
+```
+
 Classify user intent into one of four classes:
 
-1. **Persistent off** — user wants caveman disabled across sessions (e.g. "caveman off permanently", "disable caveman forever", "kill caveman for good"). Run via Bash: `node "$CLAUDE_PLUGIN_ROOT/scripts/set-config.js" off=true`. Confirm the change.
-2. **Persistent on** — user wants caveman re-enabled (e.g. "caveman on", "resume caveman", "enable caveman permanently"). Run: `node "$CLAUDE_PLUGIN_ROOT/scripts/set-config.js" off=false`. Confirm.
+1. **Persistent off** — user wants caveman disabled across sessions (e.g. "caveman off permanently", "disable caveman forever", "kill caveman for good"). Run the one-liner with `off=true`. Confirm the change.
+2. **Persistent on** — user wants caveman re-enabled (e.g. "caveman on", "resume caveman", "enable caveman permanently"). Run the one-liner with `off=false`. Confirm.
 3. **Session-only stop** — user wants caveman to stop this session only (e.g. "stop caveman", "normal mode", "pause caveman" without a permanence keyword). Stop responding in caveman for the rest of this session. Do not write the config. Mention: "say 'caveman off permanently' to stop across sessions."
 4. **Ambiguous** — intent unclear. Ask one clarifying question before acting.
 
-When you invoke `set-config.js`, read stdout/stderr to confirm success before reporting to the user. If the command exits non-zero, surface the error.
+Persistent intensity change (e.g. "set ultra permanent", "default to lite forever") uses the same one-liner with `defaultLevel=lite|full|ultra`.
+
+Read stdout/stderr to confirm success before reporting to the user. If the command exits non-zero, surface the error.
