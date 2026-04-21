@@ -9,7 +9,7 @@ Ultra-compressed response mode for Claude Code. Cuts ~75% of output tokens while
 Adapted from [JuliusBrussee/caveman](https://github.com/JuliusBrussee/caveman) (MIT) by Julius Brussee. Maintained in the `co-intelligence` marketplace by 5TuX.
 
 - Upstream version: `v1.6.0`
-- Marketplace version: `1.6.0-5tux.3`
+- Marketplace version: `1.6.0-5tux.4`
 
 See [`LICENSE`](LICENSE) for the original copyright notice.
 
