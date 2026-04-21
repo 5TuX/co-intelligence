@@ -75,3 +75,29 @@ test('files in ignore_globs are excluded from candidate additions', () => {
     assert.doesNotMatch(r.stdout, /install\.sh/, 'install.sh filtered by ignore_globs');
     assert.doesNotMatch(r.stdout, /^\s*README\.md\s*$/m, 'README.md filtered by ignore_globs');
 });
+
+test('--bump rewrites lock to upstream HEAD sha/tag/date', () => {
+    setLockSha(readSha('c1'));
+    const lockPath = join(fixtureDir, 'plugin-root', 'plugins', 'fake-plugin', 'upstream.lock.json');
+    const before = JSON.parse(readFileSync(lockPath, 'utf8'));
+
+    const r = runSync(['fake-plugin', '--bump']);
+    assert.equal(r.status, 0, `stderr: ${r.stderr}`);
+
+    const after = JSON.parse(readFileSync(lockPath, 'utf8'));
+    assert.equal(after.pinned_sha, readSha('c3'));
+    assert.equal(after.repo, before.repo);
+    assert.ok(after.pinned_tag, 'pinned_tag populated');
+    assert.match(after.last_synced_date, /^\d{4}-\d{2}-\d{2}$/);
+});
+
+test('--bump on up-to-date pin is a no-op sha-wise', () => {
+    setLockSha(readSha('c3'));
+    const lockPath = join(fixtureDir, 'plugin-root', 'plugins', 'fake-plugin', 'upstream.lock.json');
+
+    const r = runSync(['fake-plugin', '--bump']);
+    assert.equal(r.status, 0);
+
+    const after = JSON.parse(readFileSync(lockPath, 'utf8'));
+    assert.equal(after.pinned_sha, readSha('c3'));
+});

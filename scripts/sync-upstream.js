@@ -83,6 +83,91 @@ function matchesAny(path, globs) {
     return globs.some((g) => globToRegExp(g).test(path));
 }
 
+function today() {
+    return new Date().toISOString().slice(0, 10);
+}
+
+function describeTag(upstream, sha) {
+    const r = spawnSync('git', ['-C', upstream, 'describe', '--tags', '--exact-match', sha], {
+        encoding: 'utf8',
+    });
+    if (r.status === 0) return r.stdout.trim();
+    const r2 = spawnSync('git', ['-C', upstream, 'describe', '--tags', '--always', sha], {
+        encoding: 'utf8',
+    });
+    return r2.status === 0 ? r2.stdout.trim() : sha.slice(0, 10);
+}
+
+function writeLock(lock, data) {
+    writeFileSync(lock.path, JSON.stringify(data, null, 2) + '\n');
+}
+
+function runBump(lock, upstream, args) {
+    const headSha = git(['-C', upstream, 'rev-parse', 'HEAD']).trim();
+    const tag = describeTag(upstream, headSha);
+    const next = {
+        ...lock.data,
+        pinned_sha: headSha,
+        pinned_tag: tag,
+        last_synced_date: today(),
+    };
+    writeLock(lock, next);
+    process.stdout.write(`pin bumped: ${lock.data.pinned_sha.slice(0, 10)} → ${headSha.slice(0, 10)} (${tag}).\n`);
+    process.stdout.write('don\'t forget to update plugin.json version if behavior changed.\n');
+}
+
+function runReport(lock, upstream, args, repoRoot) {
+    const { pinned_sha } = lock.data;
+    const headSha = git(['-C', upstream, 'rev-parse', 'HEAD']).trim();
+    if (headSha === pinned_sha) {
+        process.stdout.write(`no changes. upstream HEAD == pinned (${pinned_sha.slice(0, 10)}).\n`);
+        return;
+    }
+
+    const ignoreGlobs = Array.isArray(lock.data.ignore_globs) ? lock.data.ignore_globs : [];
+    const pluginRel = `plugins/${args.plugin}`;
+    const ourFiles = new Set(
+        listTrackedFiles(repoRoot, pluginRel).map((f) =>
+            f.startsWith(pluginRel + '/') ? f.slice(pluginRel.length + 1) : f
+        )
+    );
+    const upstreamFiles = new Set(listTrackedFiles(upstream, '.').map((f) => f.replace(/^\.\//, '')));
+
+    const changedBoth = [];
+    for (const f of ourFiles) {
+        if (!upstreamFiles.has(f)) continue;
+        const diff = git(
+            ['-C', upstream, 'diff', '--no-color', `${pinned_sha}..${headSha}`, '--', f],
+            { maxBuffer: 50 * 1024 * 1024 }
+        );
+        if (diff.trim()) changedBoth.push({ file: f, diff });
+    }
+
+    const candidates = [...upstreamFiles]
+        .filter((f) => !ourFiles.has(f))
+        .filter((f) => !matchesAny(f, ignoreGlobs))
+        .sort();
+
+    const commits = git([
+        '-C', upstream, 'log', '--oneline', '--no-color', `${pinned_sha}..${headSha}`,
+    ]);
+
+    process.stdout.write(`== sync-upstream: ${args.plugin} ==\n`);
+    process.stdout.write(`pinned: ${pinned_sha.slice(0, 10)}  upstream HEAD: ${headSha.slice(0, 10)}\n\n`);
+    process.stdout.write('-- commits since pin --\n');
+    process.stdout.write(commits || '(none)\n');
+    process.stdout.write('\n-- changed files (tracked both sides) --\n');
+    if (changedBoth.length === 0) process.stdout.write('(none)\n');
+    for (const c of changedBoth) {
+        process.stdout.write(`\n### ${c.file}\n`);
+        process.stdout.write(c.diff);
+    }
+    process.stdout.write('\n-- candidate additions (upstream files we do not ship) --\n');
+    if (candidates.length === 0) process.stdout.write('(none)\n');
+    else for (const f of candidates) process.stdout.write(`  ${f}\n`);
+    process.stdout.write('\nNext: port by hand, update README "What\'s different from upstream", run tests, then sync-upstream.js <plugin> --bump.\n');
+}
+
 function main() {
     const args = parseArgs(process.argv.slice(2));
     const repoRoot = process.cwd();
@@ -90,58 +175,10 @@ function main() {
     if (!existsSync(pluginDir)) die(`plugin dir not found: ${pluginDir}`);
 
     const lock = loadLock(pluginDir);
-    const { repo, pinned_sha } = lock.data;
-
-    const upstream = cloneUpstream(repo);
+    const upstream = cloneUpstream(lock.data.repo);
     try {
-        const headSha = git(['-C', upstream, 'rev-parse', 'HEAD']).trim();
-        if (headSha === pinned_sha) {
-            process.stdout.write(`no changes. upstream HEAD == pinned (${pinned_sha.slice(0, 10)}).\n`);
-            return;
-        }
-
-        const ignoreGlobs = Array.isArray(lock.data.ignore_globs) ? lock.data.ignore_globs : [];
-        const pluginRel = `plugins/${args.plugin}`;
-        const ourFiles = new Set(
-            listTrackedFiles(repoRoot, pluginRel).map((f) =>
-                f.startsWith(pluginRel + '/') ? f.slice(pluginRel.length + 1) : f
-            )
-        );
-        const upstreamFiles = new Set(listTrackedFiles(upstream, '.').map((f) => f.replace(/^\.\//, '')));
-
-        const changedBoth = [];
-        for (const f of ourFiles) {
-            if (!upstreamFiles.has(f)) continue;
-            const diff = git(
-                ['-C', upstream, 'diff', '--no-color', `${pinned_sha}..${headSha}`, '--', f],
-                { maxBuffer: 50 * 1024 * 1024 }
-            );
-            if (diff.trim()) changedBoth.push({ file: f, diff });
-        }
-
-        const candidates = [...upstreamFiles]
-            .filter((f) => !ourFiles.has(f))
-            .filter((f) => !matchesAny(f, ignoreGlobs))
-            .sort();
-
-        const commits = git([
-            '-C', upstream, 'log', '--oneline', '--no-color', `${pinned_sha}..${headSha}`,
-        ]);
-
-        process.stdout.write(`== sync-upstream: ${args.plugin} ==\n`);
-        process.stdout.write(`pinned: ${pinned_sha.slice(0, 10)}  upstream HEAD: ${headSha.slice(0, 10)}\n\n`);
-        process.stdout.write('-- commits since pin --\n');
-        process.stdout.write(commits || '(none)\n');
-        process.stdout.write('\n-- changed files (tracked both sides) --\n');
-        if (changedBoth.length === 0) process.stdout.write('(none)\n');
-        for (const c of changedBoth) {
-            process.stdout.write(`\n### ${c.file}\n`);
-            process.stdout.write(c.diff);
-        }
-        process.stdout.write('\n-- candidate additions (upstream files we do not ship) --\n');
-        if (candidates.length === 0) process.stdout.write('(none)\n');
-        else for (const f of candidates) process.stdout.write(`  ${f}\n`);
-        process.stdout.write('\nNext: port by hand, update README "What\'s different from upstream", run tests, then sync-upstream.js <plugin> --bump.\n');
+        if (args.bump) runBump(lock, upstream, args);
+        else runReport(lock, upstream, args, repoRoot);
     } finally {
         rmSync(upstream, { recursive: true, force: true });
     }
