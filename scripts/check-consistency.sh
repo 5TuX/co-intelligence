@@ -52,8 +52,24 @@ for p in "${dir_plugins[@]}"; do
     if is_adapted "$p"; then
         [[ "$version" =~ $version_anchor_re ]] \
             || err "$p: version '$version' doesn't match UPSTREAM-5tux.N scheme"
-        [[ -f "$plugin_dir/UPSTREAM.md" ]] \
-            || err "$p: adapted plugin missing UPSTREAM.md"
+
+        lock="$plugin_dir/upstream.lock.json"
+        if [[ ! -f "$lock" ]]; then
+            err "$p: adapted plugin missing upstream.lock.json"
+        elif ! jq empty "$lock" 2>/dev/null; then
+            err "$p: upstream.lock.json is not valid JSON"
+        else
+            for key in repo pinned_sha pinned_tag last_synced_date; do
+                value=$(jq -r ".${key} // empty" "$lock")
+                [[ -n "$value" ]] || err "$p: upstream.lock.json missing key '$key'"
+            done
+            sha=$(jq -r '.pinned_sha' "$lock")
+            [[ "$sha" =~ ^[0-9a-f]{40}$ ]] \
+                || err "$p: upstream.lock.json pinned_sha '$sha' not a 40-char hex"
+        fi
+
+        grep -qE '^## What'"'"'s different from upstream[[:space:]]*$' "$plugin_dir/README.md" \
+            || err "$p: README.md missing '## What'\\''s different from upstream' heading"
     fi
 
     [[ $fail -eq $plugin_fail_before ]] && ok "$p ($version)"
