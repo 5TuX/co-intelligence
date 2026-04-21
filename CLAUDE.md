@@ -1,6 +1,6 @@
 # co-intelligence — repo conventions
 
-A Claude Code plugin marketplace. Three plugins under `plugins/`: two adapted forks (`caveman`, `superpowers`) and one original (`autoresearch`). Maintained by 5TuX.
+Claude Code plugin marketplace. 3 plugins in `plugins/`: 2 adapted forks (`caveman`, `superpowers`) + 1 original (`autoresearch`). Maintainer: 5TuX.
 
 ## Repo map
 
@@ -19,18 +19,18 @@ scripts/check-consistency.sh        mechanical repo checks
 
 ## Version scheme (adapted plugins)
 
-`plugin.json` versions for `caveman` and `superpowers` follow **`UPSTREAM-5tux.N`**:
+`plugin.json` versions for `caveman`/`superpowers` = **`UPSTREAM-5tux.N`**:
 
-- `UPSTREAM` = the exact upstream version ported (e.g. `1.6.0`, `5.0.7`).
-- `5tux.N` = this marketplace's patch counter for edits on top of that upstream version. Starts at `.0`, bumps with every commit that changes behavior (not README-only).
+- `UPSTREAM` = exact upstream version ported (e.g. `1.6.0`, `5.0.7`).
+- `5tux.N` = marketplace patch counter on top of that upstream. Start `.0`, bump per commit that changes behavior (not README-only).
 
 Examples: `1.6.0-5tux.0`, `5.0.7-5tux.1`.
 
-When porting a new upstream release: reset the suffix to `.0`, port changes by hand, then run `scripts/sync-upstream.js <plugin> --bump` to rewrite the new SHA/tag/date into `upstream.lock.json`.
+New upstream release port: reset suffix to `.0`, port by hand, run `scripts/sync-upstream.js <plugin> --bump` → rewrites SHA/tag/date in `upstream.lock.json`.
 
 ## Files that must agree
 
-When you touch **any** of these, check the others in the same commit:
+Touch any → check others same commit:
 
 | If you change...                            | Re-check...                                                                                             |
 |---------------------------------------------|---------------------------------------------------------------------------------------------------------|
@@ -39,11 +39,11 @@ When you touch **any** of these, check the others in the same commit:
 | upstream port                               | `plugins/<p>/upstream.lock.json` via `sync-upstream.js --bump`, `plugin.json` version, README § "What's different from upstream". |
 | adding/removing a skill under `skills/`     | `plugins/<p>/README.md` "What's included" and § "What's different from upstream".                                 |
 
-`scripts/check-consistency.sh` enforces the mechanical subset of this. The pre-commit hook blocks commits that break it.
+`scripts/check-consistency.sh` enforces mechanical subset. Pre-commit hook blocks violating commits.
 
 ## Per-plugin README skeleton
 
-Both adapted plugin READMEs (`caveman`, `superpowers`) use the same section order:
+Both adapted READMEs (`caveman`, `superpowers`) share section order:
 
 1. Title + tagline
 2. Attribution
@@ -54,33 +54,33 @@ Both adapted plugin READMEs (`caveman`, `superpowers`) use the same section orde
 7. Upstream sync (pointer to upstream.lock.json and scripts/sync-upstream.js)
 8. License
 
-Plugin-specific sections are added only where they carry real content. Do not pad for symmetry.
+Add plugin-specific sections only when real content. No padding for symmetry.
 
 ## Upstream sync workflow
 
-1. `node scripts/sync-upstream.js <plugin>` — report mode: prints commits since pin, per-file diffs for tracked files, and candidate additions from upstream. Zero writes.
-2. Review output with the user. Port desired changes by hand into `plugins/<p>/`.
-3. Update `plugins/<p>/README.md` § "What's different from upstream" (Simplifications / Additions subsections) for any behavior change.
-4. Run the plugin's tests if they exist (e.g. `plugins/caveman/tests/`). Note absence in commit message otherwise.
-5. Bump `plugin.json` version to `NEW_UPSTREAM-5tux.N` only if behavior changed.
-6. `node scripts/sync-upstream.js <plugin> --bump` — rewrites `upstream.lock.json` with new SHA, tag, and date.
+1. `node scripts/sync-upstream.js <plugin>` — report mode: commits since pin, per-file diffs, candidate additions. Zero writes.
+2. Review w/ user. Port desired changes by hand to `plugins/<p>/`.
+3. Update `plugins/<p>/README.md` § "What's different from upstream" (Simplifications / Additions) per behavior change.
+4. Run plugin tests if exist (e.g. `plugins/caveman/tests/`). Note absence in commit msg otherwise.
+5. Bump `plugin.json` to `NEW_UPSTREAM-5tux.N` only if behavior changed.
+6. `node scripts/sync-upstream.js <plugin> --bump` → rewrites `upstream.lock.json` w/ new SHA, tag, date.
 7. Run `scripts/check-consistency.sh`. Commit.
 
 ## Rules (adapted plugins)
 
-These apply to any commit touching `plugins/caveman/` or `plugins/superpowers/`.
+Apply to any commit touching `plugins/caveman/` or `plugins/superpowers/`.
 
-- **R1 — documentation required.** Any commit that modifies an adapted plugin's source (anything under `plugins/<p>/` other than `README.md` and `upstream.lock.json`) must also stage `plugins/<p>/README.md`. Enforced by `scripts/check-consistency.sh --staged` via `.githooks/pre-commit`.
-- **R2 — tests required.** Run the plugin's existing tests before committing behavior changes (e.g. `node --test plugins/caveman/tests/` if present). If the plugin has no tests, say so explicitly in the commit message. Advisory — not mechanically enforced.
-- **R3 — sync workflow.** Upstream syncs use `sync-upstream.js <plugin>` (report) → manual port → README update → tests → `sync-upstream.js <plugin> --bump`. Lock file shape validated by `check-consistency.sh`.
+- **R1 — docs required.** Commit modifying adapted plugin source (under `plugins/<p>/` except `README.md` + `upstream.lock.json`) must also stage `plugins/<p>/README.md`. Enforced by `scripts/check-consistency.sh --staged` via `.githooks/pre-commit`.
+- **R2 — tests required.** Run existing plugin tests before committing behavior changes (e.g. `node --test plugins/caveman/tests/` if present). No tests → say so in commit msg. Advisory, not mechanically enforced.
+- **R3 — sync workflow.** Upstream syncs: `sync-upstream.js <plugin>` (report) → manual port → README update → tests → `sync-upstream.js <plugin> --bump`. Lock shape validated by `check-consistency.sh`.
 
 ## Python execution
 
-This repo does not use pinned python envs, requirements.txt, or pip. All python scripts in plugins run via `uv run --with <pkg> [--with <pkg>] python3 …`. Rationale: skills ship as zero-install bundles — `uv` resolves deps on first invocation and caches them. Consumers of the plugin only need `uv` (which they likely already have for other tools).
+Repo has no pinned python envs, requirements.txt, pip. All plugin python scripts run via `uv run --with <pkg> [--with <pkg>] python3 …`. Why: skills ship zero-install — `uv` resolves deps on first invoke + caches. Consumers need only `uv`.
 
-- Do **not** commit `requirements.txt`, `pyproject.toml`, or `venv/` into plugin directories.
-- Do **not** suggest `pip install` or `python -m venv` in any SKILL.md.
-- Each plugin SKILL.md that invokes python MUST state the `uv run --with …` invocation explicitly so the agent can copy/paste it.
+- No commit of `requirements.txt`, `pyproject.toml`, `venv/` in plugin dirs.
+- No `pip install` or `python -m venv` suggestions in any SKILL.md.
+- Each plugin SKILL.md invoking python MUST state explicit `uv run --with …` invocation (copy/paste ready).
 
 ## Setup after clone
 
@@ -88,8 +88,8 @@ This repo does not use pinned python envs, requirements.txt, or pip. All python 
 git config core.hooksPath .githooks
 ```
 
-This wires `.githooks/pre-commit` to run the consistency check on every commit. One-time per clone.
+Wires `.githooks/pre-commit` → consistency check per commit. One-time per clone.
 
 ## Personal notes
 
-Put machine-specific or in-progress notes in `CLAUDE.local.md` (gitignored). This file is for conventions that apply to anyone working on the repo.
+Machine-specific / in-progress notes → `CLAUDE.local.md` (gitignored). This file = repo-wide conventions.

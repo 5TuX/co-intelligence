@@ -3,3 +3,5 @@ CLAUDE.local.md
 .claude/settings.local.json
 .worktrees/
 docs/superpowers/
+*.original.md
+__pycache__/
