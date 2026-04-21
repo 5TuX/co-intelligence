@@ -1,8 +1,8 @@
 {
   "repo": "https://github.com/JuliusBrussee/caveman",
-  "pinned_sha": "c2ed24b3e5d412cd0c25197b2bc9af587621fd99",
-  "pinned_tag": "v1.6.0",
-  "last_synced_date": "2026-04-20",
+  "pinned_sha": "84cc3c14fa1e10182adaced856e003406ccd250d",
+  "pinned_tag": "v1.6.0-1-g84cc3c1",
+  "last_synced_date": "2026-04-21",
   "ignore_globs": [
     ".github/**",
     "docs/**",
