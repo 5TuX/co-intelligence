@@ -52,6 +52,37 @@ function listTrackedFiles(repoRoot, subdir) {
     return out.split('\n').filter(Boolean);
 }
 
+function globToRegExp(glob) {
+    // Minimal ** / * support — sufficient for our ignore_globs shape.
+    let re = '';
+    let i = 0;
+    while (i < glob.length) {
+        const c = glob[i];
+        if (c === '*' && glob[i + 1] === '*') {
+            re += '.*';
+            i += 2;
+            if (glob[i] === '/') i += 1;
+        } else if (c === '*') {
+            re += '[^/]*';
+            i += 1;
+        } else if (c === '?') {
+            re += '[^/]';
+            i += 1;
+        } else if (/[.+^${}()|[\]\\]/.test(c)) {
+            re += '\\' + c;
+            i += 1;
+        } else {
+            re += c;
+            i += 1;
+        }
+    }
+    return new RegExp('^' + re + '$');
+}
+
+function matchesAny(path, globs) {
+    return globs.some((g) => globToRegExp(g).test(path));
+}
+
 function main() {
     const args = parseArgs(process.argv.slice(2));
     const repoRoot = process.cwd();
@@ -68,8 +99,49 @@ function main() {
             process.stdout.write(`no changes. upstream HEAD == pinned (${pinned_sha.slice(0, 10)}).\n`);
             return;
         }
-        // Task 10 adds the diff path. For now, just log.
-        process.stdout.write(`upstream has moved: ${pinned_sha.slice(0, 10)} → ${headSha.slice(0, 10)}\n`);
+
+        const ignoreGlobs = Array.isArray(lock.data.ignore_globs) ? lock.data.ignore_globs : [];
+        const pluginRel = `plugins/${args.plugin}`;
+        const ourFiles = new Set(
+            listTrackedFiles(repoRoot, pluginRel).map((f) =>
+                f.startsWith(pluginRel + '/') ? f.slice(pluginRel.length + 1) : f
+            )
+        );
+        const upstreamFiles = new Set(listTrackedFiles(upstream, '.').map((f) => f.replace(/^\.\//, '')));
+
+        const changedBoth = [];
+        for (const f of ourFiles) {
+            if (!upstreamFiles.has(f)) continue;
+            const diff = git(
+                ['-C', upstream, 'diff', '--no-color', `${pinned_sha}..${headSha}`, '--', f],
+                { maxBuffer: 50 * 1024 * 1024 }
+            );
+            if (diff.trim()) changedBoth.push({ file: f, diff });
+        }
+
+        const candidates = [...upstreamFiles]
+            .filter((f) => !ourFiles.has(f))
+            .filter((f) => !matchesAny(f, ignoreGlobs))
+            .sort();
+
+        const commits = git([
+            '-C', upstream, 'log', '--oneline', '--no-color', `${pinned_sha}..${headSha}`,
+        ]);
+
+        process.stdout.write(`== sync-upstream: ${args.plugin} ==\n`);
+        process.stdout.write(`pinned: ${pinned_sha.slice(0, 10)}  upstream HEAD: ${headSha.slice(0, 10)}\n\n`);
+        process.stdout.write('-- commits since pin --\n');
+        process.stdout.write(commits || '(none)\n');
+        process.stdout.write('\n-- changed files (tracked both sides) --\n');
+        if (changedBoth.length === 0) process.stdout.write('(none)\n');
+        for (const c of changedBoth) {
+            process.stdout.write(`\n### ${c.file}\n`);
+            process.stdout.write(c.diff);
+        }
+        process.stdout.write('\n-- candidate additions (upstream files we do not ship) --\n');
+        if (candidates.length === 0) process.stdout.write('(none)\n');
+        else for (const f of candidates) process.stdout.write(`  ${f}\n`);
+        process.stdout.write('\nNext: port by hand, update README "What\'s different from upstream", run tests, then sync-upstream.js <plugin> --bump.\n');
     } finally {
         rmSync(upstream, { recursive: true, force: true });
     }

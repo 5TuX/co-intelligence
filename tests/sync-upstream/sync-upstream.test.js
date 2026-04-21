@@ -49,3 +49,29 @@ test('report mode is up-to-date when lock points at HEAD', () => {
     assert.equal(r.status, 0, `stderr: ${r.stderr}`);
     assert.match(r.stdout, /no changes/i);
 });
+
+test('report shows commits, changed files, and candidate additions when behind', () => {
+    setLockSha(readSha('c1'));
+    const r = runSync(['fake-plugin']);
+    assert.equal(r.status, 0, `stderr: ${r.stderr}`);
+    assert.match(r.stdout, /c2: update foo, add bar/, 'lists c2 commit message');
+    assert.match(r.stdout, /c3: update guide/, 'lists c3 commit message');
+    assert.match(r.stdout, /skills\/foo\/SKILL\.md/, 'shows changed tracked file');
+    assert.match(r.stdout, /updated foo skill content/, 'shows diff content of changed file');
+    assert.match(r.stdout, /skills\/bar\/SKILL\.md/, 'flags new upstream file as candidate addition');
+});
+
+test('our-only files never appear in output', () => {
+    setLockSha(readSha('c1'));
+    const r = runSync(['fake-plugin']);
+    assert.equal(r.status, 0);
+    assert.doesNotMatch(r.stdout, /our-custom\.js/, 'ours-only file suppressed');
+});
+
+test('files in ignore_globs are excluded from candidate additions', () => {
+    setLockSha(readSha('c1'));
+    const r = runSync(['fake-plugin']);
+    assert.equal(r.status, 0);
+    assert.doesNotMatch(r.stdout, /install\.sh/, 'install.sh filtered by ignore_globs');
+    assert.doesNotMatch(r.stdout, /^\s*README\.md\s*$/m, 'README.md filtered by ignore_globs');
+});
