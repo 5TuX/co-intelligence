@@ -90,6 +90,15 @@ git config core.hooksPath .githooks
 
 Wires `.githooks/pre-commit` → consistency check per commit. One-time per clone.
 
+## Roadmap
+
+Private `ROADMAP.md` at repo root (gitignored). Internal scratchpad tracking per-plugin features, deltas, redundancies, ideas.
+
+- Read relevant section BEFORE any repo change.
+- Update AFTER any change: mark ✓ done, move entries, add new ideas. Cite commit SHAs when relevant.
+- Scope-separated per plugin. Cross-plugin stuff lives in `## repo-level / meta` or `## Redundancies`.
+- Symbols: ✓ done · → doing · ◦ next · ? idea/maybe.
+
 ## Personal notes
 
 Machine-specific / in-progress notes → `CLAUDE.local.md` (gitignored). This file = repo-wide conventions.

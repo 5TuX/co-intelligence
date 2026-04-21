@@ -5,3 +5,5 @@ CLAUDE.local.md
 docs/superpowers/
 *.original.md
 __pycache__/
+.playwright-mcp/
+ROADMAP.md
