@@ -1,0 +1,22 @@
+{
+  "repo": "https://github.com/obra/superpowers",
+  "pinned_sha": "1f20bef3f59b85ad7b52718f822e37c4478a3ff5",
+  "pinned_tag": "v5.0.7",
+  "last_synced_date": "2026-04-20",
+  "ignore_globs": [
+    "commands/**",
+    "docs/**",
+    "tests/**",
+    "scripts/**",
+    ".github/**",
+    "CHANGELOG.md",
+    "CODE_OF_CONDUCT.md",
+    "RELEASE-NOTES.md",
+    "gemini-extension.json",
+    "GEMINI.md",
+    "package.json",
+    "package-lock.json",
+    "README.md",
+    "LICENSE"
+  ]
+}

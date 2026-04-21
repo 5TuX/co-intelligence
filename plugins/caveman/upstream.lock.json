@@ -1,0 +1,21 @@
+{
+  "repo": "https://github.com/JuliusBrussee/caveman",
+  "pinned_sha": "c2ed24b3e5d412cd0c25197b2bc9af587621fd99",
+  "pinned_tag": "v1.6.0",
+  "last_synced_date": "2026-04-20",
+  "ignore_globs": [
+    ".github/**",
+    "docs/**",
+    "benchmarks/**",
+    "evals/**",
+    "install.sh",
+    "AGENTS.md",
+    "GEMINI.md",
+    "CLAUDE.md",
+    "README.md",
+    "LICENSE",
+    "CHANGELOG.md",
+    "package.json",
+    "package-lock.json"
+  ]
+}
