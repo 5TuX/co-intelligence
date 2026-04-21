@@ -13,27 +13,5 @@
     "keywords": ["tokens", "compression", "brevity", "caveman"],
     "license": "MIT",
     "repository": "https://github.com/5TuX/co-intelligence.git",
-    "skills": ["./skills/caveman", "./skills/caveman-compress"],
-    "hooks": {
-        "SessionStart": [
-            {
-                "hooks": [
-                    {
-                        "type": "command",
-                        "command": "node -e \"require(process.env.CLAUDE_PLUGIN_ROOT + '/scripts/hook-session-start.js')\""
-                    }
-                ]
-            }
-        ],
-        "UserPromptSubmit": [
-            {
-                "hooks": [
-                    {
-                        "type": "command",
-                        "command": "node -e \"require(process.env.CLAUDE_PLUGIN_ROOT + '/scripts/hook-user-prompt.js')\""
-                    }
-                ]
-            }
-        ]
-    }
+    "skills": ["./skills/caveman", "./skills/caveman-compress"]
 }

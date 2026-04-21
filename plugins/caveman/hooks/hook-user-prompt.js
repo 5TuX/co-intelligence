@@ -1,4 +1,4 @@
-const config = require('./caveman-config.js');
+const config = require('../scripts/caveman-config.js');
 
 // Read stdin to drain the hook payload — we do not parse the prompt here.
 // Intent classification is delegated to the agent (skill rules).

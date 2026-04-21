@@ -5,7 +5,7 @@ const path = require('node:path');
 const fs = require('node:fs');
 const os = require('node:os');
 
-const SCRIPT = path.join(__dirname, '..', 'scripts', 'hook-session-start.js');
+const SCRIPT = path.join(__dirname, '..', 'hooks', 'hook-session-start.js');
 
 function runHook(userConfigContent) {
     const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'caveman-test-'));

@@ -17,7 +17,7 @@ See [`LICENSE`](LICENSE) for the original copyright notice.
 
 - **`caveman` skill** (`skills/caveman/SKILL.md`) — the core compression rules with `lite`, `full`, and `ultra` intensity levels.
 - **`caveman-compress` skill** (`skills/caveman-compress/SKILL.md`) — compresses memory files (CLAUDE.md, todos) from natural English to caveman-speak to reduce input-token cost per session. Runs via `uv run --with <deps> python3 -m scripts <file>`.
-- **SessionStart hook** (`.claude-plugin/plugin.json`) — auto-activates caveman ultra mode at the start of every Claude Code session.
+- **SessionStart + UserPromptSubmit hooks** (`hooks/hooks.json`, scripts under `hooks/`) — auto-announce caveman mode at session start and emit a per-turn drift reminder.
 
 Quick illustration (upstream example):
 
@@ -38,7 +38,7 @@ Same fix. 75% less word. Brain still big.
 
 ### Additions
 
-- Two Claude Code hooks in `.claude-plugin/plugin.json` backed by node scripts under `scripts/`: `SessionStart` announces the active level from config; `UserPromptSubmit` emits a per-turn drift reminder gated by config.
+- Two Claude Code hooks declared in `hooks/hooks.json` with node scripts under `hooks/`: `SessionStart` announces the active level from config; `UserPromptSubmit` emits a per-turn drift reminder gated by config. Layout mirrors `superpowers/hooks/` for repo symmetry.
 - Persistent user config merged over shipped `config.default.json` (`%APPDATA%\caveman\config.json` on Windows, `~/.config/caveman/config.json` on POSIX). Controls default level, reminder toggle, and permanent off state.
 - Agent-driven off-switch intent detection (see `skills/caveman/SKILL.md`) writes via `scripts/set-config.js`.
 - `caveman-compress` skill ported from upstream's `caveman-compress/` directory (renamed from `compress` upstream — upstream did the rename in v1.6.0). Python scripts are byte-identical to upstream; only the invocation path uses `uv run --with ...` rather than a pre-installed env, per this repo's python convention.

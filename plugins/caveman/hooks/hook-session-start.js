@@ -1,5 +1,5 @@
 const path = require('node:path');
-const config = require('./caveman-config.js');
+const config = require('../scripts/caveman-config.js');
 
 // Persist absolute pluginRoot so the skill can locate set-config.js in any
 // session without relying on CLAUDE_PLUGIN_ROOT (which leaks between plugins

@@ -11,7 +11,7 @@ const os = require('node:os');
 
 const PLUGIN_ROOT = path.resolve(__dirname, '..');
 const SKILL_PATH = path.join(PLUGIN_ROOT, 'skills', 'caveman', 'SKILL.md');
-const HOOK = path.join(PLUGIN_ROOT, 'scripts', 'hook-session-start.js');
+const HOOK = path.join(PLUGIN_ROOT, 'hooks', 'hook-session-start.js');
 
 function extractOneLiner() {
     const md = fs.readFileSync(SKILL_PATH, 'utf8');

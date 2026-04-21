@@ -5,7 +5,7 @@ const path = require('node:path');
 const fs = require('node:fs');
 const os = require('node:os');
 
-const SCRIPT = path.join(__dirname, '..', 'scripts', 'hook-user-prompt.js');
+const SCRIPT = path.join(__dirname, '..', 'hooks', 'hook-user-prompt.js');
 
 function runHook(userConfigContent, stdin) {
     const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'caveman-test-'));
