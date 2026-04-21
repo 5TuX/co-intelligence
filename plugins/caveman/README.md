@@ -34,7 +34,7 @@ Same fix. 75% less word. Brain still big.
 - Claude Code only — dropped Codex, Cursor, Windsurf, Cline, Copilot, and Gemini CLI install paths along with their rule/instruction files.
 - Kept `caveman` and `caveman-compress`. Removed `caveman-commit`, `caveman-review`, and `caveman-help`.
 - Removed benchmarks, evals, tests, docs, statusline helper, hooks installer scripts, single-file `caveman.skill` distribution, `AGENTS.md` / `GEMINI.md` / `CLAUDE.md` multi-agent configs, and release assets.
-- `skills/caveman/SKILL.md` was trimmed (66 → 49 lines) for this marketplace.
+- `skills/caveman/SKILL.md` trimmed for this marketplace.
 
 ### Additions
 
