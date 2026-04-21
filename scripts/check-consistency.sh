@@ -4,6 +4,14 @@
 
 set -euo pipefail
 
+staged_mode=0
+for arg in "$@"; do
+    case "$arg" in
+        --staged) staged_mode=1 ;;
+        *) printf 'unknown arg: %s\n' "$arg" >&2; exit 2 ;;
+    esac
+done
+
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$repo_root"
 
@@ -74,6 +82,32 @@ for p in "${dir_plugins[@]}"; do
 
     [[ $fail -eq $plugin_fail_before ]] && ok "$p ($version)"
 done
+
+if [[ "$staged_mode" -eq 1 ]]; then
+    echo "» R1: adapted plugin source changes need a staged README.md"
+    mapfile -t staged < <(git diff --cached --name-only --diff-filter=ACMRD)
+    for p in "${adapted_plugins[@]}"; do
+        readme="plugins/$p/README.md"
+        lock="plugins/$p/upstream.lock.json"
+        touched_source=0
+        touched_readme=0
+        for f in "${staged[@]}"; do
+            [[ "$f" == plugins/"$p"/* ]] || continue
+            if [[ "$f" == "$readme" ]]; then
+                touched_readme=1
+            elif [[ "$f" == "$lock" ]]; then
+                :
+            else
+                touched_source=1
+            fi
+        done
+        if [[ $touched_source -eq 1 && $touched_readme -eq 0 ]]; then
+            err "$p: source changed but $readme not staged (R1)"
+        elif [[ $touched_source -eq 1 ]]; then
+            ok "$p R1 (source + README both staged)"
+        fi
+    done
+fi
 
 if [[ $fail -ne 0 ]]; then
     printf '\n\033[31mconsistency check failed\033[0m\n' >&2

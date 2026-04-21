@@ -1,4 +1,4 @@
 #!/usr/bin/env bash
 # Runs repo consistency checks before each commit.
 # Install once per clone: git config core.hooksPath .githooks
-exec "$(git rev-parse --show-toplevel)/scripts/check-consistency.sh"
+exec "$(git rev-parse --show-toplevel)/scripts/check-consistency.sh" --staged
