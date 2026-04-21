@@ -1,0 +1,14 @@
+{
+  "repo": "https://github.com/forrestchang/andrej-karpathy-skills",
+  "pinned_sha": "2c606141936f1eeef17fa3043a72095b4765b9c2",
+  "pinned_tag": "2c60614193",
+  "last_synced_date": "2026-04-21",
+  "ignore_globs": [
+    "CLAUDE.md",
+    "CURSOR.md",
+    "EXAMPLES.md",
+    "README.md",
+    "README.zh.md",
+    ".github/**"
+  ]
+}

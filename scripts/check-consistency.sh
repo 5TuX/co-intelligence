@@ -19,7 +19,7 @@ fail=0
 err() { printf '  \033[31m✗\033[0m %s\n' "$*" >&2; fail=1; }
 ok()  { printf '  \033[32m✓\033[0m %s\n' "$*"; }
 
-adapted_plugins=(caveman superpowers)
+adapted_plugins=(caveman superpowers karpathy)
 version_anchor_re='^[0-9]+\.[0-9]+\.[0-9]+-5tux\.[0-9]+$'
 
 is_adapted() {

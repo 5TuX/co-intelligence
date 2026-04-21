@@ -1,6 +1,6 @@
 # co-intelligence — repo conventions
 
-Claude Code plugin marketplace. 3 plugins in `plugins/`: 2 adapted forks (`caveman`, `superpowers`) + 1 original (`autoresearch`). Maintainer: 5TuX.
+Claude Code plugin marketplace. 4 plugins in `plugins/`: 3 adapted forks (`caveman`, `superpowers`, `karpathy`) + 1 original (`autoresearch`). Maintainer: 5TuX.
 
 ## Repo map
 
@@ -69,7 +69,7 @@ Add plugin-specific sections only when real content. No padding for symmetry.
 
 ## Rules (adapted plugins)
 
-Apply to any commit touching `plugins/caveman/` or `plugins/superpowers/`.
+Apply to any commit touching an adapted plugin (`plugins/caveman/`, `plugins/superpowers/`, `plugins/karpathy/`).
 
 - **R1 — docs required.** Commit modifying adapted plugin source (under `plugins/<p>/` except `README.md` + `upstream.lock.json`) must also stage `plugins/<p>/README.md`. Enforced by `scripts/check-consistency.sh --staged` via `.githooks/pre-commit`.
 - **R2 — tests required.** Run existing plugin tests before committing behavior changes (e.g. `node --test plugins/caveman/tests/` if present). No tests → say so in commit msg. Advisory, not mechanically enforced.

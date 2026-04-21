@@ -18,6 +18,11 @@
             "category": "productivity"
         },
         {
+            "name": "karpathy",
+            "source": "./plugins/karpathy",
+            "category": "workflow"
+        },
+        {
             "name": "superpowers",
             "source": "./plugins/superpowers",
             "category": "workflow"

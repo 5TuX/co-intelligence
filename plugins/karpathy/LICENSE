@@ -1,0 +1,11 @@
+This plugin ports content from https://github.com/forrestchang/andrej-karpathy-skills,
+which declares its license as "MIT" in its README.md.
+
+At the time of the port (SHA 2c606141936f1eeef17fa3043a72095b4765b9c2), the upstream
+repository does not ship a standalone LICENSE file. Refer to the upstream repository
+for the authoritative license terms as declared by its authors.
+
+Canonical MIT License text: https://opensource.org/license/mit
+
+The ported content in this directory is redistributed under the same MIT terms as
+declared by upstream.

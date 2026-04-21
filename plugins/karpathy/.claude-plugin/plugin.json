@@ -1,0 +1,17 @@
+{
+    "name": "karpathy",
+    "version": "0.0.0-5tux.0",
+    "description": "Behavioral guidelines to reduce common LLM coding mistakes. Surface assumptions, simplicity first, surgical changes.",
+    "author": {
+        "name": "Jiayuan Zhang"
+    },
+    "contributors": [
+        {
+            "name": "5TuX"
+        }
+    ],
+    "keywords": ["karpathy", "guidelines", "behavior", "llm"],
+    "license": "MIT",
+    "repository": "https://github.com/5TuX/co-intelligence.git",
+    "skills": ["./skills/karpathy-guidelines"]
+}

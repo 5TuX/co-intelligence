@@ -17,6 +17,7 @@ Replace `<plugin>` with any of the names below.
 |------------------------------------|---------------------------------------------------------------------|---------------------------------------------------------------------------------------------------|
 | [caveman](plugins/caveman)         | Ultra-compressed caveman-style responses (~75% token reduction).    | Adapted from [JuliusBrussee/caveman](https://github.com/JuliusBrussee/caveman) (MIT).             |
 | [superpowers](plugins/superpowers) | TDD, debugging, collaboration, and proven development workflows.    | Adapted from [obra/superpowers](https://github.com/obra/superpowers) (MIT) by Jesse Vincent.      |
+| [karpathy](plugins/karpathy)       | Behavioral guidelines to reduce common LLM coding mistakes.         | Adapted from [forrestchang/andrej-karpathy-skills](https://github.com/forrestchang/andrej-karpathy-skills) (MIT) by Jiayuan Zhang. |
 | [autoresearch](plugins/autoresearch) | Karpathy-style iterative code-driven research loops.              | Original, by 5TuX.                                                                                |
 
 Each adapted plugin ships an `UPSTREAM.md` with its source URL, pinned upstream commit, and the list of simplifications applied when porting.
