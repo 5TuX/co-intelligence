@@ -28,7 +28,18 @@ Same fix. 75% less word. Brain still big.
 
 ## What's different from upstream
 
-This is a simplified Claude Code port. It ships only the core skill — upstream's additional skills (`caveman-commit`, `caveman-review`, `caveman-help`, `compress`) and non-Claude-Code distribution paths (Codex, Cursor, Windsurf, Cline, Copilot, Gemini CLI) are not included. Statusline helpers, hooks installer scripts, benchmarks, evals, and docs are also omitted. See [`UPSTREAM.md`](UPSTREAM.md) for the full list.
+### Simplifications
+
+- Claude Code only — dropped Codex, Cursor, Windsurf, Cline, Copilot, and Gemini CLI install paths along with their rule/instruction files.
+- Kept only the core `caveman` skill. Removed `caveman-commit`, `caveman-review`, `caveman-help`, and `compress`.
+- Removed benchmarks, evals, tests, docs, statusline helper, hooks installer scripts, single-file `caveman.skill` distribution, `AGENTS.md` / `GEMINI.md` / `CLAUDE.md` multi-agent configs, and release assets.
+- `skills/caveman/SKILL.md` was trimmed (66 → 49 lines) for this marketplace.
+
+### Additions
+
+- Two Claude Code hooks in `.claude-plugin/plugin.json` backed by node scripts under `scripts/`: `SessionStart` announces the active level from config; `UserPromptSubmit` emits a per-turn drift reminder gated by config.
+- Persistent user config merged over shipped `config.default.json` (`%APPDATA%\caveman\config.json` on Windows, `~/.config/caveman/config.json` on POSIX). Controls default level, reminder toggle, and permanent off state.
+- Agent-driven off-switch intent detection (see `skills/caveman/SKILL.md`) writes via `scripts/set-config.js`.
 
 ## Install
 
@@ -79,7 +90,7 @@ The shipped default is `full`. The SessionStart hook reads the user config and a
 
 ## Upstream sync
 
-See [`UPSTREAM.md`](UPSTREAM.md) for the source URL, pinned commit, and the list of simplifications applied when porting.
+Machine state (repo URL, pinned SHA, tag, last-synced date) lives in [`upstream.lock.json`](upstream.lock.json). Run `node scripts/sync-upstream.js caveman` from the repo root to see what's changed upstream since the pin. See the repo-level [`CLAUDE.md`](../../CLAUDE.md) § "Upstream sync workflow" for the full process.
 
 ## License
 

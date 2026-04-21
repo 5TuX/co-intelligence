@@ -20,7 +20,17 @@ See [`LICENSE`](LICENSE) for the original copyright notice. If Superpowers has h
 
 ## What's different from upstream
 
-Skills, agents, and hooks are byte-identical to upstream `v5.0.7`. What's dropped is repo-level scaffolding not used by the plugin bundle: `commands/`, `docs/`, `tests/`, `scripts/`, `CHANGELOG.md`, `CODE_OF_CONDUCT.md`, `RELEASE-NOTES.md`, `package.json`, plus non-Claude-Code install paths (`gemini-extension.json`, `GEMINI.md`). See [`UPSTREAM.md`](UPSTREAM.md) for the full list.
+### Simplifications
+
+- Claude Code only — dropped Codex, Cursor, OpenCode, Copilot CLI, and Gemini CLI install paths.
+- Removed repo-level scaffolding not used by the plugin bundle: `commands/`, `docs/`, `tests/`, `scripts/`, `CHANGELOG.md`, `CODE_OF_CONDUCT.md`, `RELEASE-NOTES.md`, `gemini-extension.json`, `GEMINI.md`, `package.json`.
+
+### Additions
+
+- `.claude-plugin/plugin.json` with the marketplace version anchor.
+- `CLAUDE.md` is retained from upstream for reference — note its PR rules apply to `obra/superpowers`, not to this fork.
+
+Skills, agents, and hooks are byte-identical to upstream `v5.0.7`.
 
 ## Install
 
@@ -56,7 +66,7 @@ Read the [original release announcement](https://blog.fsck.com/2025/10/09/superp
 
 ## Upstream sync
 
-See [`UPSTREAM.md`](UPSTREAM.md) for the source URL, pinned commit, and the list of simplifications applied when porting.
+Machine state (repo URL, pinned SHA, tag, last-synced date) lives in [`upstream.lock.json`](upstream.lock.json). Run `node scripts/sync-upstream.js superpowers` from the repo root to see what's changed upstream since the pin. See the repo-level [`CLAUDE.md`](../../CLAUDE.md) § "Upstream sync workflow" for the full process.
 
 ## License
 
