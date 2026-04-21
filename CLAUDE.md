@@ -38,6 +38,7 @@ Touch any → check others same commit:
 | `.claude-plugin/marketplace.json`           | `README.md` (root) plugin table, per-plugin descriptions.                                               |
 | upstream port                               | `plugins/<p>/upstream.lock.json` via `sync-upstream.js --bump`, `plugin.json` version, README § "What's different from upstream". |
 | adding/removing a skill under `skills/`     | `plugins/<p>/README.md` "What's included" and § "What's different from upstream".                                 |
+| adding/porting any skill/hook/agent         | Grep all `plugins/*/` + read `ROADMAP.md` § Redundancies before writing. Document intentional overlap in `plugins/<p>/README.md`. |
 
 `scripts/check-consistency.sh` enforces mechanical subset. Pre-commit hook blocks violating commits.
 
@@ -73,6 +74,7 @@ Apply to any commit touching `plugins/caveman/` or `plugins/superpowers/`.
 - **R1 — docs required.** Commit modifying adapted plugin source (under `plugins/<p>/` except `README.md` + `upstream.lock.json`) must also stage `plugins/<p>/README.md`. Enforced by `scripts/check-consistency.sh --staged` via `.githooks/pre-commit`.
 - **R2 — tests required.** Run existing plugin tests before committing behavior changes (e.g. `node --test plugins/caveman/tests/` if present). No tests → say so in commit msg. Advisory, not mechanically enforced.
 - **R3 — sync workflow.** Upstream syncs: `sync-upstream.js <plugin>` (report) → manual port → README update → tests → `sync-upstream.js <plugin> --bump`. Lock shape validated by `check-consistency.sh`.
+- **R4 — no dup work.** Before port/add skill/hook/agent: (a) grep `plugins/` for overlap, (b) check CC default sys prompt for identical guidance, (c) check target plugin's own skills. Resolve: drop, merge, or doc in README § "What's different from upstream" why dup intentional. Unresolved → `ROADMAP.md` § Redundancies.
 
 ## Python execution
 
