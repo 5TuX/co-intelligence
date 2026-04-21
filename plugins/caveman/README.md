@@ -9,7 +9,7 @@ Ultra-compressed response mode for Claude Code. Cuts ~75% of output tokens while
 Adapted from [JuliusBrussee/caveman](https://github.com/JuliusBrussee/caveman) (MIT) by Julius Brussee. Maintained in the `co-intelligence` marketplace by 5TuX.
 
 - Upstream version: `v1.6.0`
-- Marketplace version: `1.6.0-5tux.5`
+- Marketplace version: `1.6.0-5tux.6`
 
 See [`LICENSE`](LICENSE) for the original copyright notice.
 
@@ -17,7 +17,7 @@ See [`LICENSE`](LICENSE) for the original copyright notice.
 
 - **`caveman` skill** (`skills/caveman/SKILL.md`) — the core compression rules with `lite`, `full`, and `ultra` intensity levels.
 - **`caveman-compress` skill** (`skills/caveman-compress/SKILL.md`) — compresses memory files (CLAUDE.md, todos) from natural English to caveman-speak to reduce input-token cost per session. Runs via `uv run --with <deps> python3 -m scripts <file>`.
-- **SessionStart + UserPromptSubmit hooks** (`hooks/hooks.json`, scripts under `hooks/`) — auto-announce caveman mode at session start and emit a per-turn drift reminder.
+- **SessionStart + UserPromptSubmit + PostToolUse hooks** (`hooks/hooks.json`, scripts under `hooks/`) — auto-announce caveman mode at session start and emit per-turn drift reminders on both user-driven and autonomous (tool-loop) turns.
 
 Quick illustration (upstream example):
 
@@ -38,7 +38,7 @@ Same fix. 75% less word. Brain still big.
 
 ### Additions
 
-- Two Claude Code hooks declared in `hooks/hooks.json` with node scripts under `hooks/`: `SessionStart` announces the active level from config; `UserPromptSubmit` emits a per-turn drift reminder gated by config. Layout mirrors `superpowers/hooks/` for repo symmetry.
+- Three Claude Code hooks declared in `hooks/hooks.json` with node scripts under `hooks/`: `SessionStart` announces the active level from config; `UserPromptSubmit` emits a per-turn drift reminder on human-driven turns; `PostToolUse` injects the same reminder after every tool call so autonomous tool-loop turns (where `UserPromptSubmit` never fires) also stay in caveman mode. Both reminders gated by config. Layout mirrors `superpowers/hooks/` for repo symmetry.
 - Persistent user config merged over shipped `config.default.json` (`%APPDATA%\caveman\config.json` on Windows, `~/.config/caveman/config.json` on POSIX). Controls default level, reminder toggle, and permanent off state.
 - Agent-driven off-switch intent detection (see `skills/caveman/SKILL.md`) writes via `scripts/set-config.js`.
 - `caveman-compress` skill ported from upstream's `caveman-compress/` directory (renamed from `compress` upstream — upstream did the rename in v1.6.0). Python scripts are byte-identical to upstream; only the invocation path uses `uv run --with ...` rather than a pre-installed env, per this repo's python convention.
