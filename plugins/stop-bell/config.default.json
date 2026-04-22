@@ -1,0 +1,5 @@
+{
+    "off": false,
+    "skipIfActive": true,
+    "bellSound": "default"
+}
