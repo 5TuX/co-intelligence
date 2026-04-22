@@ -13,7 +13,7 @@ test('userConfigPath: Windows uses APPDATA when set', () => {
     try {
         assert.strictEqual(
             config.userConfigPath(),
-            path.join('C:\\Users\\u\\AppData\\Roaming', 'stop-bell', 'config.json')
+            path.join('C:\\Users\\u\\AppData\\Roaming', 'sound-notification', 'config.json')
         );
     } finally {
         Object.defineProperty(process, 'platform', { value: prev.platform });
@@ -29,7 +29,7 @@ test('userConfigPath: Windows falls back to USERPROFILE when APPDATA missing', (
     try {
         assert.strictEqual(
             config.userConfigPath(),
-            path.join('C:\\Users\\u', '.config', 'stop-bell', 'config.json')
+            path.join('C:\\Users\\u', '.config', 'sound-notification', 'config.json')
         );
     } finally {
         Object.defineProperty(process, 'platform', { value: prev.platform });
@@ -45,7 +45,7 @@ test('userConfigPath: POSIX uses XDG_CONFIG_HOME when set', () => {
     try {
         assert.strictEqual(
             config.userConfigPath(),
-            path.join('/tmp/xdg', 'stop-bell', 'config.json')
+            path.join('/tmp/xdg', 'sound-notification', 'config.json')
         );
     } finally {
         Object.defineProperty(process, 'platform', { value: prev.platform });
@@ -54,7 +54,7 @@ test('userConfigPath: POSIX uses XDG_CONFIG_HOME when set', () => {
 });
 
 test('read: missing user config returns plugin default', () => {
-    const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'stop-bell-'));
+    const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'sound-notification-'));
     try {
         const result = spawnRead(tmp);
         assert.deepStrictEqual(result, { off: false, skipIfActive: true, bellSound: 'default' });
@@ -64,10 +64,10 @@ test('read: missing user config returns plugin default', () => {
 });
 
 test('read: partial user config merged over default', () => {
-    const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'stop-bell-'));
+    const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'sound-notification-'));
     try {
-        fs.mkdirSync(path.join(tmp, 'stop-bell'), { recursive: true });
-        fs.writeFileSync(path.join(tmp, 'stop-bell', 'config.json'), JSON.stringify({ off: true }));
+        fs.mkdirSync(path.join(tmp, 'sound-notification'), { recursive: true });
+        fs.writeFileSync(path.join(tmp, 'sound-notification', 'config.json'), JSON.stringify({ off: true }));
         const result = spawnRead(tmp);
         assert.deepStrictEqual(result, { off: true, skipIfActive: true, bellSound: 'default' });
     } finally {
@@ -76,10 +76,10 @@ test('read: partial user config merged over default', () => {
 });
 
 test('read: malformed user config returns plugin default alone', () => {
-    const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'stop-bell-'));
+    const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'sound-notification-'));
     try {
-        fs.mkdirSync(path.join(tmp, 'stop-bell'), { recursive: true });
-        fs.writeFileSync(path.join(tmp, 'stop-bell', 'config.json'), '{not-json');
+        fs.mkdirSync(path.join(tmp, 'sound-notification'), { recursive: true });
+        fs.writeFileSync(path.join(tmp, 'sound-notification', 'config.json'), '{not-json');
         const result = spawnRead(tmp);
         assert.deepStrictEqual(result, { off: false, skipIfActive: true, bellSound: 'default' });
     } finally {
@@ -88,9 +88,9 @@ test('read: malformed user config returns plugin default alone', () => {
 });
 
 test('write: creates config dir if missing', () => {
-    const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'stop-bell-'));
+    const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'sound-notification-'));
     try {
-        const finalDir = path.join(tmp, 'stop-bell');
+        const finalDir = path.join(tmp, 'sound-notification');
         fs.mkdirSync(finalDir, { recursive: true });
         assert.strictEqual(fs.existsSync(path.join(finalDir, 'config.json')), false);
         spawnWrite(tmp, { off: true });
@@ -102,12 +102,12 @@ test('write: creates config dir if missing', () => {
 });
 
 test('write: merges into existing config, preserving other keys', () => {
-    const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'stop-bell-'));
+    const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'sound-notification-'));
     try {
-        fs.mkdirSync(path.join(tmp, 'stop-bell'), { recursive: true });
-        fs.writeFileSync(path.join(tmp, 'stop-bell', 'config.json'), JSON.stringify({ off: true, bellSound: 'default' }));
+        fs.mkdirSync(path.join(tmp, 'sound-notification'), { recursive: true });
+        fs.writeFileSync(path.join(tmp, 'sound-notification', 'config.json'), JSON.stringify({ off: true, bellSound: 'default' }));
         spawnWrite(tmp, { skipIfActive: false });
-        const stored = JSON.parse(fs.readFileSync(path.join(tmp, 'stop-bell', 'config.json'), 'utf8'));
+        const stored = JSON.parse(fs.readFileSync(path.join(tmp, 'sound-notification', 'config.json'), 'utf8'));
         assert.deepStrictEqual(stored, { off: true, bellSound: 'default', skipIfActive: false });
     } finally {
         fs.rmSync(tmp, { recursive: true, force: true });

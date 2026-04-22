@@ -1,5 +1,5 @@
 {
-    "name": "stop-bell",
+    "name": "sound-notification",
     "version": "0.1.0",
     "description": "Ring a chime on each Stop event. Cross-platform. Optional skip-when-CC-window-is-frontmost.",
     "author": {
@@ -8,5 +8,5 @@
     "keywords": ["notification", "bell", "stop-hook", "awareness"],
     "license": "MIT",
     "repository": "https://github.com/5TuX/co-intelligence.git",
-    "skills": ["./skills/stop-bell"]
+    "skills": ["./skills/sound-notification"]
 }

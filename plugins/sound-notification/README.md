@@ -1,4 +1,4 @@
-# stop-bell
+# sound-notification
 
 Audible chime on every Claude Code Stop event. Cross-platform. Optional skip-when-CC-window-is-frontmost.
 

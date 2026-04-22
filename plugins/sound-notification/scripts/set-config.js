@@ -16,26 +16,26 @@ function usage() {
 function parseArg(arg) {
     const eq = arg.indexOf("=");
     if (eq < 0) {
-        process.stderr.write(`stop-bell: '${arg}' must be key=value\n`);
+        process.stderr.write(`sound-notification: '${arg}' must be key=value\n`);
         return null;
     }
     const key = arg.slice(0, eq);
     const raw = arg.slice(eq + 1);
     const schema = SCHEMA[key];
     if (!schema) {
-        process.stderr.write(`stop-bell: unknown key '${key}'\n`);
+        process.stderr.write(`sound-notification: unknown key '${key}'\n`);
         return null;
     }
     if (schema.type === "bool") {
         if (raw !== "true" && raw !== "false") {
-            process.stderr.write(`stop-bell: '${key}' must be true or false (got '${raw}')\n`);
+            process.stderr.write(`sound-notification: '${key}' must be true or false (got '${raw}')\n`);
             return null;
         }
         return [key, raw === "true"];
     }
     if (schema.type === "enum") {
         if (!schema.values.includes(raw)) {
-            process.stderr.write(`stop-bell: '${key}' must be one of ${schema.values.join("|")} (got '${raw}')\n`);
+            process.stderr.write(`sound-notification: '${key}' must be one of ${schema.values.join("|")} (got '${raw}')\n`);
             return null;
         }
         return [key, raw];
@@ -58,8 +58,8 @@ for (const arg of args) {
 
 try {
     config.write(partial);
-    process.stdout.write(`stop-bell: wrote ${JSON.stringify(partial)}\n`);
+    process.stdout.write(`sound-notification: wrote ${JSON.stringify(partial)}\n`);
 } catch (err) {
-    process.stderr.write(`stop-bell: write failed: ${err.message}\n`);
+    process.stderr.write(`sound-notification: write failed: ${err.message}\n`);
     process.exit(1);
 }

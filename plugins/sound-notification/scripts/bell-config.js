@@ -7,17 +7,17 @@ const PLUGIN_DEFAULT_PATH = path.join(__dirname, '..', 'config.default.json');
 function userConfigPath() {
     if (process.platform === 'win32') {
         const base = process.env.APPDATA || path.join(process.env.USERPROFILE || os.homedir(), '.config');
-        return path.join(base, 'stop-bell', 'config.json');
+        return path.join(base, 'sound-notification', 'config.json');
     }
     const base = process.env.XDG_CONFIG_HOME || path.join(os.homedir(), '.config');
-    return path.join(base, 'stop-bell', 'config.json');
+    return path.join(base, 'sound-notification', 'config.json');
 }
 
 function readPluginDefault() {
     try {
         return JSON.parse(fs.readFileSync(PLUGIN_DEFAULT_PATH, 'utf8'));
     } catch (err) {
-        process.stderr.write(`stop-bell: plugin default unreadable (${err.message}), using fallback\n`);
+        process.stderr.write(`sound-notification: plugin default unreadable (${err.message}), using fallback\n`);
         return { off: false, skipIfActive: true, bellSound: 'default' };
     }
 }
@@ -28,7 +28,7 @@ function readUserConfig() {
     try {
         return JSON.parse(fs.readFileSync(p, 'utf8'));
     } catch (err) {
-        process.stderr.write(`stop-bell: user config malformed (${err.message}), ignoring\n`);
+        process.stderr.write(`sound-notification: user config malformed (${err.message}), ignoring\n`);
         return {};
     }
 }
