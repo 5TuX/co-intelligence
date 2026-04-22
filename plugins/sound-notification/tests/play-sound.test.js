@@ -4,18 +4,26 @@ const path = require('node:path');
 
 const { play, resolveCommand } = require('../scripts/play-sound.js');
 
-test('resolveCommand: win32 uses powershell MediaPlayer with absolute URI', () => {
-    const cmd = resolveCommand('win32', 'C:\\abs\\bell.ogg');
-    assert.strictEqual(cmd.exe, 'powershell');
-    const joined = cmd.args.join(' ');
-    assert.ok(joined.includes('MediaPlayer'));
-    // path should appear escaped for powershell single-quoted strings
-    assert.ok(joined.includes('C:\\\\abs\\\\bell.ogg') || joined.includes('C:/abs/bell.ogg'));
+test('resolveCommand: win32 trampolines through cmd /c start with forward-slash path', () => {
+    const cmd = resolveCommand('win32', 'C:\\abs\\bell.wav');
+    assert.strictEqual(cmd.exe, 'cmd');
+    assert.deepStrictEqual(cmd.args.slice(0, 4), ['/c', 'start', '/b', '/min']);
+    assert.strictEqual(cmd.args[4], 'powershell');
+    const psScript = cmd.args[cmd.args.length - 1];
+    assert.ok(psScript.includes('SoundPlayer'));
+    assert.ok(psScript.includes('PlaySync'));
+    assert.ok(psScript.includes("'C:/abs/bell.wav'"));
+});
+
+test('resolveCommand: win32 escapes single-quotes in path', () => {
+    const cmd = resolveCommand('win32', "C:\\weird's\\bell.wav");
+    const psScript = cmd.args[cmd.args.length - 1];
+    assert.ok(psScript.includes("C:/weird''s/bell.wav"));
 });
 
 test('resolveCommand: darwin uses afplay', () => {
-    const cmd = resolveCommand('darwin', '/abs/bell.ogg');
-    assert.deepStrictEqual(cmd, { exe: 'afplay', args: ['/abs/bell.ogg'] });
+    const cmd = resolveCommand('darwin', '/abs/bell.wav');
+    assert.deepStrictEqual(cmd, { exe: 'afplay', args: ['/abs/bell.wav'] });
 });
 
 test('resolveCommand: linux uses paplay', () => {

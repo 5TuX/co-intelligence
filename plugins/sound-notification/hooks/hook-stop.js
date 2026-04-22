@@ -1,7 +1,8 @@
 const path = require('node:path');
 
-function resolveSoundDefault(bellSound) {
-    const assets = { default: path.join(__dirname, '..', 'assets', 'bell.ogg') };
+function resolveSoundDefault(bellSound, platform = process.platform) {
+    const ext = platform === 'linux' ? 'ogg' : 'wav';
+    const assets = { default: path.join(__dirname, '..', 'assets', `bell.${ext}`) };
     return assets[bellSound] ?? assets.default;
 }
 

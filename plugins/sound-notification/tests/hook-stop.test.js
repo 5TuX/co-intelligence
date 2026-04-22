@@ -1,7 +1,7 @@
 const { test } = require('node:test');
 const assert = require('node:assert');
 
-const { run } = require('../hooks/hook-stop.js');
+const { run, resolveSoundDefault } = require('../hooks/hook-stop.js');
 
 function harness({ cfg, probeResult, probeThrows }) {
     const played = [];
@@ -61,4 +61,20 @@ test('off=false, skipIfActive=false → play without probe', () => {
     });
     assert.strictEqual(probed, false);
     assert.deepStrictEqual(played, ['/fake/bell.ogg']);
+});
+
+test('resolveSoundDefault: linux → bell.ogg', () => {
+    assert.ok(resolveSoundDefault('default', 'linux').endsWith('bell.ogg'));
+});
+
+test('resolveSoundDefault: win32 → bell.wav', () => {
+    assert.ok(resolveSoundDefault('default', 'win32').endsWith('bell.wav'));
+});
+
+test('resolveSoundDefault: darwin → bell.wav', () => {
+    assert.ok(resolveSoundDefault('default', 'darwin').endsWith('bell.wav'));
+});
+
+test('resolveSoundDefault: unknown bellSound falls back to default', () => {
+    assert.ok(resolveSoundDefault('nonexistent', 'linux').endsWith('bell.ogg'));
 });

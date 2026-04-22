@@ -1,6 +1,6 @@
 {
     "name": "sound-notification",
-    "version": "0.1.0",
+    "version": "0.1.1",
     "description": "Ring a chime on each Stop event. Cross-platform. Optional skip-when-CC-window-is-frontmost.",
     "author": {
         "name": "5TuX"
