@@ -23,6 +23,11 @@
             "category": "workflow"
         },
         {
+            "name": "sound-notification",
+            "source": "./plugins/sound-notification",
+            "category": "productivity"
+        },
+        {
             "name": "superpowers",
             "source": "./plugins/superpowers",
             "category": "workflow"

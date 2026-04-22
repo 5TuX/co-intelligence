@@ -32,7 +32,7 @@ echo "» marketplace.json vs plugins/"
 marketplace_json=".claude-plugin/marketplace.json"
 [[ -f "$marketplace_json" ]] || { err "missing $marketplace_json"; exit 1; }
 
-mapfile -t listed_plugins < <(jq -r '.plugins[].name' "$marketplace_json")
+mapfile -t listed_plugins < <(jq -r '.plugins[].name' "$marketplace_json" | tr -d '\r')
 mapfile -t dir_plugins    < <(find plugins -mindepth 1 -maxdepth 1 -type d -printf '%f\n' | sort)
 
 for p in "${listed_plugins[@]}"; do
