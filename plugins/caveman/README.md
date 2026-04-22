@@ -9,7 +9,7 @@ Ultra-compressed response mode for Claude Code. Cuts ~75% of output tokens while
 Adapted from [JuliusBrussee/caveman](https://github.com/JuliusBrussee/caveman) (MIT) by Julius Brussee. Maintained in the `co-intelligence` marketplace by 5TuX.
 
 - Upstream version: `v1.6.0`
-- Marketplace version: `1.6.0-5tux.6`
+- Marketplace version: `1.6.0-5tux.7`
 
 See [`LICENSE`](LICENSE) for the original copyright notice.
 
@@ -40,7 +40,7 @@ Same fix. 75% less word. Brain still big.
 
 - Three Claude Code hooks declared in `hooks/hooks.json` with node scripts under `hooks/`: `SessionStart` announces the active level from config; `UserPromptSubmit` emits a per-turn drift reminder on human-driven turns; `PostToolUse` injects the same reminder after every tool call so autonomous tool-loop turns (where `UserPromptSubmit` never fires) also stay in caveman mode. Both reminders gated by config. Layout mirrors `superpowers/hooks/` for repo symmetry.
 - Persistent user config merged over shipped `config.default.json` (`%APPDATA%\caveman\config.json` on Windows, `~/.config/caveman/config.json` on POSIX). Controls default level, reminder toggle, and permanent off state.
-- Agent-driven off-switch intent detection (see `skills/caveman/SKILL.md`) writes via `scripts/set-config.js`.
+- Agent-driven off-switch intent detection (see `skills/caveman/SKILL.md`) writes via `scripts/set-config.js`. The skill dispatcher invokes `set-config.js` via the harness-prepended skill base dir (`<SKILL_BASE>/../../scripts/set-config.js`), not a config-lookup one-liner — so the persistent on/off/level toggle works even if the SessionStart hook never fires (e.g. Claude Code v2.1.x on Windows, which crashes plugin hooks on 2nd+ session due to a non-recursive `mkdir` on `plugins/data/<plugin>-<mkt>`).
 - `caveman-compress` skill ported from upstream's `caveman-compress/` directory (renamed from `compress` upstream — upstream did the rename in v1.6.0). Python scripts are byte-identical to upstream; only the invocation path uses `uv run --with ...` rather than a pre-installed env, per this repo's python convention.
 
 ## Install

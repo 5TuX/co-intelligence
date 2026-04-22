@@ -52,13 +52,13 @@ Code/commits/PRs: write normal. "stop caveman" or "normal mode": revert. Level p
 
 The plugin ships a user config at `$APPDATA/caveman/config.json` (Windows) or `$XDG_CONFIG_HOME/caveman/config.json` (POSIX, falling back to `~/.config/caveman/config.json`). The user can change persistent state by asking.
 
-The SessionStart hook writes the absolute `pluginRoot` into that config each session, so the skill can locate `set-config.js` without depending on `$CLAUDE_PLUGIN_ROOT` (which refers to *some* plugin — not necessarily caveman — when the skill is invoked from the main agent).
-
-Invoke `set-config.js` via this cross-platform node one-liner (works on Linux, macOS, Windows/git-bash). Substitute the `KEY=VALUE` arguments per the class below:
+Invoke `set-config.js` **directly using this skill's own base directory**. The harness prepends the absolute base dir to every skill load (the "Base directory for this skill:" line at the very top of this SKILL.md), of the form `.../<pluginRoot>/skills/caveman`. `set-config.js` is therefore always reachable at `<SKILL_BASE>/../../scripts/set-config.js`. Substitute `<SKILL_BASE>` with the exact absolute path the harness gave you, and the `KEY=VALUE` arguments per the class below:
 
 ```bash
-node -e "const fs=require('fs'),p=require('path'),os=require('os'),cp=require('child_process');const b=process.platform==='win32'?(process.env.APPDATA||p.join(process.env.USERPROFILE||os.homedir(),'.config')):(process.env.XDG_CONFIG_HOME||p.join(os.homedir(),'.config'));const c=JSON.parse(fs.readFileSync(p.join(b,'caveman','config.json'),'utf8'));if(!c.pluginRoot)throw new Error('pluginRoot missing — restart Claude Code so SessionStart hook can populate it');cp.execFileSync('node',[p.join(c.pluginRoot,'scripts/set-config.js'),...process.argv.slice(1)],{stdio:'inherit'});" KEY=VALUE
+node "<SKILL_BASE>/../../scripts/set-config.js" KEY=VALUE
 ```
+
+Works cross-platform (Linux, macOS, Windows/git-bash). Independent of `$CLAUDE_PLUGIN_ROOT`, of whether the user config file already exists, and of whether the SessionStart hook has fired — the skill's base dir is inside the plugin, so the relative path is always correct. This is robust against Claude Code's non-recursive `mkdir` bug on Windows plugin-data dirs (observed in CC v2.1.x), which crashes plugin hooks on 2nd+ sessions and prevents hook-driven bootstrap of the user config.
 
 Classify user intent into one of four classes:
 
